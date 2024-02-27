@@ -339,7 +339,7 @@ const TakeTest = ({ setmark, mark, SetTotalQuestion }) => {
 
   const fetchData = async () => {
     try {
-      const { data } = await axios.get("http://localhost:80/");
+      const { data } = await axios.get("https://testwala-backend.onrender.com/");
       setQuestions(data.data);
       SetTotalQuestion(data.data.length);
     } catch (error) {
