@@ -370,10 +370,12 @@ const TakeTest = ({ setmark, mark, SetTotalQuestion }) => {
             setHour(hour-1);
             setMin(60);
           }
-          if(min!=0){
+          else if(min!=0){
             setMin(min-1);
           }
-          else{
+          else if(min==0&&hour==0){
+alert("your time is up!")
+        navigate("/test")
             
             clearInterval();
             
