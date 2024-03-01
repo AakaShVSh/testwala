@@ -358,7 +358,7 @@ const TakeTest = ({ setmark, mark, SetTotalQuestion }) => {
   };
 
   const handleSubmit = () => {
-    // navigate("/test")
+    navigate("/test-result")
     console.log(answers);
     localStorage.setItem("test-data", JSON.stringify(answers));
   };
