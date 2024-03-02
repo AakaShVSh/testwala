@@ -322,7 +322,7 @@ const TakeTest = ({ setmark, mark, SetTotalQuestion }) => {
   const [visitedQuestions, setVisitedQuestions] = useState(new Set([]));
   const [questions, setQuestions] = useState([]);
   const navigate = useNavigate();
-  const [hour, setHour] = useState(10); // Use useState to set initial value
+  const [hour, setHour] = useState(30); // Use useState to set initial value
   const [min, setMin] = useState(0); // Use useState to set initial value
 
   // console.log(questions);
