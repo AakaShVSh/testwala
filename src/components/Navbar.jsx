@@ -64,7 +64,7 @@ const Navbar = () => {
           >
             SignIn
           </Button> */}
-          <Button rightIcon={<FaRegUserCircle />} colorScheme='blue' color={"#465074"} bg={"#1a202c"} variant='outline'>
+          <Button rightIcon={<FaRegUserCircle />} colorScheme='blue' color={"white"} bg={"gray"} variant='outline'>
     Sign in
   </Button>
         </Link>

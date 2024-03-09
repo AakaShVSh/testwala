@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Container,
   Heading,
@@ -12,8 +12,23 @@ import {
   Spacer
 } from "@chakra-ui/react";
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { signUpApi } from '../apis/auth';
 const Signup = () => {
+  const [cmpPassword,setScmpPassword] = useState(null);
+  const navigate = useNavigate()
+  const [signUpData,setSignUpData] = useState({
+    Email:null,
+    Password:null,
+  })
+
+
+  const handleSignup = () => {
+    if(signUpApi(signUpData,cmpPassword)){
+      navigate("/auth/signin")
+    };
+  }
+
   return (
     <>
       <Container
@@ -35,6 +50,7 @@ const Signup = () => {
               required={true}
               bg={"whitesmoke"}
               placeholder={"Enter your Email"}
+              onChange={(e) => setSignUpData({...signUpData,Email:e.target.value})}
             />
           </Box>
           <Box bg={"whitesmoke"} mt={"3%"}>
@@ -44,6 +60,19 @@ const Signup = () => {
               required={true}
               bg={"whitesmoke"}
               placeholder={"Enter your Password"}
+              onChange={(e) => setSignUpData({...signUpData,Password:e.target.value})}
+
+            />
+          
+          </Box>  
+          <Box bg={"whitesmoke"} mt={"3%"}>
+            <FormLabel bg={"whitesmoke"}>Confirm Password</FormLabel>
+            <Input
+              type={"password"}
+              required={true}
+              bg={"whitesmoke"}
+              placeholder={"Confirm your Password"}
+              onChange={(e) => setScmpPassword(e.target.value)}
             />
           
           </Box>
@@ -72,6 +101,7 @@ const Signup = () => {
           mt={"3%"} 
           colorScheme={"teal"} 
           bg={"#1f4985"}
+          onClick={() => handleSignup()}
           >
             Submit
           </Button>
