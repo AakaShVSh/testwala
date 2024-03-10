@@ -2,7 +2,8 @@ import Cookies from 'js-cookie'
 
 export const setCookies = (key,user) => {
  console.log("u",key,user);
-    Cookies.set(key, user, { expires: 1},{httpOnly:true},{secure:true})
+   const f = Cookies.set(key, user, { expires: 1,secure:true,httpOnly:true})
+   console.log(f,"f");
 }
 
 export const getCookies = (key) => {

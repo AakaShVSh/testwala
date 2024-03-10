@@ -8,11 +8,9 @@ export const signUpApi = async (data, cmpPassword) => {
       .post("https://testwala-backend.onrender.com/auth/signup", data)
       .then((r) => {
         console.log(r);
-        setCookies('token',r.data.token)
-        // setLocalStorage()
         return true;
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {console.log(err);return false});
   } else {
     alert("Comfirm password is different");
   }
@@ -22,8 +20,8 @@ export const signInApi = async (data) => {
   axios
     .post("https://testwala-backend.onrender.com/auth/signin", data)
     .then((r) => {
-      setCookies(r);
+      setCookies("token", r.data.token);
       return true;
     })
-    .catch((err) => console.log(err));
+    .catch((err) => {console.log(err);return false});
 };
