@@ -1,18 +1,29 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 // import TakeTest from "./TakeTest";
-import {Button} from '@chakra-ui/react'
+import { Button } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import {Container} from '@chakra-ui/react'
-const Home = () => {
+import { Container } from "@chakra-ui/react";
+const Home = ({ category,setQuestions }) => {
+  // console.log("c==", category[0].question);
+
   return (
     <>
-    <Container>
+      <Container>
+        {category.map((e,i) => (
+          <>
+            <Link to={"/test"}
       
-
-    </Container>
-   <Link to={"/test"}><Button bg={"#1f4985"} m="2% auto" color={"white"}>Take Test</Button></Link> 
+            onClick={() => setQuestions(e.question)}
+            >
+              <Button bg={"#1f4985"} m="2% auto" color={"white"}>
+                {e.section}
+              </Button>
+            </Link>
+          </>
+        ))}
+      </Container>
     </>
-  )
+  );
 };
 
 export default Home;

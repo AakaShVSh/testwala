@@ -144,12 +144,6 @@
 
 // export default TakeTest;
 
-
-
-
-
-
-
 // import axios from "axios";
 // import React, { useState, useEffect } from "react";
 // import "./TakeTest.css";
@@ -215,10 +209,9 @@
 //            m++
 //      }
 //   },60000)
-   
+
 //     },1000)
- 
-    
+
 //   },[])
 
 //   useEffect(() => {
@@ -302,30 +295,21 @@
 
 // export default TakeTest;
 
-
-
-
-
-
-
-
-
-
 import axios from "axios";
 import React, { useState, useEffect } from "react";
 import "./TakeTest.css";
 import { Link, useNavigate } from "react-router-dom";
+import { fetchData } from "../apis/question";
 
-const TakeTest = ({ setmark, mark, SetTotalQuestion }) => {
+const TakeTest = ({ setmark, mark, SetTotalQuestion,quest }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [questions,setquest] = useState(quest)
   const [answers, setAnswers] = useState([]);
   const [visitedQuestions, setVisitedQuestions] = useState(new Set([]));
-  const [questions, setQuestions] = useState([]);
   const navigate = useNavigate();
   const [hour, setHour] = useState(30); // Use useState to set initial value
   const [min, setMin] = useState(0); // Use useState to set initial value
 
-  // console.log(questions);
 
   const handleAnswerSelect = (index) => {
     const newAnswers = [...answers];
@@ -337,19 +321,9 @@ const TakeTest = ({ setmark, mark, SetTotalQuestion }) => {
     setAnswers(newAnswers);
   };
 
-  const fetchData = async () => {
-    try {
-      const { data } = await axios.get("https://testwala-backend.onrender.com/");
-      setQuestions(data.data);
-      SetTotalQuestion(data.data.length);
-    } catch (error) {
-      console.error("Error fetching questions:", error);
-    }
-  };
-
   const handleNext = () => {
     setCurrentQuestion(currentQuestion + 1);
-     setVisitedQuestions(new Set([...visitedQuestions, currentQuestion]));
+    setVisitedQuestions(new Set([...visitedQuestions, currentQuestion]));
   };
 
   const handleQuestionClick = (index) => {
@@ -358,53 +332,54 @@ const TakeTest = ({ setmark, mark, SetTotalQuestion }) => {
   };
 
   const handleSubmit = () => {
-    navigate("/test-result")
+    navigate("/test-result");
     console.log(answers);
     localStorage.setItem("test-data", JSON.stringify(answers));
   };
 
   useEffect(() => {
-    if(questions.length!=""){
-    const id = setInterval(() => {
-          if(hour!=0&&min<=0){
-            setHour(hour-1);
-            setMin(60);
-          }
-          else if(min!=0){
-            setMin(min-1);
-          }
-          else if(min==0&&hour==0){
-alert("your time is up!")
-        navigate("/test")
-            
-            clearInterval();
-            
-            return 0;
-          }
-       return min-1
-    },1000)
-  
-    return () => clearInterval(id);} // Cleanup function to clear interval
-  }, [hour, min, questions.length]); // Added hour to dependency array
-// console.log(min,hour);
-  useEffect(() => {
-    fetchData();
-  }, []);
+    if (questions.length != "") {
+      const id = setInterval(() => {
+        if (hour != 0 && min <= 0) {
+          setHour(hour - 1);
+          setMin(60);
+        } else if (min != 0) {
+          setMin(min - 1);
+        } else if (min == 0 && hour == 0) {
+          alert("your time is up!");
+          navigate("/test");
+
+          clearInterval();
+
+          return 0;
+        }
+        return min - 1;
+      }, 1000);
+
+      return () => clearInterval(id);
+    }
+    setquest(quest)
+    // Cleanup function to clear interval
+  }, []); // Added hour to dependency array
+  // console.log(min,hour);
+
 
   return (
     <div className="page">
       <div className="header">
         <div className="title">
-          Testbook SSC GD Constable (2022) Official Paper (Held On : 10 Jan
-          2023 Shift 1)
+          Testbook SSC GD Constable (2022) Official Paper (Held On : 10 Jan 2023
+          Shift 1)
         </div>
-        <div className="time-left">Time Left {hour < 10 ? '0' + hour : hour}:{min < 10 ? '0' + min : min}</div>
+        <div className="time-left">
+          Time Left {hour < 10 ? "0" + hour : hour}:{min < 10 ? "0" + min : min}
+        </div>
       </div>
       <div className="question-box">
         <div className="question-container">
           <div className="question-number">Question {currentQuestion + 1}</div>
           <div className="question-text">
-            {questions.length > 0 && questions[currentQuestion].question}
+            {questions.length > 0 && questions[currentQuestion].qus}
           </div>
           {questions.length > 0 &&
             questions[currentQuestion].options.map((option, index) => (
