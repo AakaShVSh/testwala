@@ -3,10 +3,11 @@ import Main from "./components/Main";
 function App() {
   return (
    <>
-   <div className="main-body">
+   {/* <div className="main-body"> */}
 
   
-  <Main/> </div>
+  <Main/>
+   {/* </div> */}
    </>
   );
 }

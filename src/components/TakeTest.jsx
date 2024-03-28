@@ -299,26 +299,43 @@ import axios from "axios";
 import React, { useState, useEffect } from "react";
 import "./TakeTest.css";
 import { Link, useNavigate } from "react-router-dom";
+import { Box, Container, Text, Grid, GridItem , Flex } from "@chakra-ui/react";
 import { fetchData } from "../apis/question";
+import { Button } from "@chakra-ui/react";
 
-const TakeTest = ({ setmark, mark, SetTotalQuestion,quest }) => {
+const TakeTest = ({ setmark, mark, testTitle, quest }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [questions,setquest] = useState(quest)
+  const [questions, setquest] = useState(quest);
   const [answers, setAnswers] = useState([]);
   const [visitedQuestions, setVisitedQuestions] = useState(new Set([]));
   const navigate = useNavigate();
-  const [hour, setHour] = useState(30); // Use useState to set initial value
+  const [hour, setHour] = useState(20); // Use useState to set initial value
   const [min, setMin] = useState(0); // Use useState to set initial value
 
-
   const handleAnswerSelect = (index) => {
-    const newAnswers = [...answers];
-    newAnswers[currentQuestion] = index;
-    if (index + 1 === questions[currentQuestion].answer) {
-      setmark(mark + 2); // Update mark with +2 for correct answer
+    if (answers[currentQuestion] == index) {
+      if (index + 1 === questions[currentQuestion].answer) {
+        setmark(mark - 2);
+        // Update mark with +2 for correct answer
+      }
+      const newAnswers = [...answers];
+      newAnswers[currentQuestion] = null;
+      console.log(newAnswers[currentQuestion]);
+      setAnswers(newAnswers);
+    } else {
+      const newAnswers = [...answers];
+      newAnswers[currentQuestion] = index;
+      console.log(newAnswers[currentQuestion]);
+
+      if (index + 1 === questions[currentQuestion].answer) {
+        setmark(mark + 2);
+        // Update mark with +2 for correct answer
+      }
+      setAnswers(newAnswers);
     }
-    console.log(mark);
-    setAnswers(newAnswers);
+    console.log("mark:", mark);
+
+    // newAnswers[currentQuestion] = null;
   };
 
   const handleNext = () => {
@@ -333,7 +350,7 @@ const TakeTest = ({ setmark, mark, SetTotalQuestion,quest }) => {
 
   const handleSubmit = () => {
     navigate("/test-result");
-    console.log(answers);
+    // console.log(answers);
     localStorage.setItem("test-data", JSON.stringify(answers));
   };
 
@@ -358,32 +375,42 @@ const TakeTest = ({ setmark, mark, SetTotalQuestion,quest }) => {
 
       return () => clearInterval(id);
     }
-    setquest(quest)
+    setquest(quest);
+    handleQuestionClick(0);
     // Cleanup function to clear interval
-  }, []); // Added hour to dependency array
+  }, [handleQuestionClick, hour, min, navigate, quest, questions.length]); // Added hour to dependency array
   // console.log(min,hour);
 
-
   return (
-    <div className="page">
-      <div className="header">
-        <div className="title">
-          Testbook SSC GD Constable (2022) Official Paper (Held On : 10 Jan 2023
-          Shift 1)
-        </div>
-        <div className="time-left">
+    <Container maxWidth={"100%"}>
+      <Flex
+        color={"white"}
+        p={"1%"}
+        bg={"black"}
+        justifyContent={"space-between"}
+        w={"100%"}
+        fontFamily={"initial"}
+        fontSize={"2xl"}
+      >
+        <Box color={"white"} bg={"black"}>
+          {testTitle}
+        </Box>
+        <Box bg={"black"}>
           Time Left {hour < 10 ? "0" + hour : hour}:{min < 10 ? "0" + min : min}
-        </div>
-      </div>
-      <div className="question-box">
-        <div className="question-container">
-          <div className="question-number">Question {currentQuestion + 1}</div>
-          <div className="question-text">
+        </Box>
+      </Flex>
+      <Flex>
+        <Container maxW={"100%"}>
+          <Text bg={"#c4d2ef"} p={"1%"} borderRadius={"2px"} m={"1% 0% 2% 0%"}>
+            <Box fontSize={"xl"} fontFamily={"monospace"}>
+              Question {currentQuestion + 1}
+            </Box>
             {questions.length > 0 && questions[currentQuestion].qus}
-          </div>
+          </Text>
           {questions.length > 0 &&
             questions[currentQuestion].options.map((option, index) => (
-              <div
+              <Box
+                // gap={"20%"}
                 key={index}
                 className={`option ${
                   answers[currentQuestion] === index ? "selected" : ""
@@ -391,10 +418,36 @@ const TakeTest = ({ setmark, mark, SetTotalQuestion,quest }) => {
                 onClick={() => handleAnswerSelect(index)}
               >
                 {option}
-              </div>
+              </Box>
             ))}
-        </div>
-        <div className="question-nos">
+
+          {/* <div className="marks">Marks +2 -0.5</div> */}
+          <Flex
+            w={"100%"}
+            justifyContent={"space-between"}
+            p={"5px"}
+            mt={"26%"}
+            borderRadius={"12px"}
+            bg={"#d4dfdf"}
+          >
+            {currentQuestion + 1 < questions.length ? (
+              <>
+                <Button onClick={handleNext}>Next</Button>
+                <Button onClick={() => handleAnswerSelect(null)}>
+                  Clear Response
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button onClick={handleSubmit}>
+                  <Link to={"/test"}>Submit Test</Link>
+                </Button>
+                <Button onClick={() => setCurrentQuestion(0)}>Review</Button>
+              </>
+            )}
+          </Flex>
+        </Container>
+        <Box w={"25%"} p={"1%"}>
           Visited Question : {visitedQuestions.size}
           <br />
           Not Visited Question : {questions.length - visitedQuestions.size}
@@ -404,9 +457,9 @@ const TakeTest = ({ setmark, mark, SetTotalQuestion,quest }) => {
           Answered : {answers.length}
           <br />
           <br />
-          <div className="no">
+          <Grid templateColumns='repeat(4, 1fr)' gap={6} >
             {questions.map((_, index) => (
-              <p
+              <GridItem borderRadius={"3px"}
                 key={index}
                 className={`qus-n ${
                   visitedQuestions.has(index) ? "visited" : ""
@@ -414,32 +467,21 @@ const TakeTest = ({ setmark, mark, SetTotalQuestion,quest }) => {
                 onClick={() => handleQuestionClick(index)}
               >
                 {index + 1}
-              </p>
+              </GridItem>
             ))}
-          </div>
-        </div>
-      </div>
-      <div className="footer">
-        <div className="marks">Marks +2 -0.5</div>
-        <div className="actions">
-          {currentQuestion + 1 < questions.length ? (
-            <>
-              <button onClick={handleNext}>Next</button>
-              <button onClick={() => handleAnswerSelect(null)}>
-                Clear Response
-              </button>
-            </>
-          ) : (
-            <>
-              <button onClick={handleSubmit}>
-                <Link to={"/test"}>Submit Test</Link>
-              </button>
-              <button onClick={() => setCurrentQuestion(0)}>Review</button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+          </Grid>
+          <Button
+            bg={"#1f4985"}
+            w={"100%"}
+            mt={"95%"}
+            color={"white"}
+            _hover={"red"}
+          >
+            Submit Now
+          </Button>
+        </Box>
+      </Flex>
+    </Container>
   );
 };
 

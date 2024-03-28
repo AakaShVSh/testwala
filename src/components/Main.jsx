@@ -14,6 +14,7 @@ const Main = () => {
   const [TotalQuestion, SetTotalQuestion] = useState(0);
   const [quest, setQuestions] = useState([]);
   const [questionCategory, setQuestionsCategory] = useState([]);
+  const [testTitle,settestTitle] = useState(null)
 
   console.log("cat==",questionCategory);
   console.log("d===",quest);
@@ -27,7 +28,7 @@ const Main = () => {
         <Route path="/" element={<Home 
         category={questionCategory}
       setQuestions={setQuestions}
-
+settestTitle={settestTitle}
         />} />
         <Route path="/auth/signin" element={<Signin />} />
         <Route path="/auth/signup" element={<Signup />} />
@@ -39,6 +40,7 @@ const Main = () => {
               SetTotalQuestion={SetTotalQuestion}
               mark={mark}
               quest={quest}
+              testTitle={testTitle}
             />
           }
         />
