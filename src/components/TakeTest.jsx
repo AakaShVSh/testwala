@@ -1,487 +1,541 @@
-// import axios from "axios";
-// import React, { useState, useEffect } from "react";
-// import "./TakeTest.css";
-// const TakeTest = () => {
-//   const [currentQuestion, setCurrentQuestion] = useState(0);
-//   const [selectedAnswer, setSelectedAnswer] = useState([]);
-//   const [answers, setAnswers] = useState([]);
-//   const [visitedquestion, setvisitedquestion] = useState(1);
-//   const [notvisitedquiestion, setnotvisitedquestion] = useState(0);
-//   const [optionindex, setoptionindex] = useState([]);
-//   const [cur, setcur] = useState(0);
-//   console.log(answers);
-//   const [questionindex, setquestionindex] = useState([0]);
-//   const [questions, setquestion] = useState([]);
-//   const [notans, setnotans] = useState(0);
-//   const handleAnswerSelect = (answer, index) => {
-//     if (!optionindex.includes(index)) {
-//       setoptionindex([...optionindex, index]);
-//       setAnswers([...answers, { ans: answer, ind: index }]);
-//       setnotans(notans - 1);
-//     } else {
-//       for (var i = 0; i < answers.length; i++) {
-//         if (answers[i].ind == index) {
-//           answers[i].ans = answer;
-//         }
-//       }
-//     }
-//   };
-
-//   const getdata = async () => {
-//     try {
-//       const data = await axios.get("http://localhost:80/");
-//       //  console.log(data.data.data);
-
-//       setquestion(data.data.data);
-//     } catch (error) {
-//       console.log(error);
-//     }
-//   };
-
-//   const handleNext = () => {
-//     // setAnswers([...answers, selectedAnswer]);
-//     // setSelectedAnswer("");
-//     setCurrentQuestion(currentQuestion + 1);
-//   };
-//   console.log(currentQuestion);
-//   const setq = (index) => {
-//     if(currentQuestion!==questions.length){
-//     setCurrentQuestion(index);
-
-//     }
-//     if (!questionindex.includes(index)) {
-//       // console.log(index);
-//       setvisitedquestion(visitedquestion + 1);
-//       setquestionindex([...questionindex, index]);
-//       setnotvisitedquestion(notvisitedquiestion - 1);
-//     }
-//   };
-
-//   const handleSubmit = () => {
-//     // if (selectedAnswer !== "") {
-//     //   setAnswers([...answers, selectedAnswer]);
-//     // }
-
-//     // Add code here to submit the answers to the server
-//   };
-
-//   useEffect(() => {
-//     getdata();
-//     setnotans(questions.length - answers.length);
-//     setnotvisitedquestion(questions.length - visitedquestion);
-//   }, [answers.length, questions.length, setquestion, visitedquestion]);
-
-//   return (
-//     <div className="page">
-//       <div className="header">
-//         <div className="title">
-//           testbook SSC GD Constable (2022) Official Paper (Held On : 10 Jan 2023
-//           Shift 1)
-//         </div>
-//         <div className="time-left">Time Left 00:59:39</div>
-//       </div>
-//       <div className="question-box">
-//         <div className="question-container">
-//           <div className="question-number">Question {currentQuestion + 1}</div>
-//           <div className="question-text">
-//             {questions != "" ? questions[currentQuestion].question : null}
-//           </div>
-
-//           {questions != ""
-//             ? questions[currentQuestion].options.map((option, index) => (
-//                 <div
-//                   key={index}
-//                   className={`option ${
-//                     selectedAnswer === index + 1 ? "selected" : ""
-//                   }`}
-//                   onClick={() => handleAnswerSelect(index + 1, currentQuestion)}
-//                 >
-//                   {option}
-//                 </div>
-//               ))
-//             : null}
-//         </div>
-//         <div className="question-nos">
-//           <ul>
-//             <li>Visited Question : {visitedquestion}</li>
-//             <li>Not Visited Question : {notvisitedquiestion}</li>
-//             <li>Not Answered : {notans}</li>
-//             <li>Answered : {answers.length}</li>
-//           </ul>
-//           <div className="no">
-//             {questions.map((e, i) => (
-//               <>
-//                 <p className="qus-n" onClick={() => setq(i)}>
-//                   {i + 1}
-//                 </p>
-//               </>
-//             ))}
-//           </div>
-//         </div>
-//       </div>
-
-//       <div className="footer">
-//         <div className="marks">Marks +2 -0.5</div>
-//         <div className="actions">
-//           {(currentQuestion + 1) < questions.length ? (
-//             <>
-//               <button onClick={handleNext}>Next</button>
-//               <button onClick={() => setSelectedAnswer("")}>
-//                 Clear Response
-//               </button>
-//             </>
-//           ) : (
-//             <>
-//               <button onClick={handleSubmit}>Submit Test</button>
-//               <button onClick={() => setCurrentQuestion(1)}>Review</button>
-//             </>
-//           )}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default TakeTest;
-
-// import axios from "axios";
-// import React, { useState, useEffect } from "react";
-// import "./TakeTest.css";
-// import { Link, useNavigate } from "react-router-dom";
-// const TakeTest = ({ setmark, mark, SetTotalQuestion }) => {
-//   const [currentQuestion, setCurrentQuestion] = useState(0);
-//   const [answers, setAnswers] = useState([]);
-//   const [visitedQuestions, setVisitedQuestions] = useState(new Set());
-//   const [questions, setQuestions] = useState([]);
-//   const navigate = useNavigate();
-//   const [min,setmin] = (1);
-//   const [hour,sethour] = (1);
-
-//   console.log(questions);
-//   const handleAnswerSelect = (index) => {
-//     const newAnswers = [...answers];
-//     newAnswers[currentQuestion] = index;
-//     if (newAnswers[currentQuestion] + 1 == questions[currentQuestion].answer) {
-//       setmark(mark + 1);
-//     }
-//     console.log(mark);
-//     setAnswers(newAnswers);
-//   };
-
-//   const fetchData = async () => {
-//     try {
-//       const { data } = await axios.get("http://localhost:80/");
-//       setQuestions(data.data);
-//       SetTotalQuestion(data.data.length);
-//     } catch (error) {
-//       console.error("Error fetching questions:", error);
-//     }
-//   };
-
-//   const handleNext = () => {
-//     setCurrentQuestion(currentQuestion + 1);
-//   };
-
-//   const handleQuestionClick = (index) => {
-//     setCurrentQuestion(index);
-//     setVisitedQuestions(new Set([...visitedQuestions, index]));
-//   };
-
-//   const handlesubmit = () => {
-//     // navigate("/test")
-//     console.log(answers);
-//     localStorage.setItem("test-data", JSON.stringify(answers));
-//   };
-
-//   let id = setInterval(() => {
-//     sethour((hours) => {
-//      if(hours<0){
-//          clearInterval(id)
-//      }else if(hours>0){
-//             hours--
-//      }
-//       setmin((m) =>{
-//     if(m>60){
-//       // eslint-disable-next-line no-unused-expressions
-//       hours-1;
-//          clearInterval(id)
-//      }else if(m<60){
-//            m++
-//      }
-//   },60000)
-
-//     },1000)
-
-//   },[])
-
-//   useEffect(() => {
-//     fetchData();
-//   }, []);
-
-//   return (
-//     <div className="page">
-//       <div className="header">
-//         <div className="title">
-//           Testbook SSC GD Constable (2022) Official Paper (Held On : 10 Jan 2023
-//           Shift 1)
-//         </div>
-//         <div className="time-left">Time Left {hour}:{min}</div>
-//       </div>
-//       <div className="question-box">
-//         <div className="question-container">
-//           <div className="question-number">Question {currentQuestion + 1}</div>
-//           <div className="question-text">
-//             {questions.length > 0 && questions[currentQuestion].question}
-//           </div>
-//           {questions.length > 0 &&
-//             questions[currentQuestion].options.map((option, index) => (
-//               <div
-//                 key={index}
-//                 className={`option ${
-//                   answers[currentQuestion] === index ? "selected" : ""
-//                 }`}
-//                 onClick={() => handleAnswerSelect(index, currentQuestion)}
-//               >
-//                 {option}
-//               </div>
-//             ))}
-//         </div>
-//         <div className="question-nos">
-//           Visited Question : {visitedQuestions.size}
-//           <br></br>
-//           Not Visited Question : {questions.length - visitedQuestions.size}
-//           <br></br>
-//           Not Answered : {questions.length - answers.length}
-//           <br></br>Answered : {answers.length}
-//           <br></br><br></br>
-//           <div className="no">
-//             {questions.map((_, index) => (
-//               <p
-//                 key={index}
-//                 className={`qus-n ${
-//                   visitedQuestions.has(index) ? "visited" : ""
-//                 }`}
-//                 onClick={() => handleQuestionClick(index)}
-//               >
-//                 {index + 1}
-//               </p>
-//             ))}
-//           </div>
-//         </div>
-//       </div>
-//       <div className="footer">
-//         <div className="marks">Marks +2 -0.5</div>
-//         <div className="actions">
-//           {currentQuestion + 1 < questions.length ? (
-//             <>
-//               <button onClick={handleNext}>Next</button>
-//               <button onClick={() => handleAnswerSelect(null)}>
-//                 Clear Response
-//               </button>
-//             </>
-//           ) : (
-//             <>
-//               <button onClick={handlesubmit}>
-//                 <Link to={"/test"}>Submit Test</Link>
-//               </button>
-//               <button onClick={() => setCurrentQuestion(1)}>Review</button>
-//             </>
-//           )}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default TakeTest;
-
-import axios from "axios";
-import React, { useState, useEffect } from "react";
-import "./TakeTest.css";
-import { Link, useNavigate } from "react-router-dom";
-import { Box, Container, Text, Grid, GridItem , Flex } from "@chakra-ui/react";
-import { fetchData } from "../apis/question";
-import { Button } from "@chakra-ui/react";
-
-const TakeTest = ({ setmark, mark, testTitle, quest }) => {
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [questions, setquest] = useState(quest);
-  const [answers, setAnswers] = useState([]);
-  const [visitedQuestions, setVisitedQuestions] = useState(new Set([]));
-  const navigate = useNavigate();
-  const [hour, setHour] = useState(20); // Use useState to set initial value
-  const [min, setMin] = useState(0); // Use useState to set initial value
-
-  const handleAnswerSelect = (index) => {
-    if (answers[currentQuestion] == index) {
-      if (index + 1 === questions[currentQuestion].answer) {
-        setmark(mark - 2);
-        // Update mark with +2 for correct answer
-      }
-      const newAnswers = [...answers];
-      newAnswers[currentQuestion] = null;
-      console.log(newAnswers[currentQuestion]);
-      setAnswers(newAnswers);
-    } else {
-      const newAnswers = [...answers];
-      newAnswers[currentQuestion] = index;
-      console.log(newAnswers[currentQuestion]);
-
-      if (index + 1 === questions[currentQuestion].answer) {
-        setmark(mark + 2);
-        // Update mark with +2 for correct answer
-      }
-      setAnswers(newAnswers);
-    }
-    console.log("mark:", mark);
-
-    // newAnswers[currentQuestion] = null;
-  };
-
-  const handleNext = () => {
-    setCurrentQuestion(currentQuestion + 1);
-    setVisitedQuestions(new Set([...visitedQuestions, currentQuestion]));
-  };
-
-  const handleQuestionClick = (index) => {
-    setCurrentQuestion(index);
-    setVisitedQuestions(new Set([...visitedQuestions, index]));
-  };
-
-  const handleSubmit = () => {
-    navigate("/test-result");
-    // console.log(answers);
-    localStorage.setItem("test-data", JSON.stringify(answers));
-  };
-
-  useEffect(() => {
-    if (questions.length != "") {
-      const id = setInterval(() => {
-        if (hour != 0 && min <= 0) {
-          setHour(hour - 1);
-          setMin(60);
-        } else if (min != 0) {
-          setMin(min - 1);
-        } else if (min == 0 && hour == 0) {
-          alert("your time is up!");
-          navigate("/test");
-
-          clearInterval();
-
-          return 0;
+import React, { useState } from "react";
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  // Checkbox,
+  Container,
+  Flex,
+  FormControl,
+  FormLabel,
+  Grid,
+  Heading,
+  Input,
+  Radio,
+  RadioGroup,
+  Spacer,
+  // Tag,
+  Text,
+} from "@chakra-ui/react";
+import ModalPause from "./ModalPause";
+const TakeTest = (quest, testTitle) => {
+  const [currentquestion, setcurrentquestion] = useState(0);
+  const [question, setquestion] = useState(quest);
+  // const [answerSelected, setAnswerSelected] = useState(false);
+  const [answeredQuestion, setAnsweredQuestion] = useState([]);
+  const [markedAndAnswer, setMarkedAndAnswer] = useState([]);
+  const [markedNotAnswer, setMarkedNotAnswer] = useState([]);
+  const [notAnswer, setNotAnswer] = useState([]);
+  const [answer, setans] = useState(null);
+  const [allAns, setAllAns] = useState([]);
+  const [collectAns, setcollectAns] = useState({});
+  const handlequestion = (con) => {
+    if (con === "svn") {
+      if (answer !== null && !answeredQuestion.includes(currentquestion)) {
+        setans(null);
+        if (markedNotAnswer.includes(currentquestion)) {
+          let removeFromMarkedNotAnswer =
+            markedNotAnswer.indexOf(currentquestion);
+          markedNotAnswer.splice(removeFromMarkedNotAnswer, 1);
+          console.log(removeFromMarkedNotAnswer);
         }
-        return min - 1;
-      }, 1000);
 
-      return () => clearInterval(id);
+        if (notAnswer.includes(currentquestion)) {
+          let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
+          notAnswer.splice(removeFromNotAnswer, 1);
+          console.log(removeFromNotAnswer);
+        }
+
+        if (markedAndAnswer.includes(currentquestion)) {
+          let removeFromMarkedAndAnswer =
+            markedAndAnswer.indexOf(currentquestion);
+          markedAndAnswer.splice(removeFromMarkedAndAnswer, 1);
+          console.log(removeFromMarkedAndAnswer);
+        }
+
+        setAnsweredQuestion([...answeredQuestion, currentquestion]);
+        if (question.quest.length - 1 > currentquestion) {
+          setcurrentquestion(currentquestion + 1);
+        }
+      } else if (answer === null) {
+        if (!notAnswer.includes(currentquestion)) {
+          if (markedNotAnswer.includes(currentquestion)) {
+            let removeFromMarkedNotAnswer =
+              markedNotAnswer.indexOf(currentquestion);
+            markedNotAnswer.splice(removeFromMarkedNotAnswer, 1);
+            console.log(removeFromMarkedNotAnswer);
+          }
+          if (markedAndAnswer.includes(currentquestion)) {
+            let removeFromMarAndAnswer =
+              markedAndAnswer.indexOf(currentquestion);
+            markedAndAnswer.splice(removeFromMarAndAnswer, 1);
+            console.log(removeFromMarAndAnswer);
+          }
+          if (notAnswer.includes(currentquestion)) {
+            let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
+            notAnswer.splice(removeFromNotAnswer, 1);
+            console.log(removeFromNotAnswer);
+          }
+
+          // if (answeredQuestion.includes(currentquestion)) {
+          //   let removeFromMarkedAndAnswer = answeredQuestion.indexOf(currentquestion);
+          //   answeredQuestion.splice(removeFromMarkedAndAnswer, 1);
+          //   console.log(removeFromMarkedAndAnswer);
+          // }
+          setNotAnswer([...notAnswer, currentquestion]);
+          console.log("in");
+        }
+      
+
+      }  if (question.quest.length - 1 > currentquestion) {
+          setcurrentquestion(currentquestion + 1);
+          // console.log("ac1", con);
+        }
+    } else {
+      if (answer !== null && !answeredQuestion.includes(currentquestion)) {
+        if (markedNotAnswer.includes(currentquestion)) {
+          let removeFromMarkedNotAnswer =
+            markedNotAnswer.indexOf(currentquestion);
+          markedNotAnswer.splice(removeFromMarkedNotAnswer, 1);
+          console.log(removeFromMarkedNotAnswer);
+        }
+
+        if (notAnswer.includes(currentquestion)) {
+          let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
+          notAnswer.splice(removeFromNotAnswer, 1);
+          console.log(removeFromNotAnswer);
+        }
+
+        if (markedAndAnswer.includes(currentquestion)) {
+          let removeFromMarkedAndAnswer =
+            markedAndAnswer.indexOf(currentquestion);
+          markedAndAnswer.splice(removeFromMarkedAndAnswer, 1);
+          console.log(removeFromMarkedAndAnswer);
+        }
+
+        setAnsweredQuestion([...answeredQuestion, currentquestion]);
+        if (question.quest.length - 1 > currentquestion) {
+          setcurrentquestion(con);
+          // console.log("aq2");
+          setans(null);
+        }
+      } else if (
+        answer === null &&
+        !notAnswer.includes(currentquestion) &&
+        currentquestion !== con
+      ) {
+        if (markedNotAnswer.includes(currentquestion)) {
+          let removeFromMarkedNotAnswer =
+            markedNotAnswer.indexOf(currentquestion);
+          markedNotAnswer.splice(removeFromMarkedNotAnswer, 1);
+          console.log(removeFromMarkedNotAnswer);
+        }
+
+        if (notAnswer.includes(currentquestion)) {
+          let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
+          notAnswer.splice(removeFromNotAnswer, 1);
+          console.log(removeFromNotAnswer);
+        }
+
+        // if (answeredQuestion.includes(currentquestion)) {
+        //   let removeFromMarkedAndAnswer = answeredQuestion.indexOf(currentquestion);
+        //   answeredQuestion.splice(removeFromMarkedAndAnswer, 1);
+        //   console.log(removeFromMarkedAndAnswer);
+        setNotAnswer([...notAnswer, currentquestion]);
+
+        if (question.quest.length - 1 > currentquestion) {
+          setcurrentquestion(con);
+          // console.log("ac2", con);
+        }
+      }
+      if (con !== isNaN) {
+        setcurrentquestion(con);
+        // console.log("ac2", con);
+      }
     }
-    setquest(quest);
-    handleQuestionClick(0);
-    // Cleanup function to clear interval
-  }, [handleQuestionClick, hour, min, navigate, quest, questions.length]); // Added hour to dependency array
-  // console.log(min,hour);
+  };
+  // console.log(currentquestion);
+  const markedQuestion = () => {
+    if (answer !== null && !markedAndAnswer.includes(currentquestion)) {
+      if (markedNotAnswer.includes(currentquestion)) {
+        let removeFromMarkedNotAnswer =
+          markedNotAnswer.indexOf(currentquestion);
+        markedNotAnswer.splice(removeFromMarkedNotAnswer, 1);
+        console.log(removeFromMarkedNotAnswer);
+      }
 
+      if (notAnswer.includes(currentquestion)) {
+        let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
+        notAnswer.splice(removeFromNotAnswer, 1);
+        console.log(removeFromNotAnswer);
+      }
+
+      if (answeredQuestion.includes(currentquestion)) {
+        let removeFromAnswer = answeredQuestion.indexOf(currentquestion);
+        answeredQuestion.splice(removeFromAnswer, 1);
+        console.log(removeFromAnswer);
+      }
+
+      setMarkedAndAnswer([...markedAndAnswer, currentquestion]);
+      setans(null);
+    }
+
+    // markdnn
+    if (answer === null && !markedNotAnswer.includes(currentquestion)) {
+      if (markedAndAnswer.includes(currentquestion)) {
+        if (question.quest.length - 1 > currentquestion) {
+          setcurrentquestion(currentquestion + 1);
+          return;
+        }
+      }
+
+      if (notAnswer.includes(currentquestion)) {
+        let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
+        notAnswer.splice(removeFromNotAnswer, 1);
+        console.log(removeFromNotAnswer);
+      }
+
+      if (answeredQuestion.includes(currentquestion)) {
+        let removeFromAnswer = answeredQuestion.indexOf(currentquestion);
+        answeredQuestion.splice(removeFromAnswer, 1);
+        console.log(removeFromAnswer);
+      }
+
+      setMarkedNotAnswer([...markedNotAnswer, currentquestion]);
+    }
+    if (question.quest.length - 1 > currentquestion) {
+      setcurrentquestion(currentquestion + 1);
+    }
+  };
+  // console.log(currentquestion,markedNotAnswer,notAnswer);
+  const handleAnswer = (ans, qus) => {
+    setans(qus);
+
+    if (answeredQuestion.includes(currentquestion)) {
+      let removeFromAnswer = answeredQuestion.indexOf(currentquestion);
+      answeredQuestion.splice(removeFromAnswer, 1);
+      allAns.splice(removeFromAnswer, 1);
+      console.log(removeFromAnswer);
+      setAllAns([...allAns, qus]);
+      setAnsweredQuestion([...answeredQuestion, currentquestion]);
+    } else {
+      setAllAns([...allAns, qus]);
+      setAnsweredQuestion([...answeredQuestion, currentquestion]);
+    }
+    // if (question.quest.length - 1 > currentquestion) {
+    //   setcurrentquestion(currentquestion + 1);
+    // }
+    console.log(
+      "ssa",
+      // question.quest.length,
+      // "ma",
+      // markedAndAnswer,
+      // "na",
+      // notAnswer,
+      "a",
+      answeredQuestion,
+      "c",
+      // markedNotAnswer,
+      currentquestion,
+      qus,
+      allAns
+    );
+  };
+
+  //    useEffect(() => {
+  //     if (questions.length != "") {
+  //       const id = setInterval(() => {
+  //         if (hour != 0 && min <= 0) {
+  //           setHour(hour - 1);
+  //           setMin(60);
+  //         } else if (min != 0) {
+  //           setMin(min - 1);
+  //         } else if (min == 0 && hour == 0) {
+  //           alert("your time is up!");
+  //           navigate("/test-result");
+
+  //           clearInterval();
+  // if(isFullScreen){
+  //       handleFullScreen();
+  //     }
+  //           return 0;
+  //         }
+  //         return min - 1;
+  //       }, 1000);
+
+  //       return () => clearInterval(id);
+  //     }
+  //     setquest(quest);
+  //     handleQuestionClick(0);z
+  //     // Cleanup function to clear interval
+  //   }, [handleFullScreen, handleQuestionClick, hour, isFullScreen, min, navigate, quest, questions.length]); // Added hour to dependency array
+  // console.log("question :", question.quest[0].qus, "\n", testTitle);
   return (
-    <Container maxWidth={"100%"}>
-      <Flex
-        color={"white"}
-        p={"1%"}
-        bg={"black"}
-        justifyContent={"space-between"}
-        w={"100%"}
-        fontFamily={"initial"}
-        fontSize={"2xl"}
-      >
-        <Box color={"white"} bg={"black"}>
-          {testTitle}
-        </Box>
-        <Box bg={"black"}>
-          Time Left {hour < 10 ? "0" + hour : hour}:{min < 10 ? "0" + min : min}
-        </Box>
-      </Flex>
-      <Flex>
-        <Container maxW={"100%"}>
-          <Text bg={"#c4d2ef"} p={"1%"} borderRadius={"2px"} m={"1% 0% 2% 0%"}>
-            <Box fontSize={"xl"} fontFamily={"monospace"}>
-              Question {currentQuestion + 1}
-            </Box>
-            {questions.length > 0 && questions[currentQuestion].qus}
+    <>
+      <Container bg={"white"} color={"black"} p={"%"} maxWidth={"100%"}>
+        <Box
+          display={"flex"}
+          justifyContent={"space-between"}
+          color={"black"}
+          p={"0.6%"}
+          maxWidth={"100%"}
+        >
+          <Text fontSize={"26px"}>
+            <b>Revision Karle</b>
           </Text>
-          {questions.length > 0 &&
-            questions[currentQuestion].options.map((option, index) => (
-              <Box
-                // gap={"20%"}
-                key={index}
-                className={`option ${
-                  answers[currentQuestion] === index ? "selected" : ""
-                }`}
-                onClick={() => handleAnswerSelect(index)}
-              >
-                {option}
-              </Box>
-            ))}
-
-          {/* <div className="marks">Marks +2 -0.5</div> */}
-          <Flex
+          <Text>
+            Time Left <Text as={"span"}>00</Text>:<Text as={"span"}>59</Text>:
+            <Text as={"span"}>39</Text>
+          </Text>
+          <Box>
+            <Button border={"1px solid #01bfbd"} color={"#01bfbd"} mr={"12px"}>
+              Enter Full Screen
+            </Button>
+            <ModalPause />
+          </Box>
+        </Box>{" "}
+      </Container>
+      <Box display={"flex"} h={"100^"}>
+        <Box w={"100%"}>
+          <Box
+            boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
+            p={"1%"}
             w={"100%"}
+          >
+            <Text>
+              SECTIONS | <Text as={"span"}>Elementary maths</Text>
+            </Text>
+          </Box>{" "}
+          <Box p={"1%"} w={"100%"}>
+            <Text>
+              <b>Question no {currentquestion + 1}</b>
+            </Text>
+          </Box>
+          <Box
+            boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
+            p={"1%"}
+            h={"574px"}
+            w={"100%"}
+          >
+            {/* {question.length>0 && question.quest.map((d) )} */}
+            <Text m={"1%"}>{question.quest[currentquestion]?.qus}</Text>
+            <RadioGroup>
+              {question.quest[currentquestion]?.options.map((d, i) => (
+                <Box
+                  onClick={() => {
+                    handleAnswer(d, i);
+                  }}
+                >
+                  <Radio m={"1%"} value={d}>
+                    {d}
+                  </Radio>
+                  <br></br>{" "}
+                </Box>
+              ))}
+            </RadioGroup>
+          </Box>
+          <Box
+            display={"flex"}
+            boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
+            w={"100%"}
+            p={"0.5%"}
             justifyContent={"space-between"}
-            p={"5px"}
-            mt={"26%"}
-            borderRadius={"12px"}
-            bg={"#d4dfdf"}
           >
-            {currentQuestion + 1 < questions.length ? (
-              <>
-                <Button onClick={handleNext}>Next</Button>
-                <Button onClick={() => handleAnswerSelect(null)}>
-                  Clear Response
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button onClick={handleSubmit}>
-                  <Link to={"/test"}>Submit Test</Link>
-                </Button>
-                <Button onClick={() => setCurrentQuestion(0)}>Review</Button>
-              </>
-            )}
-          </Flex>
-        </Container>
-        <Box w={"25%"} p={"1%"}>
-          Visited Question : {visitedQuestions.size}
-          <br />
-          Not Visited Question : {questions.length - visitedQuestions.size}
-          <br />
-          Not Answered : {questions.length - answers.length}
-          <br />
-          Answered : {answers.length}
-          <br />
-          <br />
-          <Grid templateColumns='repeat(4, 1fr)' gap={6} >
-            {questions.map((_, index) => (
-              <GridItem borderRadius={"3px"}
-                key={index}
-                className={`qus-n ${
-                  visitedQuestions.has(index) ? "visited" : ""
-                }`}
-                onClick={() => handleQuestionClick(index)}
+            <ButtonGroup>
+              <Button
+                onClick={() => markedQuestion()}
+                border={"1px solid #01bfbd"}
+                color={"#01bfbd"}
               >
-                {index + 1}
-              </GridItem>
-            ))}
-          </Grid>
-          <Button
-            bg={"#1f4985"}
-            w={"100%"}
-            mt={"95%"}
-            color={"white"}
-            _hover={"red"}
-          >
-            Submit Now
-          </Button>
+                Mark for priview & Next
+              </Button>
+              <Button border={"1px solid #01bfbd"} color={"#01bfbd"}>
+                Clear Response
+              </Button>
+            </ButtonGroup>
+            <Button
+              onClick={() => handlequestion("svn")}
+              border={"1px solid #01bfbd"}
+              color={"#01bfbd"}
+            >
+              Save & Next
+            </Button>
+          </Box>
         </Box>
-      </Flex>
-    </Container>
+
+        {/* slider */}
+        <Box
+          boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
+          p={"1%"}
+          w={"25%"}
+        >
+          <Box>
+            <Text fontSize={"larger"}>
+              <b>Pablo</b>
+            </Text>
+          </Box>
+          <hr />
+          <Box mt={"3%"} mb={"3%"}>
+            <Box justifyContent={"space-between"}>
+              <Text>
+                Marked{" "}
+                <Text
+                  w={"auto"}
+                  pl={"1.5%"}
+                  pr={"1.5%"}
+                  backgroundColor={"purple"}
+                  color={"white"}
+                  borderRadius={"50%"}
+                  as={"span"}
+                >
+                  {markedNotAnswer.length}
+                </Text>{" "}
+              </Text>{" "}
+              <Text>
+                Not visited{" "}
+                <Text
+                  w={"auto"}
+                  pl={"1.5%"}
+                  pr={"1.5%"}
+                  // backgroundColor={"purple"}
+                  // color={"white"}
+                  border={"1px solid gray"}
+                  // borderRadius={"50%"}
+                  as={"span"}
+                >
+                  {question.quest.length -
+                    (markedAndAnswer.length +
+                      markedNotAnswer.length +
+                      answeredQuestion.length +
+                      notAnswer.length)}
+                </Text>
+              </Text>
+              <Text>
+                Answered{" "}
+                <Text
+                  w={"auto"}
+                  pl={"1.5%"}
+                  pr={"1.5%"}
+                  backgroundColor={"green"}
+                  color={"white"}
+                  borderTopLeftRadius={"50%"}
+                  borderTopRightRadius={"50%"}
+                  as={"span"}
+                >
+                  {answeredQuestion.length}
+                </Text>
+              </Text>
+              <Text>
+                Not Answered{" "}
+                <Text
+                  w={"auto"}
+                  pl={"1.5%"}
+                  pr={"1.5%"}
+                  backgroundColor={"red"}
+                  color={"white"}
+                  borderBottomLeftRadius={"50%"}
+                  borderBottomRightRadius={"50%"}
+                  as={"span"}
+                >
+                  {notAnswer.length}
+                </Text>
+              </Text>
+              <Text>
+                Marked & Answered{" "}
+                <Text
+                  w={"auto"}
+                  pl={"1.5%"}
+                  pr={"1.5%"}
+                  backgroundColor={"purple"}
+                  color={"white"}
+                  borderRadius={"50%"}
+                  as={"span"}
+                >
+                  {markedAndAnswer.length} ✓
+                </Text>
+              </Text>
+            </Box>
+            <hr />
+          </Box>
+
+          <Text mb={"3%"}>Section : Average Type 1</Text>
+          <hr />
+          <Box mt={"10%"} h={"57%"} borderBottom={"1px solid gray"}>
+            <Grid
+              templateColumns="repeat(5, 1fr)"
+              rowGap={"10%"}
+              columnGap={"6%"}
+              textAlign={"center"}
+            >
+              {question.quest?.map((d, i) => (
+                <Box
+                  onClick={() => handlequestion(i)}
+                  background={
+                    markedNotAnswer.includes(i)
+                      ? "purple"
+                      : answeredQuestion.includes(i)
+                      ? "green"
+                      : notAnswer.includes(i)
+                      ? "red"
+                      : markedAndAnswer.includes(i)
+                      ? "purple"
+                      : null
+                  }
+                  borderRadius={
+                    markedAndAnswer.includes(i)
+                      ? "50%"
+                      : markedNotAnswer.includes(i)
+                      ? "50%"
+                      : answeredQuestion.includes(i)
+                      ? "50% 50% 0% 0%"
+                      : notAnswer.includes(i)
+                      ? "0% 0% 50% 50%"
+                      : null
+                  }
+                  color={
+                    markedAndAnswer.includes(i)
+                      ? "white"
+                      : markedNotAnswer.includes(i)
+                      ? "white"
+                      : answeredQuestion.includes(i)
+                      ? "white"
+                      : notAnswer.includes(i)
+                      ? "white"
+                      : null
+                  }
+                  cursor={"pointer"}
+                  border={"1px solid gray"}
+                >
+                  {markedAndAnswer.includes(i) ? <>{i + 1} ✓</> : <>{i + 1}</>}
+                </Box>
+              ))}
+            </Grid>
+          </Box>
+          <Box borderBottom={"1px solid gray"}>
+            <Button
+              mt={"3%"}
+              mb={"3%"}
+              border={"1px solid #01bfbd"}
+              w={"100%"}
+              color={"#01bfbd"}
+            >
+              Instruction
+            </Button>
+          </Box>
+          <Box>
+            <Button
+              mt={"3%"}
+              // mb={"3%"}
+              border={"1px solid #01bfbd"}
+              w={"100%"}
+              color={"#01bfbd"}
+            >
+              Submit Test
+            </Button>
+          </Box>
+        </Box>
+      </Box>
+    </>
   );
 };
 

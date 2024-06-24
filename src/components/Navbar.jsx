@@ -8,6 +8,7 @@ import {
   Heading,
   Button,
   Input,
+  Flex,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { FaRegUserCircle } from "react-icons/fa";
@@ -69,8 +70,77 @@ const Navbar = () => {
   </Button>
         </Link>
       </Container>
+
+       {/* sidebar */}
+
+       {/* <Container bg={"#465074"}>
+      <Flex
+        // as="nav"
+        pos="fixed"
+        top="0"
+        left="0"
+        bottom="0"
+        w="250px"
+        p={"3"}
+        bg={"#465074"}
+        color="white"
+        // py="6"
+        // px="4"
+        // direction="column"
+        justify="space-between"
+      > */}
+        {/* <Link
+          as={Icon}
+          name="logo"
+          size="24px"
+          color="teal.500"
+          // onClick={onOpen}
+        /> */}
+      
+          {/* <Box> 
+          {" "}
+          <Image
+            src={logo}
+            bg={"#465074"}
+            w={"80%"}
+            m={"0%"}
+            pb={"3%"}
+            fontColor={"White"}
+            alt="logo"
+          />
+          <Link to={"/"}>
+            <Text borderBottomWidth="1px" mt={"3%"}>
+              <Text fontSize="lg" fontWeight="bold" cursor={"pointer"}>
+                Home
+              </Text>
+            </Text></Link>
+            <Box color={"white"} borderBottomWidth="1px" fontWeight="bold">
+              <Link
+                as={Text}
+                fontSize="lg"
+                // color="gray.600"
+                href="#"
+              >
+                Dashboard
+              </Link><br></br>
+              <Link
+                as={Text}
+                fontSize="lg"
+                // color="gray.600"
+                href="#"
+              >
+                Settings
+              </Link>
+            </Box>
+           
+          </Box>
+      </Flex>
+    </Container> */}
     </>
   );
 };
 
 export default Navbar;
+
+
+

@@ -7,6 +7,7 @@ import Home from "./Home";
 import Signin from "./Signin";
 import Signup from "./Signup";
 import Navbar from "./Navbar";
+import Sidebar from "./Sidebar";
 import { fetchData } from "../apis/question";
 
 const Main = () => {
@@ -15,7 +16,18 @@ const Main = () => {
   const [quest, setQuestions] = useState([]);
   const [questionCategory, setQuestionsCategory] = useState([]);
   const [testTitle,settestTitle] = useState(null)
-
+ const [isFullScreen, setIsFullScreen] = useState(false);
+  
+  const handleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+    
+    if (!isFullScreen) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+ 
+  };
   console.log("cat==",questionCategory);
   console.log("d===",quest);
     useEffect(() => {
@@ -23,10 +35,12 @@ const Main = () => {
   }, [setQuestionsCategory]);
   return (
     < >
-    <Navbar/>
+    {isFullScreen === true ? null:<Navbar/>}
+    {/* <Sidebar/> */}
       <Routes>
         <Route path="/" element={<Home 
         category={questionCategory}
+        handleFullScreen={handleFullScreen}
       setQuestions={setQuestions}
 settestTitle={settestTitle}
         />} />
@@ -36,6 +50,8 @@ settestTitle={settestTitle}
           path="/test"
           element={
             <TakeTest
+            isFullScreen={isFullScreen}
+            handleFullScreen={handleFullScreen}
               setmark={setmark}
               SetTotalQuestion={SetTotalQuestion}
               mark={mark}
