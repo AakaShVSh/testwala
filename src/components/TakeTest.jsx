@@ -18,7 +18,9 @@ import {
   Text,
 } from "@chakra-ui/react";
 import ModalPause from "./ModalPause";
-const TakeTest = (quest, testTitle) => {
+import { Link } from "react-router-dom";
+
+const TakeTest = (quest, handleFullScreen, testTitle) => {
   const [currentquestion, setcurrentquestion] = useState(0);
   const [question, setquestion] = useState(quest);
   // const [answerSelected, setAnswerSelected] = useState(false);
@@ -27,22 +29,28 @@ const TakeTest = (quest, testTitle) => {
   const [markedNotAnswer, setMarkedNotAnswer] = useState([]);
   const [notAnswer, setNotAnswer] = useState([]);
   const [answer, setans] = useState(null);
-  const [allAns, setAllAns] = useState([]);
+  const [allAns, setAllAns] = useState({});
   const [collectAns, setcollectAns] = useState({});
+
   const handlequestion = (con) => {
     if (con === "svn") {
-      if (answer !== null && !answeredQuestion.includes(currentquestion)) {
-        setans(null);
+      if (
+        answer !== null &&
+        allAns[currentquestion] !== undefined &&
+        !answeredQuestion.includes(currentquestion)
+      ) {
         if (markedNotAnswer.includes(currentquestion)) {
           let removeFromMarkedNotAnswer =
             markedNotAnswer.indexOf(currentquestion);
           markedNotAnswer.splice(removeFromMarkedNotAnswer, 1);
+
           console.log(removeFromMarkedNotAnswer);
         }
 
         if (notAnswer.includes(currentquestion)) {
           let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
           notAnswer.splice(removeFromNotAnswer, 1);
+
           console.log(removeFromNotAnswer);
         }
 
@@ -50,14 +58,17 @@ const TakeTest = (quest, testTitle) => {
           let removeFromMarkedAndAnswer =
             markedAndAnswer.indexOf(currentquestion);
           markedAndAnswer.splice(removeFromMarkedAndAnswer, 1);
+
           console.log(removeFromMarkedAndAnswer);
         }
 
         setAnsweredQuestion([...answeredQuestion, currentquestion]);
+
         if (question.quest.length - 1 > currentquestion) {
           setcurrentquestion(currentquestion + 1);
         }
-      } else if (answer === null) {
+      } else if (allAns[currentquestion] === undefined && answer === null) {
+        console.log("ggh");
         if (!notAnswer.includes(currentquestion)) {
           if (markedNotAnswer.includes(currentquestion)) {
             let removeFromMarkedNotAnswer =
@@ -69,12 +80,15 @@ const TakeTest = (quest, testTitle) => {
             let removeFromMarAndAnswer =
               markedAndAnswer.indexOf(currentquestion);
             markedAndAnswer.splice(removeFromMarAndAnswer, 1);
+
             console.log(removeFromMarAndAnswer);
           }
-          if (notAnswer.includes(currentquestion)) {
-            let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
-            notAnswer.splice(removeFromNotAnswer, 1);
-            console.log(removeFromNotAnswer);
+          if (answeredQuestion.includes(currentquestion)) {
+            let removeFromAnswerQuestion =
+              answeredQuestion.indexOf(currentquestion);
+            answeredQuestion.splice(removeFromAnswerQuestion, 1);
+
+            console.log(removeFromAnswerQuestion);
           }
 
           // if (answeredQuestion.includes(currentquestion)) {
@@ -85,14 +99,17 @@ const TakeTest = (quest, testTitle) => {
           setNotAnswer([...notAnswer, currentquestion]);
           console.log("in");
         }
-      
-
-      }  if (question.quest.length - 1 > currentquestion) {
-          setcurrentquestion(currentquestion + 1);
-          // console.log("ac1", con);
-        }
+      }
+      if (question.quest.length - 1 > currentquestion) {
+        setcurrentquestion(currentquestion + 1);
+        // console.log("ac1", con);
+      }
     } else {
-      if (answer !== null && !answeredQuestion.includes(currentquestion)) {
+      if (
+        answer !== null &&
+        allAns[currentquestion] !== undefined &&
+        !answeredQuestion.includes(currentquestion)
+      ) {
         if (markedNotAnswer.includes(currentquestion)) {
           let removeFromMarkedNotAnswer =
             markedNotAnswer.indexOf(currentquestion);
@@ -117,13 +134,14 @@ const TakeTest = (quest, testTitle) => {
         if (question.quest.length - 1 > currentquestion) {
           setcurrentquestion(con);
           // console.log("aq2");
-          setans(null);
         }
       } else if (
         answer === null &&
+        allAns[currentquestion] === undefined &&
         !notAnswer.includes(currentquestion) &&
         currentquestion !== con
       ) {
+        console.log("gghhjhj");
         if (markedNotAnswer.includes(currentquestion)) {
           let removeFromMarkedNotAnswer =
             markedNotAnswer.indexOf(currentquestion);
@@ -131,16 +149,19 @@ const TakeTest = (quest, testTitle) => {
           console.log(removeFromMarkedNotAnswer);
         }
 
-        if (notAnswer.includes(currentquestion)) {
-          let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
-          notAnswer.splice(removeFromNotAnswer, 1);
-          console.log(removeFromNotAnswer);
+        if (markedAndAnswer.includes(currentquestion)) {
+          let removeFromMarkedAndAnswer =
+            markedAndAnswer.indexOf(currentquestion);
+          markedAndAnswer.splice(removeFromMarkedAndAnswer, 1);
+          console.log(removeFromMarkedAndAnswer);
         }
 
-        // if (answeredQuestion.includes(currentquestion)) {
-        //   let removeFromMarkedAndAnswer = answeredQuestion.indexOf(currentquestion);
-        //   answeredQuestion.splice(removeFromMarkedAndAnswer, 1);
-        //   console.log(removeFromMarkedAndAnswer);
+        if (answeredQuestion.includes(currentquestion)) {
+          let removeFromMarkedAndAnswer =
+            answeredQuestion.indexOf(currentquestion);
+          answeredQuestion.splice(removeFromMarkedAndAnswer, 1);
+          console.log(removeFromMarkedAndAnswer);
+        }
         setNotAnswer([...notAnswer, currentquestion]);
 
         if (question.quest.length - 1 > currentquestion) {
@@ -153,78 +174,90 @@ const TakeTest = (quest, testTitle) => {
         // console.log("ac2", con);
       }
     }
+    setans(null);
   };
   // console.log(currentquestion);
+    console.log("g",allAns[currentquestion]);
   const markedQuestion = () => {
-    if (answer !== null && !markedAndAnswer.includes(currentquestion)) {
-      if (markedNotAnswer.includes(currentquestion)) {
-        let removeFromMarkedNotAnswer =
-          markedNotAnswer.indexOf(currentquestion);
-        markedNotAnswer.splice(removeFromMarkedNotAnswer, 1);
-        console.log(removeFromMarkedNotAnswer);
-      }
-
-      if (notAnswer.includes(currentquestion)) {
-        let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
-        notAnswer.splice(removeFromNotAnswer, 1);
-        console.log(removeFromNotAnswer);
-      }
-
+    if (
+      answer !== null &&
+      allAns[currentquestion] !== undefined &&
+      !markedAndAnswer.includes(currentquestion)
+    ) {
+      setAllAns((prevState) => ({
+        ...prevState,
+        [currentquestion]: answer, // Update the selected answer for the specific question
+      }));
       if (answeredQuestion.includes(currentquestion)) {
         let removeFromAnswer = answeredQuestion.indexOf(currentquestion);
         answeredQuestion.splice(removeFromAnswer, 1);
         console.log(removeFromAnswer);
       }
 
+      if (markedNotAnswer.includes(currentquestion)) {
+        let removeFromMarkNotAnswer = markedNotAnswer.indexOf(currentquestion);
+        notAnswer.splice(removeFromMarkNotAnswer, 1);
+      }
+
+      if (notAnswer.includes(currentquestion)) {
+        let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
+        notAnswer.splice(removeFromNotAnswer, 1);
+      }
       setMarkedAndAnswer([...markedAndAnswer, currentquestion]);
       setans(null);
-    }
-
-    // markdnn
-    if (answer === null && !markedNotAnswer.includes(currentquestion)) {
-      if (markedAndAnswer.includes(currentquestion)) {
-        if (question.quest.length - 1 > currentquestion) {
-          setcurrentquestion(currentquestion + 1);
-          return;
-        }
-      }
-
-      if (notAnswer.includes(currentquestion)) {
-        let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
-        notAnswer.splice(removeFromNotAnswer, 1);
-        console.log(removeFromNotAnswer);
-      }
-
+    } else if (
+      allAns[currentquestion] === undefined &&
+      !markedNotAnswer.includes(currentquestion)
+    ) {
+      setAllAns((prevState) => {
+        const updatedState = { ...prevState };
+        delete updatedState[currentquestion]; // Remove the selected answer for the specific question
+        return updatedState;
+      });
       if (answeredQuestion.includes(currentquestion)) {
         let removeFromAnswer = answeredQuestion.indexOf(currentquestion);
         answeredQuestion.splice(removeFromAnswer, 1);
         console.log(removeFromAnswer);
       }
 
+      if (markedAndAnswer.includes(currentquestion)) {
+        let removeFromMarkAndAnswer = markedAndAnswer.indexOf(currentquestion);
+        notAnswer.splice(removeFromMarkAndAnswer, 1);
+        //     console.log(removeFromNotAnswer);
+      }
+      if (notAnswer.includes(currentquestion)) {
+        let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
+        notAnswer.splice(removeFromNotAnswer, 1);
+      }
       setMarkedNotAnswer([...markedNotAnswer, currentquestion]);
     }
     if (question.quest.length - 1 > currentquestion) {
       setcurrentquestion(currentquestion + 1);
     }
   };
-  // console.log(currentquestion,markedNotAnswer,notAnswer);
+
   const handleAnswer = (ans, qus) => {
-    setans(qus);
+    setans(ans);
 
     if (answeredQuestion.includes(currentquestion)) {
       let removeFromAnswer = answeredQuestion.indexOf(currentquestion);
       answeredQuestion.splice(removeFromAnswer, 1);
-      allAns.splice(removeFromAnswer, 1);
-      console.log(removeFromAnswer);
-      setAllAns([...allAns, qus]);
+      // allAns.splice(removeFromAnswer, 1);
+
+      setAllAns((prevState) => ({
+        ...prevState,
+        [currentquestion]: ans, // Update the selected answer for the specific question
+      }));
       setAnsweredQuestion([...answeredQuestion, currentquestion]);
     } else {
-      setAllAns([...allAns, qus]);
+      setAllAns((prevState) => ({
+        ...prevState,
+        [currentquestion]: ans, // Update the selected answer for the specific question
+      }));
+
       setAnsweredQuestion([...answeredQuestion, currentquestion]);
     }
-    // if (question.quest.length - 1 > currentquestion) {
-    //   setcurrentquestion(currentquestion + 1);
-    // }
+
     console.log(
       "ssa",
       // question.quest.length,
@@ -242,34 +275,33 @@ const TakeTest = (quest, testTitle) => {
     );
   };
 
-  //    useEffect(() => {
-  //     if (questions.length != "") {
-  //       const id = setInterval(() => {
-  //         if (hour != 0 && min <= 0) {
-  //           setHour(hour - 1);
-  //           setMin(60);
-  //         } else if (min != 0) {
-  //           setMin(min - 1);
-  //         } else if (min == 0 && hour == 0) {
-  //           alert("your time is up!");
-  //           navigate("/test-result");
+  const handleClearAnswer = (questionIndex) => {
+    if (answeredQuestion.includes(currentquestion)) {
+      let removeFromAnswer = answeredQuestion.indexOf(currentquestion);
+      answeredQuestion.splice(removeFromAnswer, 1);
+    }
 
-  //           clearInterval();
-  // if(isFullScreen){
-  //       handleFullScreen();
-  //     }
-  //           return 0;
-  //         }
-  //         return min - 1;
-  //       }, 1000);
+    if (markedAndAnswer.includes(currentquestion)) {
+      let removeFromMarkAndAnswer = markedAndAnswer.indexOf(currentquestion);
+      markedAndAnswer.splice(removeFromMarkAndAnswer, 1);
+      //     console.log(removeFromNotAnswer);
+    }
 
-  //       return () => clearInterval(id);
-  //     }
-  //     setquest(quest);
-  //     handleQuestionClick(0);z
-  //     // Cleanup function to clear interval
-  //   }, [handleFullScreen, handleQuestionClick, hour, isFullScreen, min, navigate, quest, questions.length]); // Added hour to dependency array
-  // console.log("question :", question.quest[0].qus, "\n", testTitle);
+    if (markedNotAnswer.includes(currentquestion)) {
+      let removeFromMarkNotAnswer = markedNotAnswer.indexOf(currentquestion);
+      markedNotAnswer.splice(removeFromMarkNotAnswer, 1);
+    }
+
+    setAllAns((prevState) => {
+      const updatedState = { ...prevState };
+      delete updatedState[questionIndex]; // Remove the selected answer for the specific question
+      return updatedState;
+    });
+    if(!notAnswer.includes(currentquestion)){
+    setNotAnswer([...notAnswer, currentquestion]);
+    }
+  };
+
   return (
     <>
       <Container bg={"white"} color={"black"} p={"%"} maxWidth={"100%"}>
@@ -288,7 +320,12 @@ const TakeTest = (quest, testTitle) => {
             <Text as={"span"}>39</Text>
           </Text>
           <Box>
-            <Button border={"1px solid #01bfbd"} color={"#01bfbd"} mr={"12px"}>
+            <Button
+              onClick={() => handleFullScreen}
+              border={"1px solid #01bfbd"}
+              color={"#01bfbd"}
+              mr={"12px"}
+            >
               Enter Full Screen
             </Button>
             <ModalPause />
@@ -319,14 +356,21 @@ const TakeTest = (quest, testTitle) => {
           >
             {/* {question.length>0 && question.quest.map((d) )} */}
             <Text m={"1%"}>{question.quest[currentquestion]?.qus}</Text>
-            <RadioGroup>
+            <RadioGroup
+              value={allAns[currentquestion] || ""}
+              onChange={(value) => handleAnswer(currentquestion, value)}
+            >
               {question.quest[currentquestion]?.options.map((d, i) => (
                 <Box
                   onClick={() => {
                     handleAnswer(d, i);
                   }}
                 >
-                  <Radio m={"1%"} value={d}>
+                  <Radio
+                    m={"1%"}
+                    checked={allAns[currentquestion] === d}
+                    value={d}
+                  >
                     {d}
                   </Radio>
                   <br></br>{" "}
@@ -349,7 +393,11 @@ const TakeTest = (quest, testTitle) => {
               >
                 Mark for priview & Next
               </Button>
-              <Button border={"1px solid #01bfbd"} color={"#01bfbd"}>
+              <Button
+                onClick={() => handleClearAnswer(currentquestion)}
+                border={"1px solid #01bfbd"}
+                color={"#01bfbd"}
+              >
                 Clear Response
               </Button>
             </ButtonGroup>
@@ -523,15 +571,17 @@ const TakeTest = (quest, testTitle) => {
             </Button>
           </Box>
           <Box>
-            <Button
-              mt={"3%"}
-              // mb={"3%"}
-              border={"1px solid #01bfbd"}
-              w={"100%"}
-              color={"#01bfbd"}
-            >
-              Submit Test
-            </Button>
+            <Link to={"/test-result"}>
+              <Button
+                mt={"3%"}
+                // mb={"3%"}
+                border={"1px solid #01bfbd"}
+                w={"100%"}
+                color={"#01bfbd"}
+              >
+                Submit Test
+              </Button>
+            </Link>
           </Box>
         </Box>
       </Box>
