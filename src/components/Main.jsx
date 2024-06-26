@@ -9,60 +9,66 @@ import Signup from "./Signup";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import { fetchData } from "../apis/question";
+import { setLocalStorage } from "../helpers/localStorage";
 
 const Main = () => {
-  const [mark, setmark] = useState(0);
+  const [mark, setMark] = useState(0);
   const [TotalQuestion, SetTotalQuestion] = useState(0);
   const [quest, setQuestions] = useState([]);
   const [questionCategory, setQuestionsCategory] = useState([]);
   const [testTitle,settestTitle] = useState(null)
  const [isFullScreen, setIsFullScreen] = useState(false);
-  
+    const [correctAns, setCorrectAns] = useState([]);
+    
   const handleFullScreen = () => {
-    setIsFullScreen(!isFullScreen);
+   
     
     if (!isFullScreen) {
       document.documentElement.requestFullscreen();
+       setIsFullScreen(true);
     } else {
-      document.exitFullscreen();
+      document.exitFullscreen(); setIsFullScreen(false);
     }
  
   };
+  console.log("hhhhh",TotalQuestion,mark,quest.length);
   console.log("cat==",questionCategory);
   console.log("d===",quest);
     useEffect(() => {
+      setLocalStorage("category",testTitle)
+SetTotalQuestion(quest.length)
     fetchData(setQuestions, SetTotalQuestion,setQuestionsCategory);
-  }, [setQuestionsCategory]);
+  }, [quest.length, setQuestionsCategory, testTitle]);
   return (
-    < >
-    {isFullScreen === true ? null:<Navbar/>}
-    {/* <Sidebar/> */}
+    <>
+      {isFullScreen === true ? null : <Navbar />}
+      {/* <Sidebar/> */}
       <Routes>
-        <Route path="/" element={<Home 
-        category={questionCategory}
-        handleFullScreen={handleFullScreen}
-      setQuestions={setQuestions}
-settestTitle={settestTitle}
-        />} />
+        <Route
+          path="/"
+          element={
+            <Home
+              category={questionCategory}
+              handleFullScreen={handleFullScreen}
+              setQuestions={setQuestions}
+              settestTitle={settestTitle}
+            />
+          }
+        />
         <Route path="/auth/signin" element={<Signin />} />
         <Route path="/auth/signup" element={<Signup />} />
         <Route
           path="/test"
           element={
             <TakeTest
-            isFullScreen={isFullScreen}
-            handleFullScreen={handleFullScreen}
-              setmark={setmark}
-              SetTotalQuestion={SetTotalQuestion}
-              mark={mark}
+              handleFullScreen={handleFullScreen}
               quest={quest}
-              testTitle={testTitle}
             />
           }
         />
         <Route
           path="/test-result"
-          element={<SubmitTest mark={mark} TotalQuestion={TotalQuestion} />}
+          element={<SubmitTest TotalQuestion={quest.length} />}
         />
       </Routes>
     </>

@@ -52,7 +52,7 @@ function Sidebar() {
             w={"80%"}
             m={"0%"}
             pb={"3%"}
-            fontColor={"White"}
+            color={"White"}
             alt="logo"
           />
           <Link to={"/"}>

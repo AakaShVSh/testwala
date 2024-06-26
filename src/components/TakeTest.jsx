@@ -19,8 +19,9 @@ import {
 } from "@chakra-ui/react";
 import ModalPause from "./ModalPause";
 import { Link } from "react-router-dom";
+import { setLocalStorage } from "../helpers/localStorage";
 
-const TakeTest = (quest, handleFullScreen, testTitle) => {
+const TakeTest = (quest, handleFullScreen) => {
   const [currentquestion, setcurrentquestion] = useState(0);
   const [question, setquestion] = useState(quest);
   // const [answerSelected, setAnswerSelected] = useState(false);
@@ -30,8 +31,9 @@ const TakeTest = (quest, handleFullScreen, testTitle) => {
   const [notAnswer, setNotAnswer] = useState([]);
   const [answer, setans] = useState(null);
   const [allAns, setAllAns] = useState({});
+  const [mark, setMark] = useState(0);
   const [collectAns, setcollectAns] = useState({});
-
+  const [correctAns, setCorrectAns] = useState([]);
   const handlequestion = (con) => {
     if (con === "svn") {
       if (
@@ -177,17 +179,19 @@ const TakeTest = (quest, handleFullScreen, testTitle) => {
     setans(null);
   };
   // console.log(currentquestion);
-    console.log("g",allAns[currentquestion]);
+  // console.log("g", allAns[currentquestion]);
   const markedQuestion = () => {
-    if (
-      answer !== null &&
-      allAns[currentquestion] !== undefined &&
-      !markedAndAnswer.includes(currentquestion)
-    ) {
+    if (allAns[currentquestion] === undefined && answer !== null) {
       setAllAns((prevState) => ({
         ...prevState,
         [currentquestion]: answer, // Update the selected answer for the specific question
       }));
+    }
+    if (
+      // answer !== null &&
+      allAns[currentquestion] !== undefined &&
+      !markedAndAnswer.includes(currentquestion)
+    ) {
       if (answeredQuestion.includes(currentquestion)) {
         let removeFromAnswer = answeredQuestion.indexOf(currentquestion);
         answeredQuestion.splice(removeFromAnswer, 1);
@@ -238,43 +242,26 @@ const TakeTest = (quest, handleFullScreen, testTitle) => {
 
   const handleAnswer = (ans, qus) => {
     setans(ans);
-
-    if (answeredQuestion.includes(currentquestion)) {
-      let removeFromAnswer = answeredQuestion.indexOf(currentquestion);
-      answeredQuestion.splice(removeFromAnswer, 1);
-      // allAns.splice(removeFromAnswer, 1);
-
-      setAllAns((prevState) => ({
-        ...prevState,
-        [currentquestion]: ans, // Update the selected answer for the specific question
-      }));
-      setAnsweredQuestion([...answeredQuestion, currentquestion]);
-    } else {
-      setAllAns((prevState) => ({
-        ...prevState,
-        [currentquestion]: ans, // Update the selected answer for the specific question
-      }));
-
-      setAnsweredQuestion([...answeredQuestion, currentquestion]);
+    if (
+      question.quest[currentquestion].answer === qus + 1 &&
+      !correctAns.includes(currentquestion)
+    ) {
+      setMark(mark + 1);
+      setCorrectAns([...correctAns, currentquestion]);
+    } else if (
+      question.quest[currentquestion].answer !== qus + 1 &&
+      correctAns.includes(currentquestion)
+    ) {
+      let removeFromCorrectAns = correctAns.indexOf(currentquestion);
+      correctAns.splice(removeFromCorrectAns, 1);
+      setMark(mark - 1);
     }
-
-    console.log(
-      "ssa",
-      // question.quest.length,
-      // "ma",
-      // markedAndAnswer,
-      // "na",
-      // notAnswer,
-      "a",
-      answeredQuestion,
-      "c",
-      // markedNotAnswer,
-      currentquestion,
-      qus,
-      allAns
-    );
+    setAllAns((prevState) => ({
+      ...prevState,
+      [currentquestion]: ans,
+    }));
   };
-
+console.log("m",mark);
   const handleClearAnswer = (questionIndex) => {
     if (answeredQuestion.includes(currentquestion)) {
       let removeFromAnswer = answeredQuestion.indexOf(currentquestion);
@@ -297,11 +284,14 @@ const TakeTest = (quest, handleFullScreen, testTitle) => {
       delete updatedState[questionIndex]; // Remove the selected answer for the specific question
       return updatedState;
     });
-    if(!notAnswer.includes(currentquestion)){
-    setNotAnswer([...notAnswer, currentquestion]);
+    if (!notAnswer.includes(currentquestion)) {
+      setNotAnswer([...notAnswer, currentquestion]);
     }
   };
 
+  const giveMark = () =>{
+       setLocalStorage("Total", mark);
+  }
   return (
     <>
       <Container bg={"white"} color={"black"} p={"%"} maxWidth={"100%"}>
@@ -328,7 +318,14 @@ const TakeTest = (quest, handleFullScreen, testTitle) => {
             >
               Enter Full Screen
             </Button>
-            <ModalPause />
+            <ModalPause
+              // testSection=
+              markedAndAnswer={markedAndAnswer}
+              question={question}
+              markedNotAnswer={markedNotAnswer}
+              notAnswer={notAnswer}
+              answered={answeredQuestion}
+            />
           </Box>
         </Box>{" "}
       </Container>
@@ -573,6 +570,7 @@ const TakeTest = (quest, handleFullScreen, testTitle) => {
           <Box>
             <Link to={"/test-result"}>
               <Button
+              onClick={giveMark}
                 mt={"3%"}
                 // mb={"3%"}
                 border={"1px solid #01bfbd"}
