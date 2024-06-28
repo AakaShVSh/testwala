@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -16,14 +16,15 @@ import {
   Spacer,
   // Tag,
   Text,
+  useMediaQuery,
 } from "@chakra-ui/react";
 import ModalPause from "./ModalPause";
-import { Link } from "react-router-dom";
-import { setLocalStorage } from "../helpers/localStorage";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
 
-const TakeTest = (quest, handleFullScreen) => {
+const TakeTest = ({quest, handleFullScreen}) => {
   const [currentquestion, setcurrentquestion] = useState(0);
-  const [question, setquestion] = useState(quest);
+  const [question] = useState(quest);
   // const [answerSelected, setAnswerSelected] = useState(false);
   const [answeredQuestion, setAnsweredQuestion] = useState([]);
   const [markedAndAnswer, setMarkedAndAnswer] = useState([]);
@@ -32,8 +33,20 @@ const TakeTest = (quest, handleFullScreen) => {
   const [answer, setans] = useState(null);
   const [allAns, setAllAns] = useState({});
   const [mark, setMark] = useState(0);
-  const [collectAns, setcollectAns] = useState({});
+  // const [isMobile] = useMediaQuery("(max-width: 768px)");
+  // const [newTestDataStore,setNewTestDataStore] = useState(null)
+
+  const [collectAns, setcollectAns] = useState([[]]);
   const [correctAns, setCorrectAns] = useState([]);
+  const navigate = useNavigate();
+  const [testData, setTestData] = useState({
+    allAnswer: null,
+    answeredQuestion: null,
+    notAnswer: null,
+    markedAndAnswer: null,
+    markedNotAnswer: null,
+  });
+  console.log("jjjl", testData);
   const handlequestion = (con) => {
     if (con === "svn") {
       if (
@@ -66,7 +79,7 @@ const TakeTest = (quest, handleFullScreen) => {
 
         setAnsweredQuestion([...answeredQuestion, currentquestion]);
 
-        if (question.quest.length - 1 > currentquestion) {
+        if (question.length - 1 > currentquestion) {
           setcurrentquestion(currentquestion + 1);
         }
       } else if (allAns[currentquestion] === undefined && answer === null) {
@@ -102,7 +115,7 @@ const TakeTest = (quest, handleFullScreen) => {
           console.log("in");
         }
       }
-      if (question.quest.length - 1 > currentquestion) {
+      if (question.length - 1 > currentquestion) {
         setcurrentquestion(currentquestion + 1);
         // console.log("ac1", con);
       }
@@ -133,7 +146,7 @@ const TakeTest = (quest, handleFullScreen) => {
         }
 
         setAnsweredQuestion([...answeredQuestion, currentquestion]);
-        if (question.quest.length - 1 > currentquestion) {
+        if (question.length - 1 > currentquestion) {
           setcurrentquestion(con);
           // console.log("aq2");
         }
@@ -166,7 +179,7 @@ const TakeTest = (quest, handleFullScreen) => {
         }
         setNotAnswer([...notAnswer, currentquestion]);
 
-        if (question.quest.length - 1 > currentquestion) {
+        if (question.length - 1 > currentquestion) {
           setcurrentquestion(con);
           // console.log("ac2", con);
         }
@@ -177,6 +190,14 @@ const TakeTest = (quest, handleFullScreen) => {
       }
     }
     setans(null);
+    //  setTestData({
+    //    ...testData,
+    //    allAnswer: allAns,
+    //    answeredQuestion: answeredQuestion,
+    //    notAnswer: notAnswer,
+    //    markedAndAnswer: markedAndAnswer,
+    //    markedNotAnswer: markedNotAnswer,
+    //  });
   };
   // console.log(currentquestion);
   // console.log("g", allAns[currentquestion]);
@@ -235,7 +256,7 @@ const TakeTest = (quest, handleFullScreen) => {
       }
       setMarkedNotAnswer([...markedNotAnswer, currentquestion]);
     }
-    if (question.quest.length - 1 > currentquestion) {
+    if (question.length - 1 > currentquestion) {
       setcurrentquestion(currentquestion + 1);
     }
   };
@@ -243,13 +264,13 @@ const TakeTest = (quest, handleFullScreen) => {
   const handleAnswer = (ans, qus) => {
     setans(ans);
     if (
-      question.quest[currentquestion].answer === qus + 1 &&
+      question[currentquestion].answer === qus + 1 &&
       !correctAns.includes(currentquestion)
     ) {
       setMark(mark + 1);
       setCorrectAns([...correctAns, currentquestion]);
     } else if (
-      question.quest[currentquestion].answer !== qus + 1 &&
+      question[currentquestion].answer !== qus + 1 &&
       correctAns.includes(currentquestion)
     ) {
       let removeFromCorrectAns = correctAns.indexOf(currentquestion);
@@ -261,7 +282,7 @@ const TakeTest = (quest, handleFullScreen) => {
       [currentquestion]: ans,
     }));
   };
-console.log("m",mark);
+  console.log("m", mark);
   const handleClearAnswer = (questionIndex) => {
     if (answeredQuestion.includes(currentquestion)) {
       let removeFromAnswer = answeredQuestion.indexOf(currentquestion);
@@ -289,9 +310,42 @@ console.log("m",mark);
     }
   };
 
-  const giveMark = () =>{
-       setLocalStorage("Total", mark);
-  }
+  const giveMark = () => {
+    const category = getLocalStorage("category");
+    const newTestData = {
+      questions: question,
+      score: mark,
+      category: category,
+      allAnswer: allAns,
+      answeredQuestion: answeredQuestion,
+      notAnswer: notAnswer,
+      markedAndAnswer: markedAndAnswer,
+      markedNotAnswer: markedNotAnswer,
+    };
+
+    setTestData(newTestData);
+
+    const getStorage = getLocalStorage("test");
+
+    if (getStorage === null) {
+      
+      setLocalStorage("Total", mark);
+      setLocalStorage("test", [newTestData]);
+      navigate("/test-result");handleFullScreen(false);
+    } else if (getStorage !== null) {
+
+      setLocalStorage("Total", mark);
+      setLocalStorage("test", [...getStorage, newTestData]);
+      navigate("/test-result");
+            handleFullScreen(false);
+
+    }
+
+    //  }
+  };
+  // useEffect(() =>{
+
+  // },[allAns, answeredQuestion, markedAndAnswer, markedNotAnswer, newTestDataStore, notAnswer])
   return (
     <>
       <Container bg={"white"} color={"black"} p={"%"} maxWidth={"100%"}>
@@ -311,7 +365,7 @@ console.log("m",mark);
           </Text>
           <Box>
             <Button
-              onClick={() => handleFullScreen}
+              onClick={() => handleFullScreen(true)}
               border={"1px solid #01bfbd"}
               color={"#01bfbd"}
               mr={"12px"}
@@ -329,7 +383,7 @@ console.log("m",mark);
           </Box>
         </Box>{" "}
       </Container>
-      <Box display={"flex"} h={"100^"}>
+      <Box display={"flex"} h={"100%"}>
         <Box w={"100%"}>
           <Box
             boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
@@ -352,12 +406,12 @@ console.log("m",mark);
             w={"100%"}
           >
             {/* {question.length>0 && question.quest.map((d) )} */}
-            <Text m={"1%"}>{question.quest[currentquestion]?.qus}</Text>
+            <Text m={"1%"}>{question[currentquestion]?.qus}</Text>
             <RadioGroup
               value={allAns[currentquestion] || ""}
               onChange={(value) => handleAnswer(currentquestion, value)}
             >
-              {question.quest[currentquestion]?.options.map((d, i) => (
+              {question[currentquestion]?.options.map((d, i) => (
                 <Box
                   onClick={() => {
                     handleAnswer(d, i);
@@ -413,6 +467,7 @@ console.log("m",mark);
           boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
           p={"1%"}
           w={"25%"}
+          // h={""}
         >
           <Box>
             <Text fontSize={"larger"}>
@@ -448,7 +503,7 @@ console.log("m",mark);
                   // borderRadius={"50%"}
                   as={"span"}
                 >
-                  {question.quest.length -
+                  {question.length -
                     (markedAndAnswer.length +
                       markedNotAnswer.length +
                       answeredQuestion.length +
@@ -512,7 +567,7 @@ console.log("m",mark);
               columnGap={"6%"}
               textAlign={"center"}
             >
-              {question.quest?.map((d, i) => (
+              {question?.map((d, i) => (
                 <Box
                   onClick={() => handlequestion(i)}
                   background={
@@ -568,18 +623,18 @@ console.log("m",mark);
             </Button>
           </Box>
           <Box>
-            <Link to={"/test-result"}>
-              <Button
-              onClick={giveMark}
-                mt={"3%"}
-                // mb={"3%"}
-                border={"1px solid #01bfbd"}
-                w={"100%"}
-                color={"#01bfbd"}
-              >
-                Submit Test
-              </Button>
-            </Link>
+            {/* <Link to={"/test-result"}> */}
+            <Button
+              onClick={() => giveMark()}
+              mt={"3%"}
+              // mb={"3%"}
+              border={"1px solid #01bfbd"}
+              w={"100%"}
+              color={"#01bfbd"}
+            >
+              Submit Test
+            </Button>
+            {/* </Link> */}
           </Box>
         </Box>
       </Box>

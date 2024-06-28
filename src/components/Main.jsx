@@ -10,6 +10,7 @@ import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import { fetchData } from "../apis/question";
 import { setLocalStorage } from "../helpers/localStorage";
+import ReviewTest from "./ReviewTest";
 
 const Main = () => {
   const [mark, setMark] = useState(0);
@@ -20,20 +21,23 @@ const Main = () => {
  const [isFullScreen, setIsFullScreen] = useState(false);
     const [correctAns, setCorrectAns] = useState([]);
     
-  const handleFullScreen = () => {
+  const handleFullScreen = (isFull) => {
    
     
-    if (!isFullScreen) {
+    if (isFull) {
+      setIsFullScreen(true)
       document.documentElement.requestFullscreen();
-       setIsFullScreen(true);
-    } else {
-      document.exitFullscreen(); setIsFullScreen(false);
+      //  setIsFullScreen(true);
+    } 
+    else {
+setIsFullScreen(false);
+      document.exitFullscreen(); 
     }
  
   };
-  console.log("hhhhh",TotalQuestion,mark,quest.length);
-  console.log("cat==",questionCategory);
-  console.log("d===",quest);
+  // console.log("hhhhh",TotalQuestion,mark,quest.length);
+  // console.log("cat==",questionCategory);
+  // console.log("d===",quest);
     useEffect(() => {
       setLocalStorage("category",testTitle)
 SetTotalQuestion(quest.length)
@@ -62,6 +66,7 @@ SetTotalQuestion(quest.length)
           element={
             <TakeTest
               handleFullScreen={handleFullScreen}
+              // setIsFullScreen={}
               quest={quest}
             />
           }
@@ -69,6 +74,10 @@ SetTotalQuestion(quest.length)
         <Route
           path="/test-result"
           element={<SubmitTest TotalQuestion={quest.length} />}
+        />
+        <Route
+          path="/Review-Test"
+          element={<ReviewTest/>}
         />
       </Routes>
     </>

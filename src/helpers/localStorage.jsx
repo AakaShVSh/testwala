@@ -4,7 +4,8 @@ export const setLocalStorage = (key,user) => {
 
 
 export const getLocalStorage = (key) => {
-  return JSON.parse(localStorage.getItem(key));
+  const storedData = localStorage.getItem(key);
+  return storedData ? JSON.parse(storedData) : null;
 };
 
 export const deleteLocalStorage = (key) => {

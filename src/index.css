@@ -1,6 +1,7 @@
 *{
    margin: 0px;
    outline: none;
+   /* forced: none; */
   }
 body {
   margin: 0;

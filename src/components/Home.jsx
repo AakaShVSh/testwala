@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
 // import TakeTest from "./TakeTest";
-import { Button, Flex } from "@chakra-ui/react";
+import { Button, Flex, useMediaQuery } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { Container,Grid,GridItem } from "@chakra-ui/react";
 import Slideshow from "./Slideshow";
 const Home = ({ category,setQuestions,handleFullScreen,settestTitle }) => {
   // console.log("c==", category[0].question);
-
  
   return (
     <>
@@ -18,7 +17,7 @@ const Home = ({ category,setQuestions,handleFullScreen,settestTitle }) => {
             <Link to={"/test"}
       
             onClick={() => {setQuestions(e.question)
-            handleFullScreen();
+            handleFullScreen(true);
             settestTitle(e.section)
             }}
             >

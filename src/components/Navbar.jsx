@@ -9,15 +9,17 @@ import {
   Button,
   Input,
   Flex,
+  Center,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { FaRegUserCircle } from "react-icons/fa";
 const Navbar = () => {
   return (
     <>
-      <Container
+      {/* <Container */}
+       <Center
         // bg={"whitesmoke"}
-        pt="10px"
+        // pt="10px"
         pl={"3%"}
         pr={"4%"}
         maxW="100%"
@@ -40,20 +42,25 @@ const Navbar = () => {
           <Image
             src={logo}
             bg={"#465074"}
-            pb={"3%"}
+            // pb={"3%"}
             fontColor={"White"}
             alt="logo"
           /></Link>
         </Box>
         <Box
           as={"b"}
-          mb={"10px"}
+          // mb={"10px"}
           w={"40%"}
+        
           bg="#465074"
           visibility={{ base: "hidden", md: "visible", lg: "visible" }}
         >
           <Input
-            type="search"
+            type="search" 
+             fontSize={"medium"}
+             p={"1%"}
+             m={"2"}
+             h={"auto"}
             placeholder="Search subject"
             w="100%"
             bg="#fbfbfb"
@@ -69,7 +76,8 @@ const Navbar = () => {
     Sign in
   </Button>
         </Link>
-      </Container>
+       </Center>
+      {/* </Container> */}
 
        {/* sidebar */}
 

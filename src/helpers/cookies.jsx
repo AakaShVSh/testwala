@@ -6,8 +6,8 @@ export const setCookies = (key,user) => {
    console.log(f,"f");
 }
 
-export const getCookies = (key) => {
-    return Cookies.get(key);
+export const getCookies = async (key) => {
+    return await Cookies.get(key);
 }
 
 export const deleteCookies = (key) => {

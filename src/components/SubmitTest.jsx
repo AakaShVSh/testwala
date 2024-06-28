@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Container, Box, Text, Center } from "@chakra-ui/react";
+import { Container, Box, Text, Center, Button } from "@chakra-ui/react";
 import { getLocalStorage } from "../helpers/localStorage";
+import { Link } from "react-router-dom";
 
 const SubmitTest = ({ mark, TotalQuestion }) => {
-      const [totalMark,setTotalMark] = useState(0);
-
-      useEffect(() => {
-         setTotalMark(getLocalStorage("Total"));
-      },[])
+  const [totalMark, setTotalMark] = useState(0);
+  useEffect(() => {
+    setTotalMark(getLocalStorage("Total"));
+  }, []);
   return (
     <>
       <Center
@@ -53,7 +53,7 @@ const SubmitTest = ({ mark, TotalQuestion }) => {
           {totalMark}/{TotalQuestion}
           <br></br>Thoda or karle bhai
         </Text>
-        <Text></Text>
+        <Link to={"/Review-Test"}>Review test</Link>
       </Center>
     </>
   );

@@ -24,9 +24,14 @@ const Signup = () => {
 
 
   const handleSignup = () => {
-    if(signUpApi(signUpData,cmpPassword)){
+
+    const t = signUpApi(signUpData,cmpPassword)
+      
+    if(t){
       navigate("/auth/signin")
-    };
+    }
+    
+    
   }
 
   return (

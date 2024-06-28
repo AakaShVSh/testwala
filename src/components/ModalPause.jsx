@@ -68,9 +68,9 @@ const ModalPause = ({
                   <Tr>
                     <>
                     <Td>{TestHeading}</Td>
-                    <Td>{question.quest.length}</Td>
+                    <Td>{question.length}</Td>
                     <Td>
-                      {question.quest.length -
+                      {question.length -
                         (notAnswer.length +
                           answered.length +
                           markedNotAnswer.length +
