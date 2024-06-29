@@ -1,36 +1,31 @@
 import axios from "axios";
 import { setCookies } from "../helpers/cookies";
 import { setLocalStorage } from "../helpers/localStorage";
-export const signUpApi = async (data, cmpPassword) => {
+export const signUpApi = async (data, cmpPassword,setMessage) => {
   console.log(data.Password, "d", cmpPassword);
-try {
-   if (data.Email.includes("@gmail.com") && data.Email!=="") {
-     if (data.Password === cmpPassword&&data.Password!=="") {
-       const r = axios.post(
-         "https://testwala-backend.onrender.com/auth/signup",
-         data
-       );
-
-       if (r.data.token) {
-         setCookies("_user", r.data.token);
-         console.log("hh");
-         return true;
-       } else if (r.data.message) {
-         alert(r.data.message);
-         console.log("ll");
-         return false;
-       }
-     } else {
-       alert("Password and Confirm Password should be same");
-     }
-   } else {
-     alert("It should be Email only");
-   }
-} catch (error) {
-   console.log(error);
-        return false;
-}
-      
+  try {
+    const r = await axios.post(
+      "https://testwala-backend.onrender.com/auth/signup",
+      data
+    );
+    console.log(r);
+    if (r.data.token!==undefined) {
+      console.log(r.data);
+      setCookies("_user", r.data.token);
+       setMessage(r.data.message);
+      console.log("hh");
+      return true;
+    } else {
+      // alert(r.data.message);
+      console.log("ll");
+      setMessage(r.data.message)
+      return false;
+    }
+  } catch (error) {
+    console.log(error.message);
+    setMessage(error.message)
+    return false;
+  }
 };
 
 export const signInApi = async (data) => {

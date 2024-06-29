@@ -7,7 +7,12 @@ export const setCookies = (key,user) => {
 }
 
 export const getCookies = async (key) => {
-    return await Cookies.get(key);
+    if(Cookies.get(key)){
+return Cookies.get(key);
+    }
+    else{
+        return null;
+    }
 }
 
 export const deleteCookies = (key) => {
