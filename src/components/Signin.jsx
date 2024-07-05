@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Container,
   Heading,
@@ -8,36 +8,93 @@ import {
   Input,
   Button,
   Text,
+  Alert,
+  AlertIcon,
 } from "@chakra-ui/react";
 import { Link, useNavigate } from "react-router-dom";
 import { signInApi } from "../apis/auth";
-const Signin = () => {
+import { getCookies } from "../helpers/cookies";
+const Signin = ({ message, setMessage,checkNavigation,setCheckNavigation }) => {
   const navigate = useNavigate();
-  const [signinData,setSigninData] = useState({
-    Email:null,
-    Password:null,
- })
-
-  const handleSubmit = () => {
-        if(signInApi(signinData)){
-        console.log(signinData);
-            navigate("/")
-        }
+  const [signinData, setSigninData] = useState({
+    Email: null,
+    Password: null,
+  });
+const handleKeyDown = (event) => {
+  console.log("hghfdss");
+  if(event.key==="Enter"){
+    console.log("hghghhfh");
+    handleSubmit()
   }
+}
+  const handleSubmit = async () => {
+    // try {
 
+      if (
+        signinData.Email!==null&&
+        signinData.Password !== null
+      ) {    if(signinData.Email.includes("@gmail.com")){
+        const checkSignin = await signInApi(signinData, setMessage); 
+        // onsole.log(checkSignup);
+        const checkCookie = await getCookies("_user");console.log("in",signinData,checkSignin,checkCookie);
+        if (checkSignin!==false&&checkCookie!==null) {
+          setCheckNavigation(true)
+        }
+      }else{
+         setMessage("Email is Required");
+      }
+      } else {
+        setMessage("All fields are Required")
+      }
+    // } catch (error) {
+    //   console.log(error);
+    // }
+  };
+ useEffect(() => {
+   if (checkNavigation && message !== null) {
+     const navigateTimeOut = setTimeout(() => {
+       setMessage(null);
+       setCheckNavigation(false);
+       navigate("/");
+     }, 3000);
+     if (checkNavigation === false && message === null) {
+       clearTimeout(navigateTimeOut);
+     }
+   } else {
+     const messageTimeOut = setTimeout(() => {
+       console.log("lh");
+       setMessage(null);
+     }, 5000);
+     if (message === null) {
+       clearTimeout(messageTimeOut);
+     }
+   }
+ }, [checkNavigation, navigate, message]);
   return (
     <>
+      {checkNavigation && message !== null ? (
+        <Alert over status="success">
+          <AlertIcon />
+          {message}
+        </Alert>
+      ) : message !== null ? (
+        <Alert status="error">
+          <AlertIcon />
+          {message}
+        </Alert>
+      ) : null}
+
       <Container
         mt={"3%"}
         borderRadius={"20px"}
-        maxW={{base:"90%", md:"65%", lg:"40%"}}
+        maxW={{ base: "90%", md: "65%", lg: "40%" }}
         p={"2% 4% 4% 4%"}
         bg={"whitesmoke"}
       >
         <Heading textAlign={"center"} mb={"11%"} bg={"whitesmoke"}>
           Signin
         </Heading>
-        <FormControl  bg={"whitesmoke"} >
+        <FormControl bg={"whitesmoke"}>
           <Box bg={"whitesmoke"}>
             <FormLabel bg={"whitesmoke"}>Email</FormLabel>
             <Input
@@ -45,7 +102,10 @@ const Signin = () => {
               required={true}
               bg={"whitesmoke"}
               placeholder={"Enter your Email"}
-              onChange={(e) => setSigninData({...signinData,Email:e.target.value})}
+              onKeyDown={handleKeyDown}
+              onChange={(e) =>
+                setSigninData({ ...signinData, Email: e.target.value })
+              }
             />
           </Box>
           <Box bg={"whitesmoke"} mt={"3%"}>
@@ -55,7 +115,10 @@ const Signin = () => {
               required={true}
               bg={"whitesmoke"}
               placeholder={"Enter your Password"}
-              onChange={(e) => setSigninData({...signinData,Password:e.target.value})}
+              onKeyDown={handleKeyDown}
+              onChange={(e) =>
+                setSigninData({ ...signinData, Password: e.target.value })
+              }
             />
             <Text
               fontSize={"12px"}
@@ -70,23 +133,25 @@ const Signin = () => {
             <Text bg={"whitesmoke"} fontSize={"md"}>
               Don't have account?{" "}
               <Link to="/auth/signup">
-              <Text
-                as={"span"}
-                cursor={"pointer"}
-                textDecoration={"underline"}
-                color="#1f4985"
-              >
-                Click Here for SignUp
-              </Text></Link>
+                <Text
+                  as={"span"}
+                  cursor={"pointer"}
+                  textDecoration={"underline"}
+                  color="#1f4985"
+                >
+                  Click Here for SignUp
+                </Text>
+              </Link>
             </Text>
           </Box>{" "}
-          <Button 
-          w={"100%"}
-          mt={"3%"} 
-          colorScheme={"teal"} 
-          bg={"#1f4985"}
-          // spinner={<BeatLoader size={8} color='white' />}
-          onClick={() => handleSubmit()}
+          <Button
+            w={"100%"}
+            mt={"3%"}
+            colorScheme={"teal"}
+            bg={"#1f4985"}
+            // spinner={<BeatLoader size={8} color='white' />}
+            onClick={() => handleSubmit()}
+            // onKeyDown={handleKeyDown}
           >
             Submit
           </Button>

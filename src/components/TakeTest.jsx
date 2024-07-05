@@ -21,8 +21,10 @@ import {
 import ModalPause from "./ModalPause";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
+import { useDispatch } from "react-redux";
+import { userTestDataApi } from "../redux/userTestData/userTestData_ActionType.js";
 
-const TakeTest = ({quest, handleFullScreen}) => {
+const TakeTest = ({ quest, handleFullScreen }) => {
   const [currentquestion, setcurrentquestion] = useState(0);
   const [question] = useState(quest);
   // const [answerSelected, setAnswerSelected] = useState(false);
@@ -33,7 +35,8 @@ const TakeTest = ({quest, handleFullScreen}) => {
   const [answer, setans] = useState(null);
   const [allAns, setAllAns] = useState({});
   const [mark, setMark] = useState(0);
-  // const [isMobile] = useMediaQuery("(max-width: 768px)");
+  const [isMobile] = useMediaQuery("(max-width: 768px)");
+  const dispatch = useDispatch();
   // const [newTestDataStore,setNewTestDataStore] = useState(null)
 
   const [collectAns, setcollectAns] = useState([[]]);
@@ -312,34 +315,37 @@ const TakeTest = ({quest, handleFullScreen}) => {
 
   const giveMark = () => {
     const category = getLocalStorage("category");
+    const user = getLocalStorage("_user")
+    console.log(user);
     const newTestData = {
-      questions: question,
+      user:user,
       score: mark,
-      category: category,
       allAnswer: allAns,
       answeredQuestion: answeredQuestion,
       notAnswer: notAnswer,
       markedAndAnswer: markedAndAnswer,
       markedNotAnswer: markedNotAnswer,
+      section: category,
+      questions: question,
     };
 
     setTestData(newTestData);
+    dispatch(userTestDataApi(newTestData));
+    // const getStorage = getLocalStorage("test");
+    setLocalStorage("Total", mark);
+    setLocalStorage("test", [newTestData]);
+    navigate("/test-result");
+    handleFullScreen(false);
+    // if (getStorage === null) {
 
-    const getStorage = getLocalStorage("test");
+    // } else if (getStorage !== null) {
 
-    if (getStorage === null) {
-      
-      setLocalStorage("Total", mark);
-      setLocalStorage("test", [newTestData]);
-      navigate("/test-result");handleFullScreen(false);
-    } else if (getStorage !== null) {
+    //   setLocalStorage("Total", mark);
+    //   setLocalStorage("test", [...getStorage, newTestData]);
+    //   navigate("/test-result");
+    //         handleFullScreen(false);
 
-      setLocalStorage("Total", mark);
-      setLocalStorage("test", [...getStorage, newTestData]);
-      navigate("/test-result");
-            handleFullScreen(false);
-
-    }
+    // }
 
     //  }
   };

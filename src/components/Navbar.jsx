@@ -12,24 +12,27 @@ import {
   Center,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import { FaRegUserCircle } from "react-icons/fa";
+import { FaBold, FaRegUserCircle } from "react-icons/fa";
+import { getCookies } from "../helpers/cookies";
 const Navbar = () => {
   return (
     <>
       {/* <Container */}
-       <Center
+      <Center
         // bg={"whitesmoke"}
-        // pt="10px"
+        pt="1px"
         pl={"3%"}
         pr={"4%"}
         maxW="100%"
+        bgGradient="linear(to-r, #4285f4, #01bfbd)"
         // mt={"1%"}
         // borderRadius={"10px"}
-        // color={"#5c4ce3"}
+        color={"#5c4ce3"}
         display={"flex"}
         justifyContent={"space-between"}
         // eslint-disable-next-line react/jsx-no-duplicate-props
-        bg={"#465074"}
+        // bg={"#465074"}
+        // bg={"#4285f4"}
         boxShadow="rgba(14, 30, 37, 0.12) 0px 2px 4px 0px, rgba(14, 30, 37, 0.32) 0px 2px 16px 0px"
       >
         <Box
@@ -37,30 +40,31 @@ const Navbar = () => {
           w={{ base: "40%", md: "22%", lg: "13%" }}
           h={"auto"}
           bg="#465074"
-        ><Link to={"/"}>
-          {" "}
-          <Image
-            src={logo}
-            bg={"#465074"}
-            // pb={"3%"}
-            fontColor={"White"}
-            alt="logo"
-          /></Link>
+        >
+          <Link to={"/"}>
+            {" "}
+            <Image
+              src={logo}
+              bg={"#4285f4"}
+              // pb={"3%"}
+              fontColor={"White"}
+              alt="logo"
+            />
+          </Link>
         </Box>
         <Box
           as={"b"}
           // mb={"10px"}
           w={"40%"}
-        
-          bg="#465074"
+          bg={"#4285f4"}
           visibility={{ base: "hidden", md: "visible", lg: "visible" }}
         >
           <Input
-            type="search" 
-             fontSize={"medium"}
-             p={"1%"}
-             m={"2"}
-             h={"auto"}
+            type="search"
+            fontSize={"medium"}
+            p={"1%"}
+            // m={"2"}
+            h={"auto"}
             placeholder="Search subject"
             w="100%"
             bg="#fbfbfb"
@@ -72,16 +76,24 @@ const Navbar = () => {
           >
             SignIn
           </Button> */}
-          <Button rightIcon={<FaRegUserCircle />} colorScheme='blue' color={"white"} bg={"gray"} variant='outline'>
-    Sign in
-  </Button>
+          <Button
+            rightIcon={<FaRegUserCircle />}
+            colorScheme="blue"
+            border={"#4285f4"}
+            color={"white"}
+            bg={"turquoise"}
+            _hover={{ bg: "#f44758" }}
+            variant="outline"
+          >
+            Sign in
+          </Button>
         </Link>
-       </Center>
+      </Center>
       {/* </Container> */}
 
-       {/* sidebar */}
+      {/* sidebar */}
 
-       {/* <Container bg={"#465074"}>
+      {/* <Container bg={"#465074"}>
       <Flex
         // as="nav"
         pos="fixed"
@@ -97,15 +109,15 @@ const Navbar = () => {
         // direction="column"
         justify="space-between"
       > */}
-        {/* <Link
+      {/* <Link
           as={Icon}
           name="logo"
           size="24px"
           color="teal.500"
           // onClick={onOpen}
         /> */}
-      
-          {/* <Box> 
+
+      {/* <Box> 
           {" "}
           <Image
             src={logo}

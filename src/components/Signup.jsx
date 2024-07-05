@@ -15,18 +15,28 @@ import {
 } from "@chakra-ui/react";
 
 import { Link, useNavigate } from "react-router-dom";
-import { signUpApi } from "../apis/auth";
+// import { signUpApi } from "../apis/auth";
 import { getCookies } from "../helpers/cookies";
-const Signup = () => {
+import { useDispatch, useSelector } from "react-redux";
+import { signupApi } from "../redux/signUp/signup_ActionType";
+const Signup = ({message,setMessage,checkNavigation,setCheckNavigation}) => {
   const [cmpPassword, setScmpPassword] = useState(null);
   const navigate = useNavigate();
-  const [message, setMessage] = useState(null);
-  const [checkNavigation, setCheckNavigation] = useState(false);
+  const dispatch = useDispatch();
+ const { signupMessage, signupSuccess, data } = useSelector(
+   (state) => state.signupReducer
+ );
   const [signUpData, setSignUpData] = useState({
     Email: null,
     Password: null,
   });
-
+const handleKeyDown = (event) => {
+  console.log("hghfdss");
+  if (event.key === "Enter") {
+    console.log("hghghhfh");
+    handleSignup();
+  }
+};
   const handleSignup = async () => {
     // if (data.Email.includes("@gmail.com") && data.Email !== "") {
     //   if (data.Password === cmpPassword && data.Password !== "") {
@@ -37,6 +47,31 @@ const Signup = () => {
     // } else {
     //   alert("It should be Email only");
     // }
+
+    // if (
+    //   signUpData.Email !== null &&
+    //   signUpData.Password !== null &&
+    //   cmpPassword !== null
+    // ) {
+    //   if (signUpData.Email.includes("@gmail.com")) {
+    //     if (signUpData.Password === cmpPassword) {
+    //       const checkSignup = await signUpApi(signUpData, cmpPassword, setMessage);
+    //       const checkCookie = await getCookies("_user");
+    //       console.log(checkSignup, checkCookie);
+    //       if (checkCookie !== null && checkSignup !== false) {
+
+    //         setCheckNavigation(true);
+    //       }
+    //     } else {
+    //       setMessage("Password and Confirm Password should be same");
+    //     }
+    //   } else {
+    //     setMessage("Email is Required");
+    //   }
+    // } else {
+    //   setMessage("All fields are Required");
+    // }
+
     if (
       signUpData.Email !== null &&
       signUpData.Password !== null &&
@@ -44,10 +79,12 @@ const Signup = () => {
     ) {
       if (signUpData.Email.includes("@gmail.com")) {
         if (signUpData.Password === cmpPassword) {
-          const t = await signUpApi(signUpData, cmpPassword, setMessage);
-          const c = await getCookies("_user");
-          console.log(t, c);
-          if (getCookies("_user") !== null&&t!==false) {
+         
+    dispatch(signupApi(signUpData,setMessage));
+          const checkCookie = await getCookies("_user");
+          console.log( checkCookie);
+          if (checkCookie !== null && signupSuccess !== false) {
+
             setCheckNavigation(true);
           }
         } else {
@@ -61,15 +98,15 @@ const Signup = () => {
     }
   };
   useEffect(() => {
-    if (checkNavigation && message !== null) {
+    if (signupSuccess && message !== null) {
       const navigateTimeOut = setTimeout(() => {
         setMessage(null);
-        setCheckNavigation(false);navigate("/auth/signin");
+        setCheckNavigation(false);
+        navigate("/auth/signin");
       }, 3000);
       if (checkNavigation === false && message === null) {
         clearTimeout(navigateTimeOut);
       }
-      
     } else {
       const messageTimeOut = setTimeout(() => {
         console.log("h");
@@ -78,12 +115,12 @@ const Signup = () => {
       if (message === null) {
         clearTimeout(messageTimeOut);
       }
-    }
-  }, [checkNavigation, navigate, message]);
+    }console.log(signupSuccess);
+  }, [checkNavigation, navigate, message,signupSuccess, signupMessage, data]);
   console.log(message);
   return (
     <>
-      {checkNavigation && message !== null ? (
+      {signupSuccess && message !== null ? (
         <Alert over status="success">
           <AlertIcon />
           {message}
@@ -94,7 +131,7 @@ const Signup = () => {
           {message}
         </Alert>
       ) : null}
-      ;
+      
       <Container
         mt={"3%"}
         // position={"sticky"}
@@ -115,6 +152,7 @@ const Signup = () => {
               required={true}
               bg={"whitesmoke"}
               placeholder={"Enter your Email"}
+              onKeyDown={handleKeyDown}
               onChange={(e) =>
                 setSignUpData({ ...signUpData, Email: e.target.value })
               }
@@ -127,6 +165,7 @@ const Signup = () => {
               required={true}
               bg={"whitesmoke"}
               placeholder={"Enter your Password"}
+              onKeyDown={handleKeyDown}
               onChange={(e) =>
                 setSignUpData({ ...signUpData, Password: e.target.value })
               }
@@ -139,6 +178,7 @@ const Signup = () => {
               required={true}
               bg={"whitesmoke"}
               placeholder={"Confirm your Password"}
+              onKeyDown={handleKeyDown}
               onChange={(e) => setScmpPassword(e.target.value)}
             />
           </Box>

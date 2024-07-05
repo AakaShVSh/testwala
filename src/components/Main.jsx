@@ -11,6 +11,7 @@ import Sidebar from "./Sidebar";
 import { fetchData } from "../apis/question";
 import { setLocalStorage } from "../helpers/localStorage";
 import ReviewTest from "./ReviewTest";
+import { m } from "framer-motion";
 
 const Main = () => {
   const [mark, setMark] = useState(0);
@@ -18,6 +19,8 @@ const Main = () => {
   const [quest, setQuestions] = useState([]);
   const [questionCategory, setQuestionsCategory] = useState([]);
   const [testTitle,settestTitle] = useState(null)
+   const [message, setMessage] = useState(null);
+    const [checkNavigation, setCheckNavigation] = useState(false);
  const [isFullScreen, setIsFullScreen] = useState(false);
     const [correctAns, setCorrectAns] = useState([]);
     
@@ -59,8 +62,14 @@ SetTotalQuestion(quest.length)
             />
           }
         />
-        <Route path="/auth/signin" element={<Signin />} />
-        <Route path="/auth/signup" element={<Signup />} />
+        <Route
+          path="/auth/signin"
+          element={<Signin message={message} setMessage={setMessage} checkNavigation={checkNavigation} setCheckNavigation={setCheckNavigation} />}
+        />
+        <Route
+          path="/auth/signup"
+          element={<Signup message={message} setMessage={setMessage} checkNavigation={checkNavigation} setCheckNavigation={setCheckNavigation} />}
+        />
         <Route
           path="/test"
           element={
@@ -75,10 +84,7 @@ SetTotalQuestion(quest.length)
           path="/test-result"
           element={<SubmitTest TotalQuestion={quest.length} />}
         />
-        <Route
-          path="/Review-Test"
-          element={<ReviewTest/>}
-        />
+        <Route path="/Review-Test" element={<ReviewTest />} />
       </Routes>
     </>
   );
