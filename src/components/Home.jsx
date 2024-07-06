@@ -1,22 +1,25 @@
 import React, { useEffect, useState } from "react";
 // import TakeTest from "./TakeTest";
-import { border, Box, Button, Center, Flex, useMediaQuery } from "@chakra-ui/react";
+import { border, Box, Button, Center, Flex, Text, useMediaQuery } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { Container,Grid,GridItem } from "@chakra-ui/react";
 import Slideshow from "./Slideshow";
 // import CalculateIcon from '@mui/icons-material/Calculate';
-const Home = ({ category,setQuestions,handleFullScreen,settestTitle }) => {
+const Home = () => {
   // console.log("c==", category[0].question);
  
   return (
     <>
-      <Box w={"100%"} border={"1px solid red"}>
+      <Box w={"100%"}>
         <Box
-          w={"100%"}
+          bg={"#f44758"}
+          w={"90%"}
+          borderRadius={"3px"}
+          m={"12px auto"}
           h={"350px"}
           p={"3"}
           position="relative"
-          border="1px solid blue"
+          // border="1px solid blue"
         >
           {/* <Box w={"160px"} h={"120px"} bg={"#113461"}></Box> */}
           <Box
@@ -33,100 +36,149 @@ const Home = ({ category,setQuestions,handleFullScreen,settestTitle }) => {
             borderRadius={"60% 0px 90% 60px"}
             h={"120px"}
             bg={"#ffc71e"}
-          ></Box>
+          ></Box> <Slideshow/>
         </Box>
 
-        {/* <Slideshow/> */}
-        <Box w={"90%"} m={"auto"} h={"200px"} border={"1px solid red"}>
+       
+        <Box
+          w={"90%"}
+          m={"20px auto"}
+          bg={"#c4d2ef"}
+          h={"200px"}
+          borderRadius={"10px"}
+          // border={"1px solid red"}
+          boxShadow="rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px"
+        >
           <Flex
             w={"100%"}
             h={"100%"}
-            borderRadius={"10px"}
             p={"12px"}
             justifyContent={"space-around"}
-            border={"1px solid red"}
+            // border={"1px solid red"}
             templateColumns="repeat(3 , 1fr)"
             gap={9}
           >
-           
             <Box
               w={"200px"}
               h={"100%"}
               fontFamily={"monospace"}
-              bg={"red"}
+              bg={"white"}
               borderRadius={"10px"}
-              border={"4px solid blue"}
+              p={"2%"}
+              border={"1px solid #01bfbd"}
             >
-              <Box></Box>
-              <Button fontSize={"x-large"} w={"90%"}>
-                <b>Maths</b>
-              </Button>
-            </Box>
-            <Box
-              w={"200px"}
-              h={"100%"}
-              fontFamily={"monospace"}
-              bg={"red"}
-              borderRadius={"10px"}
-              border={"4px solid blue"}
-            >
-              <Button fontSize={"x-large"} w={"90%"}>
-                <b>Maths</b>
-              </Button>
-            </Box>
-            <Box
-              w={"200px"}
-              h={"100%"}
-              fontFamily={"monospace"}
-              bg={"red"}
-              borderRadius={"10px"}
-              border={"4px solid blue"}
-            >
-              <Button fontSize={"x-large"} w={"90%"}>
-                <b>Maths</b>
-              </Button>
-            </Box>
-            <Box
-              w={"200px"}
-              h={"100%"}
-              fontFamily={"monospace"}
-              bg={"red"}
-              borderRadius={"10px"}
-              border={"4px solid blue"}
-            >
-              <Button fontSize={"x-large"} w={"90%"}>
-                <b>Maths</b>
-              </Button>
-            </Box>
-            {/* {category.map((e, i) => (
               <Box
-                w={"250px"}
-                bg={"#4285f4 "}
-                border={"1px solid red"}
-                overflow={"hidden"}
-                borderRadius={"10px"}
-              >
-                <Link
-                  to={"/test"}
-                  onClick={() => {
-                    setQuestions(e.question);
-                    handleFullScreen(true);
-                    settestTitle(e.section);
-                  }}
+                w={"50px"}
+                bg={"orange"}
+                m={"auto"}
+                borderRadius={"50%"}
+                h={"50px"}
+              ></Box>
+              <Text></Text>
+              <Link to={"/questionList"}>
+                <Box
+                  m={" 40px auto "}
+                  textAlign={"center"}
+                  p={"4px"}
+                  borderRadius={"3px"}
+                  bg={"#4285f4"}
+                  fontSize={"x-large"}
+                  w={"95%"}
                 >
-                  <Box
-                    // bg={"#1f4985"}
-                    // mt={"430"}
-                    _hover={"orange"}
-                    w="100%"
-                    h={"100%"}
-                    color={"white"}
-                  >
-                    <b>{e.section}</b>
-                  </Box>
-                </Link>
+                  <b>Maths</b>
+                </Box>
+              </Link>
+            </Box>
+            <Box
+              w={"200px"}
+              h={"100%"}
+              fontFamily={"monospace"}
+              // bg={"red"}
+              bg={"white"}
+              borderRadius={"10px"}
+              p={"2%"}
+              border={"1px solid #01bfbd"}
+            >
+              <Box
+                w={"50px"}
+                bg={"orange"}
+                m={"auto"}
+                borderRadius={"50%"}
+                h={"50px"}
+              ></Box>
+              <Text></Text>
+              <Box
+                m={" 40px auto "}
+                textAlign={"center"}
+                p={"4px"}
+                borderRadius={"3px"}
+                bg={"#4285f4"}
+                fontSize={"x-large"}
+                w={"95%"}
+              >
+                <b>English</b>
               </Box>
-            ))} */}
+            </Box>{" "}
+            <Box
+              w={"200px"}
+              h={"100%"}
+              fontFamily={"monospace"}
+              // bg={"red"}
+              bg={"white"}
+              borderRadius={"10px"}
+              p={"2%"}
+              border={"1px solid #01bfbd"}
+            >
+              <Box
+                w={"50px"}
+                bg={"orange"}
+                m={"auto"}
+                borderRadius={"50%"}
+                h={"50px"}
+              ></Box>
+              <Text></Text>
+              <Box
+                m={" 40px auto "}
+                textAlign={"center"}
+                p={"4px"}
+                borderRadius={"3px"}
+                bg={"#4285f4"}
+                fontSize={"x-large"}
+                w={"95%"}
+              >
+                <b>Reasoning</b>
+              </Box>
+            </Box>
+            <Box
+              w={"200px"}
+              h={"100%"}
+              fontFamily={"monospace"}
+              bg={"white"}
+              // bg={"red"}
+              borderRadius={"10px"}
+              p={"2%"}
+              border={"1px solid #01bfbd"}
+            >
+              <Box
+                w={"50px"}
+                bg={"orange"}
+                m={"auto"}
+                borderRadius={"50%"}
+                h={"50px"}
+              ></Box>
+              <Text></Text>
+              <Box
+                m={" 40px auto "}
+                textAlign={"center"}
+                p={"4px"}
+                borderRadius={"3px"}
+                bg={"#4285f4"}
+                fontSize={"x-large"}
+                w={"95%"}
+              >
+                <b>General(GS)</b>
+              </Box>
+            </Box>
           </Flex>
         </Box>
       </Box>

@@ -131,7 +131,7 @@ const handleKeyDown = (event) => {
           {message}
         </Alert>
       ) : null}
-      
+
       <Container
         mt={"3%"}
         // position={"sticky"}
@@ -139,18 +139,30 @@ const handleKeyDown = (event) => {
         maxW={{ base: "90%", md: "65%", lg: "40%" }}
         borderRadius={"20px"}
         p={"2% 4% 4% 4%"}
-        bg={"whitesmoke"}
+        // bg={"whitesmoke"}
       >
-        <Heading textAlign={"center"} mb={"11%"} bg={"whitesmoke"}>
+        <Heading
+          textAlign={"center"}
+          mb={"11%"}
+          //  bg={"whitesmoke"}
+        >
           SignUp
         </Heading>
-        <FormControl bg={"whitesmoke"}>
-          <Box bg={"whitesmoke"}>
-            <FormLabel bg={"whitesmoke"}>Email</FormLabel>
+        <FormControl
+        // bg={"whitesmoke"}
+        >
+          <Box
+          //  bg={"whitesmoke"}
+          >
+            <FormLabel
+            // bg={"whitesmoke"}
+            >
+              Email
+            </FormLabel>
             <Input
               type={"email"}
               required={true}
-              bg={"whitesmoke"}
+              // bg={"whitesmoke"}
               placeholder={"Enter your Email"}
               onKeyDown={handleKeyDown}
               onChange={(e) =>
@@ -158,12 +170,19 @@ const handleKeyDown = (event) => {
               }
             />
           </Box>
-          <Box bg={"whitesmoke"} mt={"3%"}>
-            <FormLabel bg={"whitesmoke"}>Password</FormLabel>
+          <Box
+            // bg={"whitesmoke"}
+            mt={"3%"}
+          >
+            <FormLabel
+            //  bg={"whitesmoke"}
+            >
+              Password
+            </FormLabel>
             <Input
               type={"password"}
               required={true}
-              bg={"whitesmoke"}
+              // bg={"whitesmoke"}
               placeholder={"Enter your Password"}
               onKeyDown={handleKeyDown}
               onChange={(e) =>
@@ -171,24 +190,38 @@ const handleKeyDown = (event) => {
               }
             />
           </Box>
-          <Box bg={"whitesmoke"} mt={"3%"}>
-            <FormLabel bg={"whitesmoke"}>Confirm Password</FormLabel>
+          <Box
+            // bg={"whitesmoke"}
+            mt={"3%"}
+          >
+            <FormLabel
+            // bg={"whitesmoke"}
+            >
+              Confirm Password
+            </FormLabel>
             <Input
               type={"password"}
               required={true}
-              bg={"whitesmoke"}
+              // bg={"whitesmoke"}
               placeholder={"Confirm your Password"}
               onKeyDown={handleKeyDown}
               onChange={(e) => setScmpPassword(e.target.value)}
             />
           </Box>
-          <Box bg={"whitesmoke"} mt={"7%"}>
+          <Box
+            //  bg={"whitesmoke"}
+            mt={"7%"}
+          >
             <Checkbox border={"1px  gray"} fontSize={"sm"}>
               You agree to our Terms of service & Privacy Policy
             </Checkbox>
             {/* <Spacer/> */}
             <Box>
-              <Text bg={"whitesmoke"} mt={"1%"} fontSize={"md"}>
+              <Text
+                // bg={"whitesmoke"}
+                mt={"1%"}
+                fontSize={"md"}
+              >
                 Already have Account?{" "}
                 <Link to="/auth/signin">
                   <Text
@@ -206,8 +239,9 @@ const handleKeyDown = (event) => {
           <Button
             w={"100%"}
             mt={"3%"}
-            colorScheme={"teal"}
-            bg={"#1f4985"}
+            color={"white"}
+            // colorScheme={"#01bfbd"}
+            bg={"#4285f4"}
             onClick={handleSignup}
           >
             Submit

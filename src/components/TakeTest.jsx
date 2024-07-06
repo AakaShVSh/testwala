@@ -354,7 +354,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
   // },[allAns, answeredQuestion, markedAndAnswer, markedNotAnswer, newTestDataStore, notAnswer])
   return (
     <>
-      <Container bg={"white"} color={"black"} p={"%"} maxWidth={"100%"}>
+      <Box bg={"white"} color={"black"} p={"%"} maxWidth={"100%"}>
         <Box
           display={"flex"}
           justifyContent={"space-between"}
@@ -388,7 +388,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
             />
           </Box>
         </Box>{" "}
-      </Container>
+      </Box>
       <Box display={"flex"} h={"100%"}>
         <Box w={"100%"}>
           <Box

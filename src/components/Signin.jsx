@@ -12,10 +12,14 @@ import {
   AlertIcon,
 } from "@chakra-ui/react";
 import { Link, useNavigate } from "react-router-dom";
-import { signInApi } from "../apis/auth";
+// import { signInApi } from "../apis/auth";
 import { getCookies } from "../helpers/cookies";
+import { useDispatch, useSelector } from "react-redux";
+import { signInApi } from "../redux/signIn/signIn.ActionType";
 const Signin = ({ message, setMessage,checkNavigation,setCheckNavigation }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { signInSuccess } = useSelector((state) => state.signInReducer);
   const [signinData, setSigninData] = useState({
     Email: null,
     Password: null,
@@ -34,10 +38,10 @@ const handleKeyDown = (event) => {
         signinData.Email!==null&&
         signinData.Password !== null
       ) {    if(signinData.Email.includes("@gmail.com")){
-        const checkSignin = await signInApi(signinData, setMessage); 
+      dispatch(signInApi(signinData,setMessage))
         // onsole.log(checkSignup);
-        const checkCookie = await getCookies("_user");console.log("in",signinData,checkSignin,checkCookie);
-        if (checkSignin!==false&&checkCookie!==null) {
+        const checkCookie = await getCookies("_user");console.log("in",signinData,signInSuccess,checkCookie);
+        if (signInSuccess!==false&&checkCookie!==null) {
           setCheckNavigation(true)
         }
       }else{
@@ -72,7 +76,7 @@ const handleKeyDown = (event) => {
  }, [checkNavigation, navigate, message]);
   return (
     <>
-      {checkNavigation && message !== null ? (
+      {signInSuccess && message !== null ? (
         <Alert over status="success">
           <AlertIcon />
           {message}
@@ -89,18 +93,30 @@ const handleKeyDown = (event) => {
         borderRadius={"20px"}
         maxW={{ base: "90%", md: "65%", lg: "40%" }}
         p={"2% 4% 4% 4%"}
-        bg={"whitesmoke"}
+        // bg={"whitesmoke"}
       >
-        <Heading textAlign={"center"} mb={"11%"} bg={"whitesmoke"}>
+        <Heading
+          textAlign={"center"}
+          mb={"11%"}
+          // bg={"whitesmoke"}
+        >
           Signin
         </Heading>
-        <FormControl bg={"whitesmoke"}>
-          <Box bg={"whitesmoke"}>
-            <FormLabel bg={"whitesmoke"}>Email</FormLabel>
+        <FormControl
+        // bg={"whitesmoke"}
+        >
+          <Box
+          // bg={"whitesmoke"}
+          >
+            <FormLabel
+            // bg={"whitesmoke"}
+            >
+              Email
+            </FormLabel>
             <Input
               type={"email"}
               required={true}
-              bg={"whitesmoke"}
+              // bg={"whitesmoke"}
               placeholder={"Enter your Email"}
               onKeyDown={handleKeyDown}
               onChange={(e) =>
@@ -108,12 +124,19 @@ const handleKeyDown = (event) => {
               }
             />
           </Box>
-          <Box bg={"whitesmoke"} mt={"3%"}>
-            <FormLabel bg={"whitesmoke"}>Password</FormLabel>
+          <Box
+            //  bg={"whitesmoke"}
+            mt={"3%"}
+          >
+            <FormLabel
+            //  bg={"whitesmoke"}
+            >
+              Password
+            </FormLabel>
             <Input
               type={"password"}
               required={true}
-              bg={"whitesmoke"}
+              // bg={"whitesmoke"}
               placeholder={"Enter your Password"}
               onKeyDown={handleKeyDown}
               onChange={(e) =>
@@ -129,8 +152,14 @@ const handleKeyDown = (event) => {
               Forgot Password?
             </Text>
           </Box>
-          <Box bg={"whitesmoke"} mt={"7%"}>
-            <Text bg={"whitesmoke"} fontSize={"md"}>
+          <Box
+            // bg={"whitesmoke"}
+            mt={"7%"}
+          >
+            <Text
+              //  bg={"whitesmoke"}
+              fontSize={"md"}
+            >
               Don't have account?{" "}
               <Link to="/auth/signup">
                 <Text
@@ -148,7 +177,7 @@ const handleKeyDown = (event) => {
             w={"100%"}
             mt={"3%"}
             colorScheme={"teal"}
-            bg={"#1f4985"}
+            bg={"#4285f4"}
             // spinner={<BeatLoader size={8} color='white' />}
             onClick={() => handleSubmit()}
             // onKeyDown={handleKeyDown}

@@ -28,25 +28,25 @@ import { setLocalStorage } from "../helpers/localStorage";
 //   }
 // };
 
-export const signInApi = async (data,setMessage) => {
-  try {
-    const r = await axios.post("https://testwala-backend.onrender.com/auth/signin", data)
-    if(r.data.token){
+// export const signInApi = async (data,setMessage) => {
+//   try {
+//     const r = await axios.post("https://testwala-backend.onrender.com/auth/signin", data)
+//     if(r.data.token){
      
-       setCookies("_user", r.data.token);
-       setMessage(r.data.message);
-       setLocalStorage("_user",r.data.data._id)
-         console.log(r.data.data);
-       console.log("hh");
-       return true;
-    }else{
-      setMessage(r.data.message);
-      return false
-    }
-    // console.log(r);
-  } catch (error) {
-    console.log(error.message);
-    setMessage("something went wrong");
-    return false;
-  }
-};
+//        setCookies("_user", r.data.token);
+//        setMessage(r.data.message);
+//        setLocalStorage("_user",r.data.data._id)
+//          console.log(r.data.data);
+//        console.log("hh");
+//        return true;
+//     }else{
+//       setMessage(r.data.message);
+//       return false
+//     }
+//     // console.log(r);
+//   } catch (error) {
+//     console.log(error.message);
+//     setMessage("something went wrong");
+//     return false;
+//   }
+// };

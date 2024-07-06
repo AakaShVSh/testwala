@@ -12,6 +12,7 @@ import { fetchData } from "../apis/question";
 import { setLocalStorage } from "../helpers/localStorage";
 import ReviewTest from "./ReviewTest";
 import { m } from "framer-motion";
+import Questionlist from "./Questionlist";
 
 const Main = () => {
   const [mark, setMark] = useState(0);
@@ -51,24 +52,28 @@ SetTotalQuestion(quest.length)
       {isFullScreen === true ? null : <Navbar />}
       {/* <Sidebar/> */}
       <Routes>
+        <Route path="/" element={<Home />} />
         <Route
-          path="/"
+          path="/auth/signin"
           element={
-            <Home
-              category={questionCategory}
-              handleFullScreen={handleFullScreen}
-              setQuestions={setQuestions}
-              settestTitle={settestTitle}
+            <Signin
+              message={message}
+              setMessage={setMessage}
+              checkNavigation={checkNavigation}
+              setCheckNavigation={setCheckNavigation}
             />
           }
         />
         <Route
-          path="/auth/signin"
-          element={<Signin message={message} setMessage={setMessage} checkNavigation={checkNavigation} setCheckNavigation={setCheckNavigation} />}
-        />
-        <Route
           path="/auth/signup"
-          element={<Signup message={message} setMessage={setMessage} checkNavigation={checkNavigation} setCheckNavigation={setCheckNavigation} />}
+          element={
+            <Signup
+              message={message}
+              setMessage={setMessage}
+              checkNavigation={checkNavigation}
+              setCheckNavigation={setCheckNavigation}
+            />
+          }
         />
         <Route
           path="/test"
@@ -85,6 +90,17 @@ SetTotalQuestion(quest.length)
           element={<SubmitTest TotalQuestion={quest.length} />}
         />
         <Route path="/Review-Test" element={<ReviewTest />} />
+        <Route
+          path="/questionList"
+          element={
+            <Questionlist
+              category={questionCategory}
+              handleFullScreen={handleFullScreen}
+              setQuestions={setQuestions}
+              settestTitle={settestTitle}
+            />
+          }
+        ></Route>
       </Routes>
     </>
   );

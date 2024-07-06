@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import { FaBold, FaRegUserCircle } from "react-icons/fa";
 import { getCookies } from "../helpers/cookies";
 const Navbar = () => {
+  
   return (
     <>
       {/* <Container */}
