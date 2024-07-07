@@ -14,7 +14,7 @@ const initialstate = {
 };
 
 export const signInReducer = (state = initialstate, { type, payload }) => {
-  console.log(type);
+  // console.log(type);
   switch (type) {
     case SIGNIN_lOADING:
       return {

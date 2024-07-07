@@ -8,7 +8,7 @@ const initialstate = {
 };
 console.log(initialstate.data);
 export const signupReducer = (state = initialstate, { type, payload }) => {
-  console.log(type);
+  // console.log(type);
   switch (type) {
     case SIGNUP_LOADING:
       console.log(state);

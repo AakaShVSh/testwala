@@ -20,10 +20,12 @@ const Signin = ({ message, setMessage,checkNavigation,setCheckNavigation }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { signInSuccess } = useSelector((state) => state.signInReducer);
+  // const [forgotPassword,setForgotPassword] = useState
   const [signinData, setSigninData] = useState({
     Email: null,
     Password: null,
   });
+  
 const handleKeyDown = (event) => {
   console.log("hghfdss");
   if(event.key==="Enter"){
@@ -55,7 +57,7 @@ const handleKeyDown = (event) => {
     // }
   };
  useEffect(() => {
-   if (checkNavigation && message !== null) {
+   if (signInSuccess && message !== null) {
      const navigateTimeOut = setTimeout(() => {
        setMessage(null);
        setCheckNavigation(false);
@@ -73,7 +75,7 @@ const handleKeyDown = (event) => {
        clearTimeout(messageTimeOut);
      }
    }
- }, [checkNavigation, navigate, message]);
+ }, [checkNavigation, navigate, message,signInSuccess]);
   return (
     <>
       {signInSuccess && message !== null ? (
@@ -143,14 +145,16 @@ const handleKeyDown = (event) => {
                 setSigninData({ ...signinData, Password: e.target.value })
               }
             />
-            <Text
-              fontSize={"12px"}
-              cursor={"pointer"}
-              textAlign={"right"}
-              color={"#1f4985"}
-            >
-              Forgot Password?
-            </Text>
+            <Link to={"/auth/forgotPassword"}>
+              <Text
+                fontSize={"12px"}
+                cursor={"pointer"}
+                textAlign={"right"}
+                color={"#1f4985"}
+              >
+                Forgot Password?
+              </Text>
+            </Link>
           </Box>
           <Box
             // bg={"whitesmoke"}

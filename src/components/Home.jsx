@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+// import React, { useEffect, useState } from "react";
 // import TakeTest from "./TakeTest";
-import { border, Box, Button, Center, Flex, Text, useMediaQuery } from "@chakra-ui/react";
+import { border, Box, Flex, Heading, Text } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import { Container,Grid,GridItem } from "@chakra-ui/react";
+// import { Container,Grid,GridItem } from "@chakra-ui/react";
 import Slideshow from "./Slideshow";
 // import CalculateIcon from '@mui/icons-material/Calculate';
 const Home = () => {
@@ -36,7 +36,8 @@ const Home = () => {
             borderRadius={"60% 0px 90% 60px"}
             h={"120px"}
             bg={"#ffc71e"}
-          ></Box> <Slideshow/>
+          ></Box>
+           {/* <Slideshow/> */}
         </Box>
 
        
@@ -49,6 +50,7 @@ const Home = () => {
           // border={"1px solid red"}
           boxShadow="rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px"
         >
+          <Text p={"2"} fontSize={"large"}><b>For all compitative Exam :-</b></Text>
           <Flex
             w={"100%"}
             h={"100%"}
@@ -181,6 +183,7 @@ const Home = () => {
             </Box>
           </Flex>
         </Box>
+        
       </Box>
     </>
   );

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import logo from "../logo.svg";
 import {
   Container,
@@ -14,8 +14,21 @@ import {
 import { Link } from "react-router-dom";
 import { FaBold, FaRegUserCircle } from "react-icons/fa";
 import { getCookies } from "../helpers/cookies";
+import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
+import { useSelector } from "react-redux";
 const Navbar = () => {
-  
+  const { signInSuccess } = useSelector((state) => state.signInReducer);
+  const [stateSignin,setStateSignin] = useState(false);
+  useEffect(() => {
+    
+    if (signInSuccess !== false) {
+      setLocalStorage("success", signInSuccess);
+
+    }
+    else{
+      setLocalStorage("success",false);
+    }
+  },[signInSuccess])
   return (
     <>
       {/* <Container */}
@@ -71,7 +84,7 @@ const Navbar = () => {
             bg="#fbfbfb"
           />
         </Box>
-        <Link to={"/auth/signin"}>
+        {signInSuccess?"user":  <Link to={"/auth/signin"}>
           {/* <Button 
           colorScheme="orange"
           >
@@ -88,7 +101,8 @@ const Navbar = () => {
           >
             Sign in
           </Button>
-        </Link>
+        </Link>}
+      
       </Center>
       {/* </Container> */}
 

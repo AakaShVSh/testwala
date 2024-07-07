@@ -13,39 +13,36 @@ import { setLocalStorage } from "../helpers/localStorage";
 import ReviewTest from "./ReviewTest";
 import { m } from "framer-motion";
 import Questionlist from "./Questionlist";
+import ForgotPassword from "./ForgotPassword";
 
 const Main = () => {
   const [mark, setMark] = useState(0);
   const [TotalQuestion, SetTotalQuestion] = useState(0);
   const [quest, setQuestions] = useState([]);
   const [questionCategory, setQuestionsCategory] = useState([]);
-  const [testTitle,settestTitle] = useState(null)
-   const [message, setMessage] = useState(null);
-    const [checkNavigation, setCheckNavigation] = useState(false);
- const [isFullScreen, setIsFullScreen] = useState(false);
-    const [correctAns, setCorrectAns] = useState([]);
-    
+  const [testTitle, settestTitle] = useState(null);
+  const [message, setMessage] = useState(null);
+  const [checkNavigation, setCheckNavigation] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [correctAns, setCorrectAns] = useState([]);
+
   const handleFullScreen = (isFull) => {
-   
-    
     if (isFull) {
-      setIsFullScreen(true)
+      setIsFullScreen(true);
       document.documentElement.requestFullscreen();
       //  setIsFullScreen(true);
-    } 
-    else {
-setIsFullScreen(false);
-      document.exitFullscreen(); 
+    } else {
+      setIsFullScreen(false);
+      document.exitFullscreen();
     }
- 
   };
   // console.log("hhhhh",TotalQuestion,mark,quest.length);
   // console.log("cat==",questionCategory);
   // console.log("d===",quest);
-    useEffect(() => {
-      setLocalStorage("category",testTitle)
-SetTotalQuestion(quest.length)
-    fetchData(setQuestions, SetTotalQuestion,setQuestionsCategory);
+  useEffect(() => {
+    setLocalStorage("category", testTitle);
+    SetTotalQuestion(quest.length);
+    fetchData(setQuestions, SetTotalQuestion, setQuestionsCategory);
   }, [quest.length, setQuestionsCategory, testTitle]);
   return (
     <>
@@ -72,6 +69,16 @@ SetTotalQuestion(quest.length)
               setMessage={setMessage}
               checkNavigation={checkNavigation}
               setCheckNavigation={setCheckNavigation}
+            />
+          }
+        />
+        <Route
+          path="/auth/forgotPassword"
+          element={
+            <ForgotPassword
+              message={message}
+              setMessage={setMessage}
+           
             />
           }
         />
