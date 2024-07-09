@@ -8,6 +8,7 @@ const initialState = {
   forgotPasswordLoading: false,
   forgotPasswordSuccess: false,
   forgotPasswordOtp: 0,
+  forgotPasswordUser: null,
   forgotPasswordError: false,
 };
 
@@ -28,7 +29,8 @@ export const forgotPasswordReducer = (
         ...state,
         forgotPasswordLoading: false,
         forgotPasswordSuccess: true,
-        forgotPasswordOtp: payload,
+        forgotPasswordOtp: payload.Otp,
+        forgotPasswordUser:payload.user._id,
         forgotPasswordError: false,
       };
     case FORGOT_PASSWORD_ERROR:

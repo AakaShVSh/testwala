@@ -12,7 +12,7 @@ const Home = () => {
     <>
       <Box w={"100%"}>
         <Box
-          bg={"#f44758"}
+          // bg={"#f44758"}
           w={"90%"}
           borderRadius={"3px"}
           m={"12px auto"}
@@ -20,27 +20,13 @@ const Home = () => {
           p={"3"}
           position="relative"
           // border="1px solid blue"
+          boxShadow="rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px"
         >
           {/* <Box w={"160px"} h={"120px"} bg={"#113461"}></Box> */}
-          <Box
-            w={"160px"}
-            h={"120px"}
-            borderRadius={"90% 60px 90% 0px"}
-            position="absolute"
-            bg={"#f41eff"}
-          ></Box>
-          <Box
-            w={"160px"}
-            m={"5"}
-            position="absolute"
-            borderRadius={"60% 0px 90% 60px"}
-            h={"120px"}
-            bg={"#ffc71e"}
-          ></Box>
-           {/* <Slideshow/> */}
+
+          {/* <Slideshow/> */}
         </Box>
 
-       
         <Box
           w={"90%"}
           m={"20px auto"}
@@ -50,7 +36,9 @@ const Home = () => {
           // border={"1px solid red"}
           boxShadow="rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px"
         >
-          <Text p={"2"} fontSize={"large"}><b>For all compitative Exam :-</b></Text>
+          <Text p={"2"} fontSize={"large"}>
+            <b>For all compitative Exam :-</b>
+          </Text>
           <Flex
             w={"100%"}
             h={"100%"}
@@ -183,7 +171,6 @@ const Home = () => {
             </Box>
           </Flex>
         </Box>
-        
       </Box>
     </>
   );

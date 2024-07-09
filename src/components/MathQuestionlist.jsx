@@ -2,7 +2,7 @@ import { Box, Divider, Flex, Heading, Text } from '@chakra-ui/react';
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom';
 
-const Questionlist = ({
+const MathQuestionlist = ({
   category,
   setQuestions,
   handleFullScreen,
@@ -53,7 +53,7 @@ console.log(MathSubject,category);
               {category.map((e, i) => (
                 <>
                 {e.topic===MathSubject?
-                <Box
+                <Box cursor={"pointer"}
                   w={"100%"}
                   mt={"2"}
                   bg={"#4285f4 "}
@@ -139,4 +139,4 @@ console.log(MathSubject,category);
   );
 };
 
-export default Questionlist
+export default MathQuestionlist

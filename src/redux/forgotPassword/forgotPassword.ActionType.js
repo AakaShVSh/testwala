@@ -10,7 +10,7 @@ export const forgotPasswordApi = (data, setMessage) => async (dispatch) => {
   axios
     .post("https://testwala-backend.onrender.com/auth/forgot-password", data)
     .then((r) => 
-      dispatch({ type: FORGOT_PASSWORD_SUCCESS, payload: r.data.Otp })
+      dispatch({ type: FORGOT_PASSWORD_SUCCESS, payload: r.data })
     )
     .catch((e) => dispatch({ type: FORGOT_PASSWORD_ERROR }));
 };

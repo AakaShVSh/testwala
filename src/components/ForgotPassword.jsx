@@ -1,25 +1,64 @@
-import { Box, Button, FormControl, FormLabel, Heading, Input, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Heading,
+  Input,
+  Text,
+} from "@chakra-ui/react";
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { forgotPasswordApi } from "../redux/forgotPassword/forgotPassword.ActionType";
+import { useNavigate } from "react-router-dom";
+import { changePasswordApi } from "../redux/changePassword/changePassword.ActionType";
 
-const ForgotPassword = ({setMessage,message}) => {
+const ForgotPassword = ({ setMessage, message }) => {
   const dispatch = useDispatch();
-  const { forgotPasswordSuccess, forgotPasswordOtp } = useSelector(
-    (state) => state.forgotPasswordReducer
-  );
-  const [UserEmail,setEmail] = useState({
-    Email:null
+  const navigate = useNavigate();
+  const [changePassword, setChangePassword] = useState(false);
+  const [otp, setOtp] = useState(0);
+  const { forgotPasswordSuccess, forgotPasswordUser, forgotPasswordOtp } =
+    useSelector((state) => state.forgotPasswordReducer);
+
+  const { changePasswordSuccess, changePasswordData, changePasswordError } =
+    useSelector((state) => state.changePasswordReducer);
+  const [password, setpassword] = useState({
+    Password: null,
+  });
+  const [UserEmail, setEmail] = useState({
+    Email: null,
   });
 
-console.log(UserEmail);
+  console.log(UserEmail);
   const handleSubmit = () => {
-         if(UserEmail.Email.includes("@gmail.com")&&UserEmail.Email!=="@gmail.com"){
-            dispatch(forgotPasswordApi(UserEmail))  
-         }
-  }
-console.log(forgotPasswordSuccess, forgotPasswordOtp);
+    if (
+      UserEmail.Email.includes("@gmail.com") &&
+      UserEmail.Email !== "@gmail.com"
+    ) {
+      if (forgotPasswordOtp === 0) {
+        dispatch(forgotPasswordApi(UserEmail, forgotPasswordUser));
+      }
+      if (
+        forgotPasswordSuccess &&
+        forgotPasswordOtp !== 0 &&
+        otp == forgotPasswordOtp
+      ) {
+        setChangePassword(true);
+        if (password.Password !== null) {
+          dispatch(changePasswordApi(password, forgotPasswordUser));
+       
+        }
+      }
+    }
+  };
+  console.log(changePasswordSuccess, changePasswordData, changePasswordError);
+  useEffect(() => {
+       if (changePasswordSuccess) {
+         navigate("/auth/signin");
+       }
+  },[changePasswordSuccess, navigate])
   return (
     <>
       <Box
@@ -46,22 +85,22 @@ console.log(forgotPasswordSuccess, forgotPasswordOtp);
               <Box
               // bg={"whitesmoke"}
               >
-                {forgotPasswordOtp !== 0 ? (
+                {changePassword ? (
                   <>
                     {" "}
                     <FormLabel
                     // bg={"whitesmoke"}
                     >
-                      OTP Here
+                      New Password Here
                     </FormLabel>
                     <Input
-                      type={"number"}
+                      type={"text"}
                       required={true}
                       // bg={"whitesmoke"}
-                      placeholder={"Enter OTP Here"}
-                      // onChange={(e) =>
-                      //   setEmail({ ...UserEmail, Email: e.target.value })
-                      // }
+                      placeholder={"Enter New Password"}
+                      onChange={(e) =>
+                        setpassword({ ...password, Password: e.target.value })
+                      }
                       // onKeyDown={handleKeyDown}
                       // onChange={(e) =>
                       //   setSigninData({ ...signinData, Email: e.target.value })
@@ -70,24 +109,49 @@ console.log(forgotPasswordSuccess, forgotPasswordOtp);
                   </>
                 ) : (
                   <>
-                    <FormLabel
-                    // bg={"whitesmoke"}
-                    >
-                      Email
-                    </FormLabel>
-                    <Input
-                      type={"email"}
-                      required={true}
-                      // bg={"whitesmoke"}
-                      placeholder={"Enter your Email"}
-                      onChange={(e) =>
-                        setEmail({ ...UserEmail, Email: e.target.value })
-                      }
-                      // onKeyDown={handleKeyDown}
-                      // onChange={(e) =>
-                      //   setSigninData({ ...signinData, Email: e.target.value })
-                      // }
-                    />
+                    {" "}
+                    {forgotPasswordOtp !== 0 ? (
+                      <>
+                        {" "}
+                        <FormLabel
+                        // bg={"whitesmoke"}
+                        >
+                          OTP Here
+                        </FormLabel>
+                        <Input
+                          type={"number"}
+                          required={true}
+                          // bg={"whitesmoke"}
+                          placeholder={"Enter OTP Here"}
+                          onChange={(e) => setOtp(e.target.value)}
+                          // onKeyDown={handleKeyDown}
+                          // onChange={(e) =>
+                          //   setSigninData({ ...signinData, Email: e.target.value })
+                          // }
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <FormLabel
+                        // bg={"whitesmoke"}
+                        >
+                          Email
+                        </FormLabel>
+                        <Input
+                          type={"email"}
+                          required={true}
+                          // bg={"whitesmoke"}
+                          placeholder={"Enter your Email"}
+                          onChange={(e) =>
+                            setEmail({ ...UserEmail, Email: e.target.value })
+                          }
+                          // onKeyDown={handleKeyDown}
+                          // onChange={(e) =>
+                          //   setSigninData({ ...signinData, Email: e.target.value })
+                          // }
+                        />
+                      </>
+                    )}
                   </>
                 )}
               </Box>

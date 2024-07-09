@@ -12,8 +12,10 @@ import { fetchData } from "../apis/question";
 import { setLocalStorage } from "../helpers/localStorage";
 import ReviewTest from "./ReviewTest";
 import { m } from "framer-motion";
-import Questionlist from "./Questionlist";
+// import Questionlist from "./Questionlist";
 import ForgotPassword from "./ForgotPassword";
+import MathQuestionlist from "./MathQuestionlist";
+import Footer from "./Footer";
 
 const Main = () => {
   const [mark, setMark] = useState(0);
@@ -74,13 +76,7 @@ const Main = () => {
         />
         <Route
           path="/auth/forgotPassword"
-          element={
-            <ForgotPassword
-              message={message}
-              setMessage={setMessage}
-           
-            />
-          }
+          element={<ForgotPassword message={message} setMessage={setMessage} />}
         />
         <Route
           path="/test"
@@ -100,7 +96,7 @@ const Main = () => {
         <Route
           path="/questionList"
           element={
-            <Questionlist
+            <MathQuestionlist
               category={questionCategory}
               handleFullScreen={handleFullScreen}
               setQuestions={setQuestions}
@@ -109,6 +105,7 @@ const Main = () => {
           }
         ></Route>
       </Routes>
+      {isFullScreen === true ? null : <Footer />}
     </>
   );
 };
