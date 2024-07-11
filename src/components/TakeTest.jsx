@@ -387,7 +387,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
         display={"flex"}
         justifyContent={"space-between"}
         // color={"black"}
-        p={"0.6%"}
+        p={isMobile ? "1.6%" : "0.6%"}
         backgroundColor={"#4285f4"}
         // maxWidth={"100%"}
         width="100%"
@@ -461,7 +461,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
           <Box
             boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
             p={"1%"}
-            h={isMobile ? "83vh" : "574px"}
+            h={isMobile ? "82vh" : "574px"}
             w={"100%"}
           >
             {/* {question.length>0 && question.quest.map((d) )} */}

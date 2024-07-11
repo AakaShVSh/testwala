@@ -5,6 +5,12 @@ import {
   ButtonGroup,
   // Checkbox,
   Container,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerHeader,
+  DrawerOverlay,
   Flex,
   FormControl,
   FormLabel,
@@ -16,11 +22,13 @@ import {
   Spacer,
   // Tag,
   Text,
+  useDisclosure,
   useMediaQuery,
 } from "@chakra-ui/react";
 import ModalPause from "./ModalPause";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
+import { HamburgerIcon } from "@chakra-ui/icons";
 
 const ReviewTest = () => {
   const [question, setQuestion] = useState([]);
@@ -32,6 +40,9 @@ const ReviewTest = () => {
   const [markedAndAnswer, setMarkedAndAnswer] = useState(null);
   const [markedNotAnswer, setMarkedNotAnswer] = useState(null);
   const [currentquestion, setcurrentQuestion] = useState(0);
+    const [isMobile] = useMediaQuery("(max-width: 768px)");
+  const [size, setSize] = useState("");
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
 const handleQuestion = (con=null) => {
   if(con!==null){
@@ -41,6 +52,10 @@ const handleQuestion = (con=null) => {
     setcurrentQuestion(currentquestion+1)
   }
 }
+ const handleClick = (newSize) => {
+   setSize(newSize);
+   onOpen();
+ };
 
   useEffect(() => {
     const getData = () => {
@@ -67,7 +82,7 @@ const handleQuestion = (con=null) => {
           display={"flex"}
           justifyContent={"space-between"}
           color={"black"}
-          p={"0.6%"}
+          p={isMobile ? "2.6%" : "0.6%"}
           maxWidth={"100%"}
         >
           <Text fontSize={"26px"}>
@@ -82,7 +97,8 @@ const handleQuestion = (con=null) => {
               // onClick={() => handleFullScreen(true)}
               border={"1px solid #01bfbd"}
               color={"#01bfbd"}
-              mr={"12px"}
+              fontSize={"12px"}
+              // mr={"1px"}
             >
               Reattempt This Test
             </Button>
@@ -132,7 +148,7 @@ const handleQuestion = (con=null) => {
             >
               {question[currentquestion]?.options.map((d, i) => (
                 <Box
-                m={"1%"}
+                  m={"1%"}
                   p={"1%"}
                   fontSize={"large"}
                   bg={
@@ -186,210 +202,446 @@ const handleQuestion = (con=null) => {
             p={"0.5%"}
             justifyContent={"space-between"}
           >
-            <ButtonGroup>
+            {/* <ButtonGroup>
               <Button
                 // onClick={() => markedQuestion()}
                 onClick={() => handleQuestion(null)}
                 border={"1px solid #01bfbd"}
                 color={"#01bfbd"}
               >
-                Mark for priview & Next
-              </Button>
-              {/* <Button
+                Previous
+              </Button> */}
+            {/* <Button
                 // onClick={() => handleClearAnswer(currentquestion)}
                 border={"1px solid #01bfbd"}
                 color={"#01bfbd"}
               >
                 Clear Response
               </Button> */}
-            </ButtonGroup>
+            {/* </ButtonGroup> */}
+
+            {isMobile ? (
+              <>
+                {" "}
+                <Button onClick={() => handleClick("xs")} key={"xs"} m={1}>
+                  <HamburgerIcon />
+                </Button>
+                <Drawer onClose={onClose} isOpen={isOpen} size={"xs"}>
+                  <DrawerOverlay />
+                  <DrawerContent>
+                    <DrawerCloseButton />
+                    <DrawerHeader>Revision Karle</DrawerHeader>
+                    <DrawerBody>
+                      {/* <Box
+                boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
+                p={"1%"}
+                w={"100%"}
+                // h={""}
+                // height="100vh"
+                color={"white"}
+                bg={"#4285f4"}
+              > */}
+                      {/* <Box
+                        boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
+                        p={"1%"}
+                        w={"100%"}
+                        // h={""}
+                        // height="100vh"
+                        color={""}
+                        // bg={"#4285f4"}
+                      > */}
+                      <Box>
+                        <Text fontSize={"x-large"}>
+                          <b>Pablo</b>
+                        </Text>
+                      </Box>
+                      <hr />
+                      <Box mt={"3%"} mb={"3%"}>
+                        <Box mb={"3%"} justifyContent={"space-between"}>
+                          <Text mb={"2%"}>
+                            Marked{" "}
+                            <Text
+                              w={"auto"}
+                              pl={"4.5%"}
+                              pr={"4.5%"}
+                              backgroundColor={"purple"}
+                              color={"white"}
+                              borderRadius={"50%"}
+                              as={"span"}
+                            >
+                              {markedNotAnswer.length}
+                            </Text>{" "}
+                          </Text>{" "}
+                          <Text mb={"2%"}>
+                            Not visited{" "}
+                            <Text
+                              w={"auto"}
+                              pl={"4.5%"}
+                              pr={"4.5%"}
+                              // backgroundColor={"purple"}
+                              color={"gray"}
+                              bg={"white"}
+                              border={"1px solid gray"}
+                              // borderRadius={"50%"}
+                              as={"span"}
+                            >
+                              {question.length -
+                                (markedAndAnswer.length +
+                                  markedNotAnswer.length +
+                                  answeredQuestion.length +
+                                  notAnswer.length)}
+                            </Text>
+                          </Text>
+                          <Text mb={"2%"}>
+                            Answered{" "}
+                            <Text
+                              w={"auto"}
+                              pl={"4.5%"}
+                              pr={"4.5%"}
+                              backgroundColor={"green"}
+                              color={"white"}
+                              borderTopLeftRadius={"50%"}
+                              borderTopRightRadius={"50%"}
+                              as={"span"}
+                            >
+                              {answeredQuestion.length}
+                            </Text>
+                          </Text>
+                          <Text mb={"2%"}>
+                            Not Answered{" "}
+                            <Text
+                              w={"auto"}
+                              pl={"4.5%"}
+                              pr={"4.5%"}
+                              backgroundColor={"red"}
+                              color={"white"}
+                              borderBottomLeftRadius={"50%"}
+                              borderBottomRightRadius={"50%"}
+                              as={"span"}
+                            >
+                              {notAnswer.length}
+                            </Text>
+                          </Text>
+                          <Text>
+                            Marked & Answered{" "}
+                            <Text
+                              w={"auto"}
+                              pl={"4.5%"}
+                              pr={"4.5%"}
+                              backgroundColor={"purple"}
+                              color={"white"}
+                              borderRadius={"50%"}
+                              as={"span"}
+                            >
+                              {markedAndAnswer.length} ✓
+                            </Text>
+                          </Text>
+                        </Box>
+                        <hr />
+                      </Box>
+
+                      <Text mb={"3%"}>Section : Average Type 1</Text>
+                      <hr />
+                      <Box
+                        mt={"8%"}
+                        mb={"6.5%"}
+                        height="48vh"
+                        p={"2%"}
+                        overflow={"scroll"}
+                        sx={{
+                          "::-webkit-scrollbar": {
+                            display: "none",
+                          },
+                          "-ms-overflow-style": "none", // IE and Edge
+                          "scrollbar-width": "none", // Firefox
+                        }}
+                        // borderBottom={"1px solid gray"}
+                      >
+                        <Box>
+                          {" "}
+                          <Grid
+                            templateColumns="repeat(5, 1fr)"
+                            rowGap={"10%"}
+                            columnGap={"6%"}
+                            textAlign={"center"}
+                          >
+                            {question?.map((d, i) => (
+                              <Box
+                                pl={"4.5%"}
+                                pr={"4.5%"}
+                                boxShadow={" rgba(0, 0, 0, 0.35) 0px 5px 15px"}
+                                onClick={() => handleQuestion(i)}
+                                background={
+                                  markedNotAnswer.includes(i)
+                                    ? "purple"
+                                    : answeredQuestion.includes(i)
+                                    ? "green"
+                                    : notAnswer.includes(i)
+                                    ? "red"
+                                    : markedAndAnswer.includes(i)
+                                    ? "purple"
+                                    : "white"
+                                }
+                                borderRadius={
+                                  markedAndAnswer.includes(i)
+                                    ? "50%"
+                                    : markedNotAnswer.includes(i)
+                                    ? "50%"
+                                    : answeredQuestion.includes(i)
+                                    ? "50% 50% 0% 0%"
+                                    : notAnswer.includes(i)
+                                    ? "0% 0% 50% 50%"
+                                    : null
+                                }
+                                color={
+                                  markedAndAnswer.includes(i)
+                                    ? "white"
+                                    : markedNotAnswer.includes(i)
+                                    ? "white"
+                                    : answeredQuestion.includes(i)
+                                    ? "white"
+                                    : notAnswer.includes(i)
+                                    ? "white"
+                                    : "gray"
+                                }
+                                cursor={"pointer"}
+                                border={"1px solid gray"}
+                              >
+                                {markedAndAnswer.includes(i) ? (
+                                  <>
+                                    {i + 1}
+                                    <b> ✓</b>
+                                  </>
+                                ) : (
+                                  <>{i + 1}</>
+                                )}
+                              </Box>
+                            ))}
+                          </Grid>{" "}
+                        </Box>
+                      </Box>
+                     <Box >
+                            <Button
+                              mt={"20%"}
+                              mb={"3%"}
+                              border={"1px solid #01bfbd"}
+                              w={"100%"}
+                              color={"#01bfbd"}
+                            >
+                              Take More Test
+                            </Button>{" "}
+                          </Box>{" "}
+                          
+                        {/* </Box> */}
+                      {/* </Box> */}
+                      {/* <Box> */}
+                      {/* <Link to={"/test-result"}> */}
+
+                      {/* </Link> */}
+                      {/* </Box> */}
+                      {/* </Box> */}
+                    </DrawerBody>
+                  </DrawerContent>
+                </Drawer>
+              </>
+            ) : null}
+
             <Button
               // onClick={() => handlequestion("svn")}
               onClick={() => handleQuestion(null)}
               border={"1px solid #01bfbd"}
               color={"#01bfbd"}
             >
-              Save & Next
+              Next
             </Button>
           </Box>
         </Box>
-
-        {/* slider */}
-        <Box
-          boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
-          p={"1%"}
-          w={"25%"}
-          // h={""}
-        >
-          <Box>
-            <Text fontSize={"larger"}>
-              <b>Pablo</b>
-            </Text>
-          </Box>
-          <hr />
-          <Box mt={"3%"} mb={"3%"}>
-            <Box justifyContent={"space-between"}>
-              <Text>
-                Marked{" "}
-                <Text
-                  w={"auto"}
-                  pl={"1.5%"}
-                  pr={"1.5%"}
-                  backgroundColor={"purple"}
-                  color={"white"}
-                  borderRadius={"50%"}
-                  as={"span"}
-                >
-                  {markedNotAnswer?.length}
-                </Text>{" "}
-              </Text>{" "}
-              <Text>
-                Not visited{" "}
-                <Text
-                  w={"auto"}
-                  pl={"1.5%"}
-                  pr={"1.5%"}
-                  // backgroundColor={"purple"}
-                  // color={"white"}
-                  border={"1px solid gray"}
-                  // borderRadius={"50%"}
-                  as={"span"}
-                >
-                  {question?.length -
-                    (markedAndAnswer?.length +
-                      markedNotAnswer?.length +
-                      answeredQuestion?.length +
-                      notAnswer?.length)}
-                </Text>
-              </Text>
-              <Text>
-                Answered{" "}
-                <Text
-                  w={"auto"}
-                  pl={"1.5%"}
-                  pr={"1.5%"}
-                  backgroundColor={"green"}
-                  color={"white"}
-                  borderTopLeftRadius={"50%"}
-                  borderTopRightRadius={"50%"}
-                  as={"span"}
-                >
-                  {answeredQuestion?.length}
-                </Text>
-              </Text>
-              <Text>
-                Not Answered{" "}
-                <Text
-                  w={"auto"}
-                  pl={"1.5%"}
-                  pr={"1.5%"}
-                  backgroundColor={"red"}
-                  color={"white"}
-                  borderBottomLeftRadius={"50%"}
-                  borderBottomRightRadius={"50%"}
-                  as={"span"}
-                >
-                  {notAnswer?.length}
-                </Text>
-              </Text>
-              <Text>
-                Marked & Answered{" "}
-                <Text
-                  w={"auto"}
-                  pl={"1.5%"}
-                  pr={"1.5%"}
-                  backgroundColor={"purple"}
-                  color={"white"}
-                  borderRadius={"50%"}
-                  as={"span"}
-                >
-                  {markedAndAnswer?.length} ✓
-                </Text>
-              </Text>
-            </Box>
-            <hr />
-          </Box>
-
-          <Text mb={"3%"}>Section : Average Type 1</Text>
-          <hr />
-          <Box mt={"10%"} h={"57%"} borderBottom={"1px solid gray"}>
-            <Grid
-              templateColumns="repeat(5, 1fr)"
-              rowGap={"10%"}
-              columnGap={"6%"}
-              textAlign={"center"}
+        {isMobile ? null : (
+          <>
+            {" "}
+            <Box
+              boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
+              p={"1%"}
+              w={"25%"}
+              // h={""}
             >
-              {question?.map((d, i) => (
-                <Box
-                  // onClick={() => handlequestion(i)}
-                  onClick={() => handleQuestion(i)}
-                  background={
-                    markedNotAnswer.includes(i)
-                      ? "purple"
-                      : answeredQuestion.includes(i)
-                      ? "green"
-                      : notAnswer.includes(i)
-                      ? "red"
-                      : markedAndAnswer.includes(i)
-                      ? "purple"
-                      : null
-                  }
-                  borderRadius={
-                    markedAndAnswer.includes(i)
-                      ? "50%"
-                      : markedNotAnswer.includes(i)
-                      ? "50%"
-                      : answeredQuestion.includes(i)
-                      ? "50% 50% 0% 0%"
-                      : notAnswer.includes(i)
-                      ? "0% 0% 50% 50%"
-                      : null
-                  }
-                  color={
-                    markedAndAnswer.includes(i)
-                      ? "white"
-                      : markedNotAnswer.includes(i)
-                      ? "white"
-                      : answeredQuestion.includes(i)
-                      ? "white"
-                      : notAnswer.includes(i)
-                      ? "white"
-                      : null
-                  }
-                  cursor={"pointer"}
-                  border={"1px solid gray"}
-                >
-                  {markedAndAnswer.includes(i) ? <>{i + 1} ✓</> : <>{i + 1}</>}
+              <Box>
+                <Text fontSize={"larger"}>
+                  <b>Pablo</b>
+                </Text>
+              </Box>
+              <hr />
+              <Box mt={"3%"} mb={"3%"}>
+                <Box justifyContent={"space-between"}>
+                  <Text>
+                    Marked{" "}
+                    <Text
+                      w={"auto"}
+                      pl={"1.5%"}
+                      pr={"1.5%"}
+                      backgroundColor={"purple"}
+                      color={"white"}
+                      borderRadius={"50%"}
+                      as={"span"}
+                    >
+                      {markedNotAnswer?.length}
+                    </Text>{" "}
+                  </Text>{" "}
+                  <Text>
+                    Not visited{" "}
+                    <Text
+                      w={"auto"}
+                      pl={"1.5%"}
+                      pr={"1.5%"}
+                      // backgroundColor={"purple"}
+                      // color={"white"}
+                      border={"1px solid gray"}
+                      // borderRadius={"50%"}
+                      as={"span"}
+                    >
+                      {question?.length -
+                        (markedAndAnswer?.length +
+                          markedNotAnswer?.length +
+                          answeredQuestion?.length +
+                          notAnswer?.length)}
+                    </Text>
+                  </Text>
+                  <Text>
+                    Answered{" "}
+                    <Text
+                      w={"auto"}
+                      pl={"1.5%"}
+                      pr={"1.5%"}
+                      backgroundColor={"green"}
+                      color={"white"}
+                      borderTopLeftRadius={"50%"}
+                      borderTopRightRadius={"50%"}
+                      as={"span"}
+                    >
+                      {answeredQuestion?.length}
+                    </Text>
+                  </Text>
+                  <Text>
+                    Not Answered{" "}
+                    <Text
+                      w={"auto"}
+                      pl={"1.5%"}
+                      pr={"1.5%"}
+                      backgroundColor={"red"}
+                      color={"white"}
+                      borderBottomLeftRadius={"50%"}
+                      borderBottomRightRadius={"50%"}
+                      as={"span"}
+                    >
+                      {notAnswer?.length}
+                    </Text>
+                  </Text>
+                  <Text>
+                    Marked & Answered{" "}
+                    <Text
+                      w={"auto"}
+                      pl={"1.5%"}
+                      pr={"1.5%"}
+                      backgroundColor={"purple"}
+                      color={"white"}
+                      borderRadius={"50%"}
+                      as={"span"}
+                    >
+                      {markedAndAnswer?.length} ✓
+                    </Text>
+                  </Text>
                 </Box>
-              ))}
-            </Grid>
-          </Box>
-          <Box borderBottom={"1px solid gray"}>
-            <Button
-              mt={"3%"}
-              mb={"3%"}
-              border={"1px solid #01bfbd"}
-              w={"100%"}
-              color={"#01bfbd"}
-            >
-              Instruction
-            </Button>
-          </Box>
-          <Box>
-            {/* <Link to={"/test-result"}> */}
-            <Button
-              // onClick={() => giveMark()}
-              mt={"3%"}
-              // mb={"3%"}
-              border={"1px solid #01bfbd"}
-              w={"100%"}
-              color={"#01bfbd"}
-            >
-              Submit Test
-            </Button>
-            {/* </Link> */}
-          </Box>
-        </Box>
+                <hr />
+              </Box>
+
+              <Text mb={"3%"}>Section : Average Type 1</Text>
+              <hr />
+              <Box mt={"10%"} h={"57%"} borderBottom={"1px solid gray"}>
+                <Grid
+                  templateColumns="repeat(5, 1fr)"
+                  rowGap={"10%"}
+                  columnGap={"6%"}
+                  textAlign={"center"}
+                >
+                  {question?.map((d, i) => (
+                    <Box
+                      // onClick={() => handlequestion(i)}
+                      onClick={() => handleQuestion(i)}
+                      background={
+                        markedNotAnswer.includes(i)
+                          ? "purple"
+                          : answeredQuestion.includes(i)
+                          ? "green"
+                          : notAnswer.includes(i)
+                          ? "red"
+                          : markedAndAnswer.includes(i)
+                          ? "purple"
+                          : null
+                      }
+                      borderRadius={
+                        markedAndAnswer.includes(i)
+                          ? "50%"
+                          : markedNotAnswer.includes(i)
+                          ? "50%"
+                          : answeredQuestion.includes(i)
+                          ? "50% 50% 0% 0%"
+                          : notAnswer.includes(i)
+                          ? "0% 0% 50% 50%"
+                          : null
+                      }
+                      color={
+                        markedAndAnswer.includes(i)
+                          ? "white"
+                          : markedNotAnswer.includes(i)
+                          ? "white"
+                          : answeredQuestion.includes(i)
+                          ? "white"
+                          : notAnswer.includes(i)
+                          ? "white"
+                          : null
+                      }
+                      cursor={"pointer"}
+                      border={"1px solid gray"}
+                    >
+                      {markedAndAnswer.includes(i) ? (
+                        <>{i + 1} ✓</>
+                      ) : (
+                        <>{i + 1}</>
+                      )}
+                    </Box>
+                  ))}
+                </Grid>
+              </Box>
+              <Box borderBottom={"1px solid gray"}>
+                <Button
+                  mt={"3%"}
+                  mb={"3%"}
+                  border={"1px solid #01bfbd"}
+                  w={"100%"}
+                  color={"#01bfbd"}
+                >
+                  Instruction
+                </Button>
+              </Box>
+              <Box>
+                {/* <Link to={"/test-result"}> */}
+                <Button
+                  // onClick={() => giveMark()}
+                  fontSize={isMobile ? "12" : "auto"}
+                  mt={"3%"}
+                  // mb={"3%"}
+                  border={"1px solid #01bfbd"}
+                  w={"100%"}
+                  color={"#01bfbd"}
+                >
+                  Submit Test
+                </Button>
+                {/* </Link> */}
+              </Box>
+            </Box>
+          </>
+        )}
+        {/* slider */}
       </Box>
     </>
   );

@@ -11,7 +11,7 @@ const MathQuestionlist = ({
 
  const [MathSubject,setMathSubject] = useState("")
 const [sscCglMathsSyllabus] = useState([
-    "Number System (Computation of whole numbers; Decimals; Fractions; and Relationships between numbers)",
+    "Number System",
     "L.C.M and H.C.F",
     "Surds and Indices",
     "Algebraic Identities",
