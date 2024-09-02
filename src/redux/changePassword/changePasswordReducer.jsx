@@ -15,7 +15,7 @@ export const changePasswordReducer = (
   state = initialState,
   { type, payload }
 ) => {
-  console.log(type, payload);
+  // console.log(type, payload);
   switch (type) {
     case CHANGEPASSWORD_LOADING:
       return {

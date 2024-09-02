@@ -16,10 +16,12 @@ import { m } from "framer-motion";
 import ForgotPassword from "./ForgotPassword";
 import MathQuestionlist from "./MathQuestionlist";
 import Footer from "./Footer";
+import { useDispatch, useSelector } from "react-redux";
+import { QuestionApi } from "../redux/questions/questions.ActionType";
 
 const Main = () => {
   const [mark, setMark] = useState(0);
-  const [TotalQuestion, SetTotalQuestion] = useState(0);
+  // const [TotalQuestion, SetTotalQuestion] = useState(0);
   const [quest, setQuestions] = useState([]);
   const [questionCategory, setQuestionsCategory] = useState([]);
   const [testTitle, settestTitle] = useState(null);
@@ -27,7 +29,10 @@ const Main = () => {
   const [checkNavigation, setCheckNavigation] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [correctAns, setCorrectAns] = useState([]);
-
+  const { questionLoading, questionSuccess, questionData } = useSelector(
+    (state) => state.QuestionReducer
+  );
+  const dispatch = useDispatch();
   const handleFullScreen = (isFull) => {
     if (isFull) {
       setIsFullScreen(true);
@@ -42,10 +47,16 @@ const Main = () => {
   // console.log("cat==",questionCategory);
   // console.log("d===",quest);
   useEffect(() => {
+   
     setLocalStorage("category", testTitle);
-    SetTotalQuestion(quest.length);
-    fetchData(setQuestions, SetTotalQuestion, setQuestionsCategory);
-  }, [quest.length, setQuestionsCategory, testTitle]);
+    // SetTotalQuestion(quest.length);
+    // fetchData(setQuestionsCategory);
+    // if(!questionSuccess){
+    dispatch(QuestionApi("math"));
+    setQuestionsCategory(questionData);
+    setQuestions(questionData);
+  }, [questionSuccess]);
+  // console.log("qqqq", questionLoading, "sss", questionSuccess,"dddd",questionData);
   return (
     <>
       {isFullScreen === true ? null : <Navbar />}
