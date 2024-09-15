@@ -80,6 +80,7 @@ const handleQuestion = (con=null) => {
       <Container bg={"white"} color={"black"} p={"%"} maxWidth={"100%"}>
         <Box
           display={"flex"}
+          bg={"#4286f5"}
           justifyContent={"space-between"}
           color={"black"}
           p={isMobile ? "2.6%" : "0.6%"}
@@ -339,7 +340,6 @@ const handleQuestion = (con=null) => {
                         </Box>
                         <hr />
                       </Box>
-
                       <Text mb={"3%"}>Section : Average Type 1</Text>
                       <hr />
                       <Box
@@ -420,23 +420,21 @@ const handleQuestion = (con=null) => {
                           </Grid>{" "}
                         </Box>
                       </Box>
-                     <Box >
-                            <Button
-                              mt={"20%"}
-                              mb={"3%"}
-                              border={"1px solid #01bfbd"}
-                              w={"100%"}
-                              color={"#01bfbd"}
-                            >
-                              Take More Test
-                            </Button>{" "}
-                          </Box>{" "}
-                          
-                        {/* </Box> */}
+                      <Box>
+                        <Button
+                          mt={"20%"}
+                          mb={"3%"}
+                          border={"1px solid #01bfbd"}
+                          w={"100%"}
+                          color={"#01bfbd"}
+                        >
+                          Take More Test
+                        </Button>{" "}
+                      </Box>{" "}
+                      {/* </Box> */}
                       {/* </Box> */}
                       {/* <Box> */}
                       {/* <Link to={"/test-result"}> */}
-
                       {/* </Link> */}
                       {/* </Box> */}
                       {/* </Box> */}
@@ -460,9 +458,10 @@ const handleQuestion = (con=null) => {
           <>
             {" "}
             <Box
-              boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
+              boxShadow="rgba(109, 115, 136, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
               p={"1%"}
               w={"25%"}
+              bg={"#4286f5"}
               // h={""}
             >
               <Box>

@@ -18,6 +18,7 @@ import MathQuestionlist from "./MathQuestionlist";
 import Footer from "./Footer";
 import { useDispatch, useSelector } from "react-redux";
 import { QuestionApi } from "../redux/questions/questions.ActionType";
+import Feedback from "./Feedback";
 
 const Main = () => {
   const [mark, setMark] = useState(0);
@@ -28,7 +29,7 @@ const Main = () => {
   const [message, setMessage] = useState(null);
   const [checkNavigation, setCheckNavigation] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [correctAns, setCorrectAns] = useState([]);
+  const [choseSub, setchoosesub] = useState("");
   const { questionLoading, questionSuccess, questionData } = useSelector(
     (state) => state.QuestionReducer
   );
@@ -49,6 +50,8 @@ const Main = () => {
   useEffect(() => {
    
     setLocalStorage("category", testTitle);
+    console.log(testTitle);
+    
     // SetTotalQuestion(quest.length);
     // fetchData(setQuestionsCategory);
     // if(!questionSuccess){
@@ -114,7 +117,9 @@ const Main = () => {
               settestTitle={settestTitle}
             />
           }
-        ></Route>
+        />
+        <Route path="/GiveFeedback" element={<Feedback/>}/>
+
       </Routes>
       {isFullScreen === true ? null : <Footer />}
     </>

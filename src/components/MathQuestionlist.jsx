@@ -30,7 +30,8 @@ const [sscCglMathsSyllabus] = useState([
     "Mensuration 2D & 3D",
     "Geometry and Co-ordinate Geometry (Graphs of Linear Equations)",
     "Trigonometry",
-    "Data Interpretation"
+    "Data Interpretation",
+    "General Studies"
 ]);
 console.log(MathSubject,category);
   return (
