@@ -6,7 +6,7 @@ export const QuestionApi = (sub) => async (dispatch) => {
     console.log("s",sub);
     
   axios
-    .get(`https://testwala-backend.onrender.com/QuestionStorage/gs`)
+    .get(`https://testwala-backend.onrender.com/QuestionStorage/${sub}`)
     .then((r) => dispatch({ type: QUESTION_SUCCESS, payload: r.data }))
     .catch((err) => dispatch({ type: QUESTION_ERROR }));
 };

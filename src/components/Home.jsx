@@ -1,13 +1,19 @@
 // import React, { useEffect, useState } from "react";
 // import TakeTest from "./TakeTest";
 import { border, Box, Button, Flex, FormControl, FormLabel, Heading, Input, Text, Textarea } from "@chakra-ui/react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 // import { Container,Grid,GridItem } from "@chakra-ui/react";
 import Slideshow from "./Slideshow";
 // import CalculateIcon from '@mui/icons-material/Calculate';
-const Home = () => {
+const Home = ({setchoosesub}) => {
   // console.log("c==", category[0].question);
-
+  const navigate = useNavigate();
+  const setsub = (pro) => {
+    setchoosesub(pro);
+    console.log(pro);
+    
+    navigate("/questionList");
+  }
   return (
     <>
       {/* <Box
@@ -196,32 +202,49 @@ const Home = () => {
           Top compitative Subject Quize 🐱‍🏍{" "}
         </Text>
         <Flex justifyContent={"space-around"} mt={"3%"}>
-          <Box
-            _hover={{ transform: "scale(1.1)", transition: "0.5s ease-in-out" }}
-            border={"3px solid #01bfbd"}
-            bg={"#01bfbd"}
-            color={"white"}
-            borderRadius={"3px"}
-            boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
-            w={"15%"}
-          >
-            <Text m={"5%"} fontSize={"20"}>
-              English
-            </Text>
-          </Box>
-          <Box
-            _hover={{ transform: "scale(1.1)", transition: "0.5s ease-in-out" }}
-            border={"3px solid red"}
-            bg={"red"}
-            color={"white"}
-            borderRadius={"3px"}
-            boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
-            w={"15%"}
-          >
-            <Text m={"5%"} fontSize={"20"}>
-              Maths
-            </Text>
-          </Box>
+            <Box
+              _hover={{
+                transform: "scale(1.1)",
+                transition: "0.5s ease-in-out",
+              }}
+              border={"3px solid #01bfbd"}
+              bg={"#01bfbd"}
+              color={"white"}
+              borderRadius={"3px"}
+              boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
+              w={"15%"}
+              onClick={() => {
+                setsub("Eng");
+                console.log("e");
+                
+              }
+                
+            }
+            >
+              <Text m={"5%"} fontSize={"20"}>
+                English
+              </Text>
+            </Box>
+            <Box
+              // to={"/questionList"}
+              _hover={{
+                transform: "scale(1.1)",
+                transition: "0.5s ease-in-out",
+              }}
+              border={"3px solid red"}
+              bg={"red"}
+              color={"white"}
+              borderRadius={"3px"}
+              boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
+              w={"15%"}
+              onClick={() => 
+                setsub("math")
+              }
+            >
+              <Text m={"5%"} fontSize={"20"}>
+                Maths
+              </Text>
+            </Box>
           <Box
             _hover={{ transform: "scale(1.1)", transition: "0.5s ease-in-out" }}
             border={"3px solid #48bb78"}
@@ -230,6 +253,7 @@ const Home = () => {
             color={"white"}
             boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
             w={"15%"}
+            onClick={() => setsub("Reasoning")}
           >
             <Text m={"5%"} fontSize={"20"}>
               Reasoning
@@ -243,6 +267,7 @@ const Home = () => {
             borderRadius={"3px"}
             boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
             w={"15%"}
+            onClick={() => setsub("gs")}
           >
             <Text m={"5%"} fontSize={"20"}>
               General studies
@@ -285,7 +310,6 @@ const Home = () => {
           <Text></Text>
         </Box>
       </Box> */}
-      
       {/* <Box
           w={"90%"}
           m={"20px auto"}

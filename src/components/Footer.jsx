@@ -1,4 +1,4 @@
-import { Box, Flex, Image, ListItem, Text, UnorderedList } from "@chakra-ui/react";
+import { Box, Center, Flex, Image, ListItem, Text, UnorderedList } from "@chakra-ui/react";
 import React from "react";
 import logo from "../logo.svg"
 import { Link } from "react-router-dom";
@@ -14,23 +14,23 @@ const Footer = () => {
         bg={"#1f4985"}
         fontFamily={"sans-serif"}
         color={"white"}
-        border={"1px solid red"}
+        // border={"1px solid red"}
         h={"250px"}
       >
-      
-
-        <Box border={"1px solid blue"} w={"60%"}>
+        <Box w={"60%"}>
           <Box
             boxSize={"sm"}
-            w={{ base: "40%", md: "22%", lg: "13%" }}
+            w={{ base: "40%", md: "22%", lg: "100%" }}
             h={"auto"}
-            bg="#465074"
+            m={"auto"}
+            bg="#1f4985"
           >
             <Link to={"/"}>
               {" "}
               <Image
                 src={logo}
-                // bg={"#4285f4"}
+                bg={"#1f4985"}
+                // w={"20%"}
                 // pb={"3%"}
                 fontColor={"White"}
                 alt="logo"

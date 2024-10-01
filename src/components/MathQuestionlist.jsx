@@ -1,15 +1,18 @@
 import { Box, Divider, Flex, Heading, Text } from '@chakra-ui/react';
-import React, { useState } from 'react'
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom';
 
 const MathQuestionlist = ({
   category,
+  chooseSub,
+  currentSub,
   setQuestions,
   handleFullScreen,
   settestTitle,
 }) => {
 
  const [MathSubject,setMathSubject] = useState("")
+ const [currentTopic,setcurrentTopic] = useState([])
 const [sscCglMathsSyllabus] = useState([
     "Number System",
     "L.C.M and H.C.F",
@@ -33,7 +36,53 @@ const [sscCglMathsSyllabus] = useState([
     "Data Interpretation",
     "General Studies"
 ]);
-console.log(MathSubject,category);
+
+
+const [englishTopics] = useState([
+  "Reading Comprehension",
+  "Synonyms",
+  "Antonyms",
+  "Fill in the Blanks",
+  "Sentence Improvement",
+  "Spotting Errors",
+  "Para Jumbles",
+  "Idioms and Phrases",
+  "One Word Substitution",
+  "Active and Passive Voice",
+  "Direct and Indirect Speech",
+  "Cloze Test",
+  "Sentence Completion",
+  "Vocabulary",
+  "Prepositions",
+  "Articles",
+  "Tenses",
+  "Subject-Verb Agreement",
+  "Phrasal Verbs",
+  "Vocabulary"
+]);
+
+const [Gs] = useState(["Vedic age"]);
+
+const navigate = useNavigate()
+const maketest = (qus,full,sec) => {
+   setQuestions(qus);
+   handleFullScreen(full);
+   settestTitle(sec);
+   navigate("/test")
+}
+console.log("p",MathSubject,category,chooseSub);
+
+useEffect(() => {
+  if (currentSub === "Eng") {
+    setcurrentTopic(englishTopics);
+  } else if (currentSub === "math") {
+    setcurrentTopic(sscCglMathsSyllabus);
+  }
+  else if(currentSub === "gs"){
+     setcurrentTopic(Gs);
+  }
+}, [Gs, currentSub, englishTopics, sscCglMathsSyllabus]);
+
   return (
     <>
       <Flex w={"100%"}>
@@ -45,50 +94,46 @@ console.log(MathSubject,category);
           borderRadius={"4px"}
           m={"20px"}
         >
-          <Heading>{MathSubject!==""?<>{MathSubject}</>:"Maths"}</Heading>
+          <Heading>
+            {MathSubject !== "" ? <>{MathSubject}</> : <>{currentSub}</>}
+          </Heading>
 
           {MathSubject !== "" ? (
             <>
               {" "}
-
               {category.map((e, i) => (
                 <>
-                {e.topic===MathSubject?
-                <Box cursor={"pointer"}
-                  w={"100%"}
-                  mt={"2"}
-                  bg={"#4285f4 "}
-                  //   border={"1px solid red"}
-                  overflow={"hidden"}
-                  p={"2"}
-                  borderRadius={"3px"}
-                >
-                  <Link
-                    to={"/test"}
-                    onClick={() => {
-                      setQuestions(e.question);
-                      handleFullScreen(true);
-                      settestTitle(e.section);
-                    }}
-                  >
+                  {e.topic === MathSubject ? (
                     <Box
-                      // bg={"#1f4985"}
-                      // mt={"430"}
-                      _hover={"orange"}
-                      w="100%"
-                      h={"100%"}
-                      color={"white"}
+                      cursor={"pointer"}
+                      w={"100%"}
+                      mt={"2"}
+                      bg={"#4285f4 "}
+                      //   border={"1px solid red"}
+                      overflow={"hidden"}
+                      p={"2"}
+                      borderRadius={"3px"}
                     >
-                       <b>{e.section}</b>
                      
+                        <Box
+                          // bg={"#1f4985"}
+                          // mt={"430"}
+                          _hover={"orange"}
+                          w="100%"
+                          h={"100%"}
+                          color={"white"}
+                          onClick={() => maketest(e.question, true, e.section)}
+                        >
+                          <b>{e.section}</b>
+                        </Box>
                     </Box>
-                  </Link>
-                </Box>
-            :null} </> ))}
+                  ) : null}{" "}
+                </>
+              ))}
             </>
           ) : (
             <>
-              {sscCglMathsSyllabus.map((e, i) => (
+              {currentTopic?.map((e, i) => (
                 <Box
                   w={"100%"}
                   mt={"2"}
@@ -133,7 +178,6 @@ console.log(MathSubject,category);
           <Text w={"100%"} fontSize={"large"}>
             <b>Make a Test</b>
           </Text>
-          
         </Box>
       </Flex>
     </>

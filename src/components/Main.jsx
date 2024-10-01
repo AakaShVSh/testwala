@@ -29,7 +29,8 @@ const Main = () => {
   const [message, setMessage] = useState(null);
   const [checkNavigation, setCheckNavigation] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [choseSub, setchoosesub] = useState("");
+  const [chooseSub, setchoosesub] = useState("");
+  const [currentSub,setCurrentSub] = useState("");
   const { questionLoading, questionSuccess, questionData } = useSelector(
     (state) => state.QuestionReducer
   );
@@ -44,28 +45,41 @@ const Main = () => {
       document.exitFullscreen();
     }
   };
+  console.log("k",questionData);
+  
   // console.log("hhhhh",TotalQuestion,mark,quest.length);
   // console.log("cat==",questionCategory);
   // console.log("d===",quest);
   useEffect(() => {
-   
-    setLocalStorage("category", testTitle);
+   if (testTitle!==null){
+     setLocalStorage("category", testTitle);
     console.log(testTitle);
+    console.log("l");
+   } 
+   
     
     // SetTotalQuestion(quest.length);
     // fetchData(setQuestionsCategory);
     // if(!questionSuccess){
-    dispatch(QuestionApi("math"));
-    setQuestionsCategory(questionData);
+    if(chooseSub!==""){
+      console.log("i",chooseSub);
+      setCurrentSub(chooseSub);
+       dispatch(QuestionApi(chooseSub));
+    
+    setchoosesub("")
+    }if(questionData!=[]){
+       setQuestionsCategory(questionData);
     setQuestions(questionData);
-  }, [questionSuccess]);
+    }
+  
+  }, [questionSuccess, chooseSub, testTitle, dispatch, questionData]);
   // console.log("qqqq", questionLoading, "sss", questionSuccess,"dddd",questionData);
   return (
     <>
       {isFullScreen === true ? null : <Navbar />}
       {/* <Sidebar/> */}
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Home setchoosesub={setchoosesub} />} />
         <Route
           path="/auth/signin"
           element={
@@ -111,6 +125,8 @@ const Main = () => {
           path="/questionList"
           element={
             <MathQuestionlist
+            currentSub={currentSub}
+            chooseSub={chooseSub}
               category={questionCategory}
               handleFullScreen={handleFullScreen}
               setQuestions={setQuestions}
@@ -118,8 +134,7 @@ const Main = () => {
             />
           }
         />
-        <Route path="/GiveFeedback" element={<Feedback/>}/>
-
+        <Route path="/GiveFeedback" element={<Feedback />} />
       </Routes>
       {isFullScreen === true ? null : <Footer />}
     </>
