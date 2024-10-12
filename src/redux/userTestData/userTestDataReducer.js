@@ -15,7 +15,7 @@ export const userTestDataReducer = (
   state = initialstate,
   { type, payload }
 ) => {
-  // console.log(type);
+  console.log(type,payload);
   switch (type) {
     case USERTESTDATA_LOADING:
        console.log(state);

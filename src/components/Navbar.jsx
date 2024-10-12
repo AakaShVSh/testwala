@@ -13,22 +13,31 @@ import {
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { FaBold, FaRegUserCircle } from "react-icons/fa";
-import { getCookies } from "../helpers/cookies";
+import { getCookies, setCookies } from "../helpers/cookies";
 import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
 import { useSelector } from "react-redux";
 const Navbar = () => {
   const { signInSuccess } = useSelector((state) => state.signInReducer);
   const [stateSignin,setStateSignin] = useState(false);
   useEffect(() => {
-    
-    if (signInSuccess !== false) {
-      setLocalStorage("success", signInSuccess);
+    const h = async() => {
+       const s = await getCookies("success");
+   ;
+    if (s) {
+     
+      setStateSignin(s); console.log(s)
+      setLocalStorage("success", s);
 
     }
-    else{
-      setLocalStorage("success",false);
+     else if (signInSuccess !== false) {
+      setCookies("success", signInSuccess);
+      setStateSignin(s)
     }
-  },[signInSuccess])
+    
+   
+    }
+    h()
+  })
   return (
     <>
       {/* <Container */}
@@ -84,25 +93,28 @@ const Navbar = () => {
             bg="#fbfbfb"
           />
         </Box>
-        {signInSuccess?"user":  <Link to={"/auth/signin"}>
-          {/* <Button 
+        {stateSignin ? (
+          "user"
+        ) : (
+          <Link to={"/auth/signin"}>
+            {/* <Button 
           colorScheme="orange"
           >
             SignIn
           </Button> */}
-          <Button
-            rightIcon={<FaRegUserCircle />}
-            colorScheme="blue"
-            border={"#4285f4"}
-            color={"white"}
-            bg={"turquoise"}
-            _hover={{ bg: "#f44758" }}
-            variant="outline"
-          >
-            Sign in
-          </Button>
-        </Link>}
-      
+            <Button
+              rightIcon={<FaRegUserCircle />}
+              colorScheme="blue"
+              border={"#4285f4"}
+              color={"white"}
+              bg={"turquoise"}
+              _hover={{ bg: "#f44758" }}
+              variant="outline"
+            >
+              Sign in
+            </Button>
+          </Link>
+        )}
       </Center>
       {/* </Container> */}
 

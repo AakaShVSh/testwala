@@ -19,6 +19,7 @@ import Footer from "./Footer";
 import { useDispatch, useSelector } from "react-redux";
 import { QuestionApi } from "../redux/questions/questions.ActionType";
 import Feedback from "./Feedback";
+import ResultPage from "./ResultPage";
 
 const Main = () => {
   const [mark, setMark] = useState(0);
@@ -45,7 +46,7 @@ const Main = () => {
       document.exitFullscreen();
     }
   };
-  console.log("k",questionData);
+  // console.log("k",questionData);
   
   // console.log("hhhhh",TotalQuestion,mark,quest.length);
   // console.log("cat==",questionCategory);
@@ -54,9 +55,11 @@ const Main = () => {
    if (testTitle!==null){
      setLocalStorage("category", testTitle);
     console.log(testTitle);
+    setLocalStorage("Testdata",quest);
     console.log("l");
    } 
    
+    
     
     // SetTotalQuestion(quest.length);
     // fetchData(setQuestionsCategory);
@@ -65,6 +68,7 @@ const Main = () => {
       console.log("i",chooseSub);
       setCurrentSub(chooseSub);
        dispatch(QuestionApi(chooseSub));
+       setLocalStorage("Subject",chooseSub)
     
     setchoosesub("")
     }if(questionData!=[]){
@@ -112,21 +116,19 @@ const Main = () => {
             <TakeTest
               handleFullScreen={handleFullScreen}
               // setIsFullScreen={}
+              // chooseSub={chooseSub}
               quest={quest}
             />
           }
         />
-        <Route
-          path="/test-result"
-          element={<SubmitTest TotalQuestion={quest.length} />}
-        />
+        <Route path="/test-result" element={<ResultPage />} />
         <Route path="/Review-Test" element={<ReviewTest />} />
         <Route
           path="/questionList"
           element={
             <MathQuestionlist
-            currentSub={currentSub}
-            chooseSub={chooseSub}
+              currentSub={currentSub}
+              chooseSub={chooseSub}
               category={questionCategory}
               handleFullScreen={handleFullScreen}
               setQuestions={setQuestions}

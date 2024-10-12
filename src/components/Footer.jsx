@@ -55,24 +55,7 @@ const Footer = () => {
               <ListItem>Privacy</ListItem>
             </UnorderedList>{" "}
           </Box>
-          <Box mr={"9"}>
-            <UnorderedList styleType="''">
-              <Text>Help</Text>
-              <ListItem>Support</ListItem>
-              <ListItem>F&Q</ListItem>
-              <ListItem>Status</ListItem>
-              <ListItem>Conact us</ListItem>
-            </UnorderedList>
-          </Box>{" "}
-          <Box>
-            <UnorderedList styleType="''">
-              <Text>Help</Text>
-              <ListItem>Support</ListItem>
-              <ListItem>F&Q</ListItem>
-              <ListItem>Status</ListItem>
-              <ListItem>Conact us</ListItem>
-            </UnorderedList>
-          </Box>
+         
         </Flex>
       </Box>
     </>

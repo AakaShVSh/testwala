@@ -30,7 +30,7 @@ import ModalPause from "./ModalPause";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
 import { useDispatch } from "react-redux";
-import { userTestDataApi } from "../redux/userTestData/userTestData_ActionType.js";
+import { userTestDataApi, userTestFetchDataApi } from "../redux/userTestData/userTestData_ActionType.js";
 import { HamburgerIcon } from "@chakra-ui/icons";
 
 const TakeTest = ({ quest, handleFullScreen }) => {
@@ -42,9 +42,12 @@ const TakeTest = ({ quest, handleFullScreen }) => {
   const [markedNotAnswer, setMarkedNotAnswer] = useState([]);
   const [notAnswer, setNotAnswer] = useState([]);
   const [answer, setans] = useState(null);
+  const [wrongans, setwrong] = useState(0);
+  const [wrongansqus, setwrongansqus] = useState([]);
   const [allAns, setAllAns] = useState({});
   const [mark, setMark] = useState(0);
   const [isMobile] = useMediaQuery("(max-width: 768px)");
+  const [correctQus, setcorrectQus] = useState([]);
   const dispatch = useDispatch();
   // const [newTestDataStore,setNewTestDataStore] = useState(null)
 
@@ -275,6 +278,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
       setcurrentquestion(currentquestion + 1);
     }
   };
+  console.log("wrongans", wrongans, wrongansqus);
 
   const handleAnswer = (ans, qus) => {
     setans(ans);
@@ -282,7 +286,13 @@ const TakeTest = ({ quest, handleFullScreen }) => {
       question[currentquestion].answer === qus + 1 &&
       !correctAns.includes(currentquestion)
     ) {
+      if (wrongansqus.includes(currentquestion)) {
+        setwrong(wrongans - 1);
+        let removeFromwrongansqus = wrongansqus.indexOf(currentquestion);
+        wrongansqus.splice(removeFromwrongansqus, 1);
+      }
       setMark(mark + 1);
+      setcorrectQus([...correctQus, currentquestion]);
       setCorrectAns([...correctAns, currentquestion]);
     } else if (
       question[currentquestion].answer !== qus + 1 &&
@@ -290,7 +300,18 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     ) {
       let removeFromCorrectAns = correctAns.indexOf(currentquestion);
       correctAns.splice(removeFromCorrectAns, 1);
+      let removecorrectQus = correctQus.indexOf(currentquestion);
+      correctQus.splice(removecorrectQus, 1);
       setMark(mark - 1);
+      setwrong(wrongans + 1);
+    }
+    if (
+      question[currentquestion].answer !== qus + 1 &&
+      !correctAns.includes(currentquestion) &&
+      !wrongansqus.includes(currentquestion)
+    ) {
+      setwrong(wrongans + 1);
+      setwrongansqus([...wrongansqus, currentquestion]);
     }
     setAllAns((prevState) => ({
       ...prevState,
@@ -328,11 +349,17 @@ const TakeTest = ({ quest, handleFullScreen }) => {
   const giveMark = () => {
     const category = getLocalStorage("category");
     const user = getLocalStorage("_user");
-    console.log(user);
+    const subject = getLocalStorage("Subject");
+    console.log(user,subject);
     const newTestData = {
       user: user,
+      subject: subject,
+      rank: 0,
+      wrongans: wrongans,
+      correctQus: correctQus,
       score: mark,
       allAnswer: allAns,
+      wrongansqus: wrongansqus,
       answeredQuestion: answeredQuestion,
       notAnswer: notAnswer,
       markedAndAnswer: markedAndAnswer,
@@ -344,6 +371,9 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     setTestData(newTestData);
     dispatch(userTestDataApi(newTestData));
     // const getStorage = getLocalStorage("test");
+    const d = userTestFetchDataApi();
+    console.log(d);
+    
     setLocalStorage("Total", mark);
     setLocalStorage("test", [newTestData]);
     navigate("/test-result");

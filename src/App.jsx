@@ -1,18 +1,21 @@
+import { Box } from "@chakra-ui/react";
 import ForgotPassword from "./components/ForgotPassword";
 import Main from "./components/Main";
 import Navbar from "./components/Navbar";
+import ResultPage from "./components/ResultPage";
 // import "./App.css"
 function App() {
   return (
    <>
-   <div className="main-body">
-
+ 
   {/* <Navbar/> */}
   <Main/>
-{/* <ForgotPassword/> */}
-   </div>
+  {/* <ResultPage/> */}
+  
    </>
   );
 }
 
 export default App;
+
+

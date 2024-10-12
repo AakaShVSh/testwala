@@ -1,6 +1,6 @@
 import React from 'react'
 
-const EnglishQuestionList = () => {
+const RankPage = () => {
   return (
     <div>
       
@@ -8,4 +8,4 @@ const EnglishQuestionList = () => {
   )
 }
 
-export default EnglishQuestionList
+export default RankPage
