@@ -1,64 +1,90 @@
-import { Box, Center, Flex, Image, ListItem, Text, UnorderedList } from "@chakra-ui/react";
+import {
+  Box,
+  Center,
+  Flex,
+  Image,
+  ListItem,
+  Text,
+  UnorderedList,
+} from "@chakra-ui/react";
 import React from "react";
-import logo from "../logo.svg"
+import logo from "../logo.svg";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <>
-      <Box
-        // textAlign={"lft"}
+    <Box
+      w={"100%"}
+      display={"flex"}
+      mt={"5%"}
+      bg={"#1f4985"}
+      fontFamily={"sans-serif"}
+      color={"white"}
+      h={""} // Responsive height
+      p={{ base: "20px 10%", md: "30px 10%" }} // Responsive padding
+    >
+      <Flex
+        direction={{ base: "column", md: "row" }}
+        justifyContent={"space-between"}
+        alignItems={"center"}
         w={"100%"}
-        display={"flex"}
-        mt={"5%"}
-        bg={"#1f4985"}
-        fontFamily={"sans-serif"}
-        color={"white"}
-        // border={"1px solid red"}
-        h={"250px"}
       >
-        <Box w={"60%"}>
-          <Box
-            boxSize={"sm"}
-            w={{ base: "40%", md: "22%", lg: "100%" }}
-            h={"auto"}
-            m={"auto"}
-            bg="#1f4985"
-          >
-            <Link to={"/"}>
-              {" "}
-              <Image
-                src={logo}
-                bg={"#1f4985"}
-                // w={"20%"}
-                // pb={"3%"}
-                fontColor={"White"}
-                alt="logo"
-              />
-            </Link>
-          </Box>
-        </Box>
-        <Flex
-          // display={"flex"}
-          m={"4"}
-          justifyContent={"space-around"}
-          lineHeight={"7"}
+        <Box
+          boxSize={"sm"}
+          w={{ base: "60%", md: "22%", lg: "20%" }}
+          h={"auto"}
+          m={"auto"}
+          bg="#1f4985"
         >
-          <Box mr={"9"}>
-            <UnorderedList styleType="''">
-              <Text>About Us</Text>
+          <Link to={"/"}>
+            <Image
+              src={logo}
+              alt="logo"
+              objectFit="contain"
+              h={{ base: "100%", md: "60px",lg:"100%" }} // Responsive logo height
+              m="auto"
+            />
+          </Link>
+        </Box>
+
+        <Flex
+          direction={{ base: "column", md: "row" }}
+          justifyContent={"space-around"}
+          alignItems={"flex-start"}
+          mt={{ base: "20px", md: "0" }} // Margin on mobile
+        >
+          <Box>
+            <UnorderedList styleType="none" spacing={2} color="white">
+              <Text fontWeight="bold" mb={2}>
+                About Us
+              </Text>
               <Link to={"/GiveFeedback"}>
-                <ListItem>Give Feedback</ListItem>
+                <ListItem
+                  _hover={{ textDecoration: "underline", color: "#cce5ff" }}
+                >
+                  Give Feedback
+                </ListItem>
               </Link>
-              <ListItem>policy</ListItem>
-              <ListItem>Conact us</ListItem>
-              <ListItem>Privacy</ListItem>
-            </UnorderedList>{" "}
+              <ListItem
+                _hover={{ textDecoration: "underline", color: "#cce5ff" }}
+              >
+                Policy
+              </ListItem>
+              <ListItem
+                _hover={{ textDecoration: "underline", color: "#cce5ff" }}
+              >
+                Contact Us
+              </ListItem>
+              <ListItem
+                _hover={{ textDecoration: "underline", color: "#cce5ff" }}
+              >
+                Privacy
+              </ListItem>
+            </UnorderedList>
           </Box>
-         
         </Flex>
-      </Box>
-    </>
+      </Flex>
+    </Box>
   );
 };
 

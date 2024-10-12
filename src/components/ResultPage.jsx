@@ -34,7 +34,7 @@ import {
   Legend,
 } from "chart.js";
 import { useEffect, useState } from "react";
-import { getLocalStorage } from "../helpers/localStorage";
+import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
 import { userTestFetchDataApi } from "../redux/userTestData/userTestData_ActionType";
 
 // Register required components for Chart.js
@@ -75,8 +75,9 @@ const ResultPage = () => {
       (e) => e.subject === sub && e.section === topic
     );
     console.log(g); 
-setTotalStudent(g.length)
-    const sortedScores = [...g]?.sort((a, b) => a.score - b.score);
+    if(g!==undefined){  
+setTotalStudent(g?.length)
+    const sortedScores = g?.sort((a, b) => a.score - b.score);
     // Find how many scores are less than the user's score
     console.log(sortedScores);
 
@@ -86,7 +87,7 @@ setTotalStudent(g.length)
     const percent = (belowYourScore / sortedScores.length) * 100;
     console.log("p", percent);
 
-    setPercentile(percent);
+    setPercentile(percent.toFixed(2));
  
     //rank
     // Sort scores in descending order
@@ -98,15 +99,16 @@ setTotalStudent(g.length)
      );
      console.log(gp);
      setTotalStudent(gp.length);
-    const sortedScoresrank = [...gp]?.sort((a, b) => b.score - a.score);
+    const sortedScoresrank = gp?.sort((a, b) => b.score - a.score);
 console.log("s", score, sortedScoresrank,sortedScoresrank.indexOf(score));
 
     // Calculate rank (index of the user's score + 1 in the sorted array)
     const strank = sortedScoresrank.filter((s) => s.score < score).length+1;
 
     console.log("k",strank,sortedScoresrank);
-    
+    setLocalStorage("rank",strank)
     setrank(strank) 
+    }
   }; 
   
   const handleCalculate = () => { 
@@ -171,7 +173,7 @@ console.log("s", score, sortedScoresrank,sortedScoresrank.indexOf(score));
   };
   // console.log(TotalQuestion);
   return (
-    <Box maxW="4xl" mx="auto" p={4}>
+    <Box mx="auto" p={"6"}>
       {/* Header */}
       <Flex alignItems="center" mb={4}>
         <Icon as={FaArrowLeft} color="gray.600" mr={2} />
@@ -222,7 +224,9 @@ console.log("s", score, sortedScoresrank,sortedScoresrank.indexOf(score));
 
         <Flex alignItems="center" mb={2}>
           <Icon as={FaMedal} color="purple.500" mr={2} />
-          <Text>Rank: {rank}/{TotalStudent}</Text>
+          <Text>
+            Rank: {rank}/{TotalStudent}
+          </Text>
         </Flex>
 
         <Flex alignItems="center" mb={2}>
@@ -255,6 +259,9 @@ console.log("s", score, sortedScoresrank,sortedScoresrank.indexOf(score));
       </Box>
 
       {/* Bar Chart */}
+      <Heading as="h2" size="md" fontWeight="semibold">
+        Graphical Repreasentation
+      </Heading>
       <Box mb={6}>
         <Bar data={chartData} options={chartOptions} />
       </Box>

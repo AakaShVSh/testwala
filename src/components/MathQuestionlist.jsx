@@ -1,6 +1,7 @@
 import { Box, Divider, Flex, Heading, Text } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
+import { getLocalStorage, setLocalStorage } from '../helpers/localStorage';
 
 const MathQuestionlist = ({
   category,
@@ -13,6 +14,7 @@ const MathQuestionlist = ({
 
  const [MathSubject,setMathSubject] = useState("")
  const [currentTopic,setcurrentTopic] = useState([])
+ const [data,setdata] = useState([]);
 const [sscCglMathsSyllabus] = useState([
     "Number System",
     "L.C.M and H.C.F",
@@ -70,7 +72,15 @@ const maketest = (qus,full,sec) => {
    settestTitle(sec);
    navigate("/test")
 }
-console.log("p",MathSubject,category,chooseSub);
+
+
+useEffect(() => {
+console.log("p",category);
+const cate = category;
+setLocalStorage("questiondata",cate);
+const h = getLocalStorage("questiondata");
+setdata(h);
+}, [category])
 
 useEffect(() => {
   if (currentSub === "Eng") {

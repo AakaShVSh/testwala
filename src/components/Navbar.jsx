@@ -10,12 +10,14 @@ import {
   Input,
   Flex,
   Center,
+  Icon,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { FaBold, FaRegUserCircle } from "react-icons/fa";
 import { getCookies, setCookies } from "../helpers/cookies";
 import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
 import { useSelector } from "react-redux";
+import { FaSearch } from "react-icons/fa";
 const Navbar = () => {
   const { signInSuccess } = useSelector((state) => state.signInReducer);
   const [stateSignin,setStateSignin] = useState(false);
@@ -94,7 +96,7 @@ const Navbar = () => {
           />
         </Box>
         {stateSignin ? (
-          "user"
+          <Icon  fontSize={"100%"} as={FaRegUserCircle} />
         ) : (
           <Link to={"/auth/signin"}>
             {/* <Button 
