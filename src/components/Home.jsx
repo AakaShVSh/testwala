@@ -37,12 +37,12 @@ const Home = ({setchoosesub}) => {
         boxShadow="rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px"
       >
         {/* <Box w={"160px"} h={"120px"} bg={"#113461"}></Box> */}
-        <img
+        {/* <img
           src="https://www.nism.ac.in/wp-content/uploads/2024/07/1600-1-4.jpg"
           // h="0"
           w="100%"
           alt=""
-        />
+        /> */}
         {/* <Slideshow/> */}
       </Box>
       <Box
