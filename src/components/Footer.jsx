@@ -13,78 +13,92 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <Box
-      w={"100%"}
-      display={"flex"}
-      mt={"5%"}
-      bg={"#1f4985"}
-      fontFamily={"sans-serif"}
-      color={"white"}
-      h={""} // Responsive height
-      p={{ base: "20px 10%", md: "30px 10%" }} // Responsive padding
-    >
-      <Flex
-        direction={{ base: "column", md: "row" }}
-        justifyContent={"space-between"}
-        alignItems={"center"}
+    <>
+      {" "}
+      <Box w="100%" mt={"5%"} bg="#91b1dd" p="1%">
+        <Text textAlign={"center"} fontFamily={"sans-serif"}>
+          {" "}
+          <Link to={"/GiveFeedback"}>
+            {" "}
+            <Text as={"span"} color={"#006aff"}>
+              <b>Click Here</b>
+            </Text>
+          </Link>{" "}
+          to Give Us Your Feedback, Your Feedback is very valueble to Us
+        </Text>
+      </Box>
+      <Box
         w={"100%"}
+        display={"flex"}
+        bg={"#1f4985"}
+        fontFamily={"sans-serif"}
+        color={"white"}
+        h={""} // Responsive height
+        p={{ base: "20px 10%", md: "30px 10%" }} // Responsive padding
       >
-        <Box
-          boxSize={"sm"}
-          w={{ base: "60%", md: "22%", lg: "20%" }}
-          h={"auto"}
-          m={"auto"}
-          bg="#1f4985"
-        >
-          <Link to={"/"}>
-            <Image
-              src={logo}
-              alt="logo"
-              objectFit="contain"
-              h={{ base: "100%", md: "60px",lg:"100%" }} // Responsive logo height
-              m="auto"
-            />
-          </Link>
-        </Box>
-
         <Flex
           direction={{ base: "column", md: "row" }}
-          justifyContent={"space-around"}
-          alignItems={"flex-start"}
-          mt={{ base: "20px", md: "0" }} // Margin on mobile
+          justifyContent={"space-between"}
+          alignItems={"center"}
+          w={"100%"}
         >
-          <Box>
-            <UnorderedList styleType="none" spacing={2} color="white">
-              <Text fontWeight="bold" mb={2}>
-                About Us
-              </Text>
-              <Link to={"/GiveFeedback"}>
+          <Box
+            boxSize={"sm"}
+            w={{ base: "60%", md: "22%", lg: "20%" }}
+            h={"auto"}
+            m={"auto"}
+            bg="#1f4985"
+          >
+            <Link to={"/"}>
+              <Image
+                src={logo}
+                alt="logo"
+                objectFit="contain"
+                h={{ base: "100%", md: "60px", lg: "100%" }} // Responsive logo height
+                m="auto"
+              />
+            </Link>
+          </Box>
+
+          <Flex
+            direction={{ base: "column", md: "row" }}
+            justifyContent={"space-around"}
+            alignItems={"flex-start"}
+            mt={{ base: "20px", md: "0" }} // Margin on mobile
+          >
+            <Box>
+              <UnorderedList styleType="none" spacing={2} color="white">
+                <Text fontWeight="bold" mb={2}>
+                  About Us
+                </Text>
+                <Link to={"/GiveFeedback"}>
+                  <ListItem
+                    _hover={{ textDecoration: "underline", color: "#cce5ff" }}
+                  >
+                    Give Feedback
+                  </ListItem>
+                </Link>
                 <ListItem
                   _hover={{ textDecoration: "underline", color: "#cce5ff" }}
                 >
-                  Give Feedback
+                  Policy
                 </ListItem>
-              </Link>
-              <ListItem
-                _hover={{ textDecoration: "underline", color: "#cce5ff" }}
-              >
-                Policy
-              </ListItem>
-              <ListItem
-                _hover={{ textDecoration: "underline", color: "#cce5ff" }}
-              >
-                Contact Us
-              </ListItem>
-              <ListItem
-                _hover={{ textDecoration: "underline", color: "#cce5ff" }}
-              >
-                Privacy
-              </ListItem>
-            </UnorderedList>
-          </Box>
+                <ListItem
+                  _hover={{ textDecoration: "underline", color: "#cce5ff" }}
+                >
+                  Contact Us
+                </ListItem>
+                <ListItem
+                  _hover={{ textDecoration: "underline", color: "#cce5ff" }}
+                >
+                  Privacy
+                </ListItem>
+              </UnorderedList>
+            </Box>
+          </Flex>
         </Flex>
-      </Flex>
-    </Box>
+      </Box>
+    </>
   );
 };
 

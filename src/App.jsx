@@ -13,6 +13,7 @@ function App() {
   <Main/>
   {/* <ResultPage/> */}
   {/* <RankPage/> */}
+  
    </>
   );
 }

@@ -31,7 +31,7 @@ const Main = () => {
   const [checkNavigation, setCheckNavigation] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [chooseSub, setchoosesub] = useState("");
-  const [currentSub,setCurrentSub] = useState("");
+  const [currentSub, setCurrentSub] = useState("");
   const { questionLoading, questionSuccess, questionData } = useSelector(
     (state) => state.QuestionReducer
   );
@@ -47,35 +47,33 @@ const Main = () => {
     }
   };
   // console.log("k",questionData);
-  
+
   // console.log("hhhhh",TotalQuestion,mark,quest.length);
   // console.log("cat==",questionCategory);
   // console.log("d===",quest);
   useEffect(() => {
-   if (testTitle!==null){
-     setLocalStorage("category", testTitle);
-    console.log(testTitle);
-    setLocalStorage("Testdata",quest);
-    console.log("l");
-   } 
-   
-    
-    
+    if (testTitle !== null) {
+      setLocalStorage("category", testTitle);
+      console.log(testTitle);
+      setLocalStorage("Testdata", quest);
+      console.log("l");
+    }
+
     // SetTotalQuestion(quest.length);
     // fetchData(setQuestionsCategory);
     // if(!questionSuccess){
-    if(chooseSub!==""){
-      console.log("i",chooseSub);
+    if (chooseSub !== "") {
+      console.log("i", chooseSub);
       setCurrentSub(chooseSub);
-       dispatch(QuestionApi(chooseSub));
-       setLocalStorage("Subject",chooseSub)
-    
-    setchoosesub("")
-    }if(questionData!=[]){
-       setQuestionsCategory(questionData);
-    setQuestions(questionData);
+      dispatch(QuestionApi(chooseSub));
+      setLocalStorage("Subject", chooseSub);
+
+      setchoosesub("");
     }
-  
+    if (questionData != []) {
+      setQuestionsCategory(questionData);
+      setQuestions(questionData);
+    }
   }, [questionSuccess, chooseSub, testTitle, dispatch, questionData]);
   // console.log("qqqq", questionLoading, "sss", questionSuccess,"dddd",questionData);
   return (

@@ -2,6 +2,7 @@ import { Box, Divider, Flex, Heading, Text } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import { getLocalStorage, setLocalStorage } from '../helpers/localStorage';
+import CollapseEx from './CreateTest';
 
 const MathQuestionlist = ({
   category,
@@ -16,31 +17,32 @@ const MathQuestionlist = ({
  const [currentTopic,setcurrentTopic] = useState([])
  const [data,setdata] = useState([]);
 const [sscCglMathsSyllabus] = useState([
-    "Number System",
-    "L.C.M and H.C.F",
-    "Surds and Indices",
-    "Algebraic Identities",
-    "Percentage",
-    "Profit and Loss",
-    "Simple and Compound Interest",
-    "Average",
-    "Ratio and Proportion",
-    "Partnership",
-    "Problems with Ages",
-    "Time and Distance",
-    "Pipe and Cistern",
-    "Mixture and Alligation",
-    "Distance, Time, and Speed",
-    "Problems based on Train, Boat, and Stream",
-    "Mensuration 2D & 3D",
-    "Geometry and Co-ordinate Geometry (Graphs of Linear Equations)",
-    "Trigonometry",
-    "Data Interpretation",
-    "General Studies"
+  "Number System",
+  "L.C.M and H.C.F",
+  "Surds and Indices",
+  "Algebraic Identities",
+  "Percentage",
+  "Profit and Loss",
+  "Simple and Compound Interest",
+  "Average",
+  "Ratio and Proportion",
+  "Partnership",
+  "Problems with Ages",
+  "Time and Distance",
+  "Pipe and Cistern",
+  "Mixture and Alligation",
+  "Distance, Time, and Speed",
+  "Problems based on Train, Boat, and Stream",
+  "Mensuration 2D & 3D",
+  "Coordinate Geometry",
+  "Trigonometry",
+  "Data Interpretation",
+  "General Studies",
 ]);
 
 
 const [englishTopics] = useState([
+  "Spot the Error",
   "Reading Comprehension",
   "Synonyms",
   "Antonyms",
@@ -95,19 +97,22 @@ useEffect(() => {
 
   return (
     <>
-      <Flex w={"100%"}>
+      <Flex w={"80%"} m="auto">
         <Box
           w={"75%"}
           bg={"#c4d2ef"}
           // border={"1px solid red"}
           p={"20px"}
+          pt="2"
           borderRadius={"4px"}
           m={"20px"}
         >
+          
           <Heading>
             {MathSubject !== "" ? <>{MathSubject}</> : <>{currentSub}</>}
           </Heading>
-
+          <hr/>
+<CollapseEx/>
           {MathSubject !== "" ? (
             <>
               {" "}
@@ -186,7 +191,38 @@ useEffect(() => {
           mb={"20px"}
         >
           <Text w={"100%"} fontSize={"large"}>
-            <b>Make a Test</b>
+            <b>Created Tests</b>
+            <hr />
+             {currentTopic?.map((e, i) => (
+                <Box
+                  w={"100%"}
+                  mt={"2"}
+                  bg={"#4285f4 "}
+                  //   border={"1px solid red"}
+                  overflow={"hidden"}
+                  p={"2"}
+                  borderRadius={"3px"}
+                >
+                  {/* <Link
+                   to={"/test"}
+                   onClick={() => {
+                   }}
+                 > */}
+                  <Box
+                    // bg={"#1f4985"}
+                    // mt={"430"}
+                    _hover={"orange"}
+                    w="100%"
+                    h={"100%"}
+                    color={"white"}
+                    onClick={() => setMathSubject(e)}
+                  >
+                    <b>{e}</b>
+                  </Box>
+                  {/* </Link> */}
+                </Box>
+              ))}
+            
           </Text>
         </Box>
       </Flex>
