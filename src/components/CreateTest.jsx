@@ -5,7 +5,7 @@ import { MdAddBox } from "react-icons/md";
 function CollapseEx({setlist,setnoOfQus,setq}) {
  const { isOpen: isOpen1, onToggle: onToggle1 } = useDisclosure();
   const { isOpen: isOpen2, onToggle: onToggle2 } = useDisclosure();
-  const [totalqus,setTotalQus] = useState(0);
+  const [totalqus,setTotalQus] = useState(20);
   const [arr,setarr] = useState([])
   
  
