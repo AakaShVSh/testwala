@@ -95,11 +95,42 @@ const MathQuestionlist = ({
 
 
 const setq = async () => {
-  const h = getLocalStorage("questiondata");
-  const p = h.filter((e) => e.topic==="Vocabulary")
-  console.log(p); 
-  
+  const questionData = getLocalStorage("questiondata"); 
+  const p = questionData.filter((e) => list.includes(e.topic));
+  let dd = []
+  quslist.forEach((e,i) => { 
+ const g = p[i].question.slice(0, e.count);
+    //  console.log(p[i].question.slice(0,e.count),quslist)
+    dd = [...dd,...g]
+})
+console.log("g",dd);
+maketest(dd,true,"Test 1")
 }
+ 
+  
+
+
+
+// const setq = async () => {
+//   const questionData = getLocalStorage("questiondata"); // Fetch data once
+//   const vocabularyData = questionData.find(
+//     (item) => item.topic === "Vocabulary"
+//   ); // Find vocabulary topic
+
+//   if (vocabularyData && vocabularyData.question) {
+//     quslist.forEach((e) => {
+//       // Slice the question array up to the count specified in quslist
+//       const selectedQuestions = vocabularyData.question.slice(0, e.count);
+//       console.log(selectedQuestions); // Display the sliced questions
+//     });
+//   } else {
+//     console.log("No Vocabulary topic found or no questions available.");
+//   }
+// };
+
+ 
+
+
 
  useEffect(() => {
    if (list.length > 0) {

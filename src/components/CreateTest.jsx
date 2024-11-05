@@ -1,17 +1,20 @@
 import { Box, Button, Collapse, Grid, GridItem, Input, Select, Tag, Text, useDisclosure } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { MdAddBox } from "react-icons/md";
+import { getLocalStorage } from "../helpers/localStorage";
 
 function CollapseEx({setlist,setnoOfQus,setq}) {
  const { isOpen: isOpen1, onToggle: onToggle1 } = useDisclosure();
   const { isOpen: isOpen2, onToggle: onToggle2 } = useDisclosure();
   const [totalqus,setTotalQus] = useState(20);
   const [arr,setarr] = useState([])
-  
- 
+  const [TestSubject,setTestSubject] = useState("");
+
+
   useEffect(() => {
     setlist(arr)
     // setquslist({...quslist,qusdata:arr})
+    setTestSubject(getLocalStorage("Subject"));
   setnoOfQus(totalqus)
     
   },[arr, setlist, setnoOfQus, totalqus])
@@ -66,20 +69,22 @@ function CollapseEx({setlist,setnoOfQus,setq}) {
                   "scrollbar-width": "none", // for Firefox
                 }}
               >
-                <option></option>
-                <option
-                  value="Spot the Error"
-                  style={{
-                    backgroundColor: arr.includes("Spot the Error")
-                      ? "gray"
-                      : "",
-                    // color: "white",
-                  }}
-                >
-                  Spot the Error
-                </option>
-
-                <option
+                {TestSubject === "Eng" ? (
+                  <>
+                    {" "}
+                    <option></option>
+                    <option
+                      value="Spot the Error"
+                      style={{
+                        backgroundColor: arr.includes("Spot the Error")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Spot the Error
+                    </option>
+                    {/* <option
                   value="reading-comprehension"
                   style={{
                     backgroundColor: arr.includes("reading-comprehension")
@@ -130,17 +135,7 @@ function CollapseEx({setlist,setnoOfQus,setq}) {
                 >
                   Sentence Improvement
                 </option>
-                <option
-                  value="spotting-errors"
-                  style={{
-                    backgroundColor: arr.includes("spotting-errors")
-                      ? "gray"
-                      : "",
-                    // color: "white",
-                  }}
-                >
-                  Spotting Errors
-                </option>
+
                 <option
                   value="para-jumbles"
                   style={{
@@ -213,17 +208,19 @@ function CollapseEx({setlist,setnoOfQus,setq}) {
                   }}
                 >
                   Sentence Completion
-                </option>
-                <option
-                  value="vocabulary"
-                  style={{
-                    backgroundColor: arr.includes("vocabulary") ? "gray" : "",
-                    // color: "white",
-                  }}
-                >
-                  Vocabulary
-                </option>
-                <option
+                </option> */}
+                    <option
+                      value="Vocabulary"
+                      style={{
+                        backgroundColor: arr.includes("Vocabulary")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Vocabulary
+                    </option>
+                    {/* <option
                   value="prepositions"
                   style={{
                     backgroundColor: arr.includes("prepositions") ? "gray" : "",
@@ -271,7 +268,253 @@ function CollapseEx({setlist,setnoOfQus,setq}) {
                   }}
                 >
                   Phrasal Verbs
-                </option>
+                </option> */}
+                  </>
+                ) : TestSubject === "math" ? (
+                  <>
+                    <option></option>
+                    <option
+                      value="Average"
+                      style={{
+                        backgroundColor: arr.includes("Average") ? "gray" : "",
+                        // color: "white",
+                      }}
+                    >
+                      <Select>
+                        Average<option value="Game">Game</option>
+                        <option value="MoneyBased">MoneyBased</option>
+                        <option value="Pencil">Pencil</option>
+                        <option value="Salary">Salary</option>
+                      </Select>
+                    </option>{" "}
+                    <option
+                      value="L.C.M and H.C.F"
+                      style={{
+                        backgroundColor: arr.includes("L.C.M and H.C.F")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      L.C.M and H.C.F
+                    </option>{" "}
+                    <option
+                      value="Surds and Indices"
+                      style={{
+                        backgroundColor: arr.includes("Surds and Indices")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Surds and Indices
+                    </option>{" "}
+                    <option
+                      value="Algebraic Identities"
+                      style={{
+                        backgroundColor: arr.includes("Algebraic Identities")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Algebraic Identities
+                    </option>{" "}
+                    <option
+                      value="Percentage"
+                      style={{
+                        backgroundColor: arr.includes("Percentage")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Percentage
+                    </option>{" "}
+                    <option
+                      value="Profit and Loss"
+                      style={{
+                        backgroundColor: arr.includes("Profit and Loss")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Profit and Loss
+                    </option>{" "}
+                    <option
+                      value="Simple and Compound Interest"
+                      style={{
+                        backgroundColor: arr.includes(
+                          "Simple and Compound Interest"
+                        )
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Simple and Compound Interest
+                    </option>{" "}
+                    <option
+                      value="Number System"
+                      style={{
+                        backgroundColor: arr.includes("Number System")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Number System
+                    </option>{" "}
+                    <option
+                      value="Ratio and Proportion"
+                      style={{
+                        backgroundColor: arr.includes("Ratio and Proportion")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Ratio and Proportion
+                    </option>{" "}
+                    <option
+                      value="Partnership"
+                      style={{
+                        backgroundColor: arr.includes("Partnership")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Partnership
+                    </option>{" "}
+                    <option
+                      value="Problems with Ages"
+                      style={{
+                        backgroundColor: arr.includes("Problems with Ages")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Problems with Ages
+                    </option>{" "}
+                    <option
+                      value="Time and Distance"
+                      style={{
+                        backgroundColor: arr.includes("Time and Distance")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Time and Distance
+                    </option>{" "}
+                    <option
+                      value="Pipe and Cistern"
+                      style={{
+                        backgroundColor: arr.includes("Pipe and Cistern")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Pipe and Cistern
+                    </option>{" "}
+                    <option
+                      value="Mixture and Alligation"
+                      style={{
+                        backgroundColor: arr.includes("Mixture and Alligation")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Mixture and Alligation
+                    </option>{" "}
+                    <option
+                      value="Distance, Time, and Speed"
+                      style={{
+                        backgroundColor: arr.includes(
+                          "Distance, Time, and Speed"
+                        )
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Distance, Time, and Speed
+                    </option>{" "}
+                    <option
+                      value="Problems based on Train, Boat, and Stream"
+                      style={{
+                        backgroundColor: arr.includes(
+                          "Problems based on Train, Boat, and Stream"
+                        )
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Problems based on Train, Boat, and Stream
+                    </option>{" "}
+                    <option
+                      value="Mensuration 2D & 3D"
+                      style={{
+                        backgroundColor: arr.includes("Mensuration 2D & 3D")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Mensuration 2D & 3D
+                    </option>{" "}
+                    <option
+                      value="Coordinate Geometry"
+                      style={{
+                        backgroundColor: arr.includes("Coordinate Geometry")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Coordinate Geometry
+                    </option>{" "}
+                    <option
+                      value="Trigonometry"
+                      style={{
+                        backgroundColor: arr.includes("Trigonometry")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Trigonometry
+                    </option>{" "}
+                    <option
+                      value="Data Interpretation"
+                      style={{
+                        backgroundColor: arr.includes("Data Interpretation")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Data Interpretation
+                    </option>{" "}
+                    {/* <option
+                      value="General Studies"
+                      style={{
+                        backgroundColor: arr.includes("General Studies")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      General Studies
+                    </option>{" "} */}
+                  </>
+                ) : null}
               </Select>
 
               <Box display="flex" flexWrap="wrap" gap="8px" mt="10px">
@@ -298,7 +541,7 @@ function CollapseEx({setlist,setnoOfQus,setq}) {
               <Input
                 defaultValue="20"
                 // onChange={"handleChange"}
-onChange={(e) => setTotalQus(e.target.value)}
+                onChange={(e) => setTotalQus(e.target.value)}
                 type="number"
                 placeholder="Here is a sample placeholder"
                 size="sm"
@@ -344,7 +587,7 @@ onChange={(e) => setTotalQus(e.target.value)}
                 }}
                 // fontSize={"sm"}
                 // onClick={onToggle1}
-                onClick={onToggle2}
+                onClick={setq}
               >
                 Create
               </Button>
