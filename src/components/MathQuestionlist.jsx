@@ -14,10 +14,12 @@ const MathQuestionlist = ({
 }) => {
   const [MathSubject, setMathSubject] = useState("");
   const [currentTopic, setcurrentTopic] = useState([]);
+  const [dataTypeWiseTest, setdataTypeWiseTest] = useState([]);
   const [data, setdata] = useState([]);
   const [list, setlist] = useState([]);
   const [quslist, setquslist] = useState([]);
-  const [noOfQus,setnoOfQus] = useState(0);
+  const [name, setname] = useState("Test");
+  const [noOfQus, setnoOfQus] = useState(0);
   const [sscCglMathsSyllabus] = useState([
     "Number System",
     "L.C.M and H.C.F",
@@ -77,78 +79,110 @@ const MathQuestionlist = ({
 
   // Handle increment and decrement in quslist
   const updateCounter = (index, operation) => {
-    setquslist((prevQuslist) =>
-      prevQuslist.map((item, idx) =>
-        idx === index
-          ? {
-              ...item,
-              count:
-                operation === "increment"
-                  ? item.count + 1
-                  : Math.max(1, item.count - 1),
-            }
-          : item
-      )
-    );
+    setquslist((prevQuslist) => {
+      // Calculate the new count for the current topic
+      let newQuslist = [...prevQuslist];
+      const currentItem = newQuslist[index];
+      const updatedItem = {
+        ...currentItem,
+        count:
+          operation === "increment"
+            ? currentItem.count + 1
+            : Math.max(1, currentItem.count - 1), // Ensure count doesn't go below 1
+      };
+
+      newQuslist[index] = updatedItem;
+
+      // Calculate the total count of questions
+      const totalQuestions = newQuslist.reduce(
+        (acc, item) => acc + item.count,
+        0
+      );
+
+      // If totalQuestions exceeds the desired number, redistribute to maintain the total
+      if (totalQuestions > noOfQus) {
+        // Adjust other topics to make sure the total count matches `noOfQus`
+        let diff = totalQuestions - noOfQus;
+        let adjustmentIndex = 0;
+
+        while (diff > 0 && adjustmentIndex < newQuslist.length) {
+          // Find topics with count greater than 1 to decrement
+          if (newQuslist[adjustmentIndex].count > 1) {
+            newQuslist[adjustmentIndex].count -= 1;
+            diff--;
+          }
+          adjustmentIndex++;
+        }
+      }
+
+      return newQuslist;
+    });
   };
-// console.log(20%quslist.length);
 
+  // console.log(20%quslist.length);
 
-const setq = async () => {
-  const questionData = getLocalStorage("questiondata"); 
-  const p = questionData.filter((e) => list.includes(e.topic));
-  let dd = []
-  quslist.forEach((e,i) => { 
- const g = p[i].question.slice(0, e.count);
-    //  console.log(p[i].question.slice(0,e.count),quslist)
-    dd = [...dd,...g]
-})
-console.log("g",dd);
-maketest(dd,true,"Test 1")
-}
- 
-  
+  const setq = async () => {
+    const questionData = getLocalStorage("questiondata");
+    const p = questionData.filter((e) => list.includes(e.topic));
+    let dd = [];
+    quslist.forEach((e, i) => {
+      const g = p[i].question.slice(0, e.count);
+      //  console.log(p[i].question.slice(0,e.count),quslist)
+      dd = [...dd, ...g];
+    });
+    console.log("g", dd);
+    const testobj = {
+      testName: name,
+      quslist: quslist,
+      noOfQus: noOfQus,
+      questions: dd,
+    };
+    const f = getLocalStorage("allTypeWiseTests");
+    console.log("p",f);
+    
+    if (f != null) {
+      setLocalStorage("allTypeWiseTests", [...f, testobj]);
+    } else {
+      setLocalStorage("allTypeWiseTests", [testobj]);
+    }
 
+    maketest(dd, true, "Test 1");
+  };
 
+  console.log(quslist, name);
 
-// const setq = async () => {
-//   const questionData = getLocalStorage("questiondata"); // Fetch data once
-//   const vocabularyData = questionData.find(
-//     (item) => item.topic === "Vocabulary"
-//   ); // Find vocabulary topic
+  // const setq = async () => {
+  //   const questionData = getLocalStorage("questiondata"); // Fetch data once
+  //   const vocabularyData = questionData.find(
+  //     (item) => item.topic === "Vocabulary"
+  //   ); // Find vocabulary topic
 
-//   if (vocabularyData && vocabularyData.question) {
-//     quslist.forEach((e) => {
-//       // Slice the question array up to the count specified in quslist
-//       const selectedQuestions = vocabularyData.question.slice(0, e.count);
-//       console.log(selectedQuestions); // Display the sliced questions
-//     });
-//   } else {
-//     console.log("No Vocabulary topic found or no questions available.");
-//   }
-// };
+  //   if (vocabularyData && vocabularyData.question) {
+  //     quslist.forEach((e) => {
+  //       // Slice the question array up to the count specified in quslist
+  //       const selectedQuestions = vocabularyData.question.slice(0, e.count);
+  //       console.log(selectedQuestions); // Display the sliced questions
+  //     });
+  //   } else {
+  //     console.log("No Vocabulary topic found or no questions available.");
+  //   }
+  // };
 
- 
+  useEffect(() => {
+    if (list.length > 0) {
+      const totalQuestions = list.length;
+      const baseCount = Math.floor(noOfQus / totalQuestions);
+      const remainder = noOfQus % totalQuestions; // Calculate the remainder based on noOfQus
 
+      // Create `quslist` where the first item gets extra count if there's a remainder
+      const updatedQuslist = list.map((item, index) => ({
+        count: index === 0 ? baseCount + remainder : baseCount, // First item gets baseCount + remainder
+        qusdata: item,
+      }));
 
-
- useEffect(() => {
-   if (list.length > 0) {
-     const totalQuestions = list.length;
-     const baseCount = Math.floor(noOfQus / totalQuestions);
-     const remainder = noOfQus % totalQuestions; // Calculate the remainder based on noOfQus
-
-     // Create `quslist` where the first item gets extra count if there's a remainder
-     const updatedQuslist = list.map((item, index) => ({
-       count: index === 0 ? baseCount + remainder : baseCount, // First item gets baseCount + remainder
-       qusdata: item,
-     }));
-
-     setquslist(updatedQuslist);
-   }
- }, [list, noOfQus]);
-
-
+      setquslist(updatedQuslist);
+    }
+  }, [list, noOfQus]);
 
   useEffect(() => {
     // Category-related actions
@@ -166,6 +200,12 @@ maketest(dd,true,"Test 1")
       setcurrentTopic(Gs);
     }
   }, [category, currentSub, englishTopics, sscCglMathsSyllabus, Gs]);
+
+  useEffect(() => {
+    const f = getLocalStorage("allTypeWiseTests");
+    console.log(f, name);
+    setdataTypeWiseTest(f);
+  }, [name]);
 
   return (
     <>
@@ -185,7 +225,12 @@ maketest(dd,true,"Test 1")
         >
           <Heading>{MathSubject !== "" ? MathSubject : currentSub}</Heading>
           <Divider />
-          <CollapseEx setlist={setlist} setq={setq} setnoOfQus={setnoOfQus} />
+          <CollapseEx
+            setlist={setlist}
+            setq={setq}
+            setname={setname}
+            setnoOfQus={setnoOfQus}
+          />
           {quslist.length > 0 ? (
             quslist.map((e, i) => (
               <Box
@@ -287,24 +332,32 @@ maketest(dd,true,"Test 1")
           p="20px"
           borderRadius="4px"
         >
-          <Text w="100%" fontSize="large">
-            <b>Created Tests</b>
+          <Box w="100%">
+            <Text fontSize="large">
+              <b>Created Tests</b>
+            </Text>
             <Divider />
-            {currentTopic.map((topic, i) => (
-              <Box
-                key={i}
-                w="100%"
-                mt="2"
-                bg="#4285f4"
-                p="2"
-                borderRadius="3px"
-              >
-                <Box color="white" onClick={() => setMathSubject(topic)}>
-                  <b>{topic}</b>
+            {dataTypeWiseTest && dataTypeWiseTest.length > 0 ? (
+              dataTypeWiseTest.map((e, i) => (
+                <Box
+                  key={i}
+                  w="100%"
+                  mt="2"
+                  bg="#4285f4"
+                  p="2"
+                  borderRadius="3px"
+                >
+                  <Text color="white">
+                    <b>{e.testName || "Unnamed Test"}</b>
+                  </Text>
                 </Box>
-              </Box>
-            ))}
-          </Text>
+              ))
+            ) : (
+              <Text mt="4" color="gray.500">
+                No tests available.
+              </Text>
+            )}
+          </Box>
         </Box>
       </Box>
     </>

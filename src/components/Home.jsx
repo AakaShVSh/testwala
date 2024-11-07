@@ -247,9 +247,12 @@ const Home = ({ setchoosesub }) => {
             Top compitative Subject Quize
           </Text>
           <Box
-            display={{ base: "", lg: "flex" }}
+            display={{ base: "grid", lg: "flex" }}
             justifyContent={"space-around"}
-            mt={"3%"}
+            // gridTemplateColumns={"repeat(2,1fr)"}
+            // w={"100%"}
+            gap="5"
+            // mt={"1%"}
           >
             <Box
               _hover={{
@@ -261,70 +264,70 @@ const Home = ({ setchoosesub }) => {
               color={"white"}
               borderRadius={"3px"}
               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
-              w={"15%"}
-              h={"20%"}
+              w={{ base: "100%", lg: "15%" }}
+              // h={"20%"}
+              mt={{ base: "5%", lg: "" }}
               onClick={() => {
                 setsub("Eng");
                 console.log("e");
               }}
             >
               <Box>
-             <svg
-  fill="none"
-  height="48"
-  viewBox="0 0 48 48"
-  width="48"
-  xmlns="http://www.w3.org/2000/svg"
->
-  <rect
-    fill="#2F88FF"
-    height="36"
-    rx="3"
-    stroke="#666666"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    stroke-width="4"
-    width="36"
-    x="6"
-    y="6"
-  />
-  <path
-    d="M13 31V17H21"
-    stroke="white"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    stroke-width="4"
-  />
-  <path
-    d="M13 24H20.5"
-    stroke="white"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    stroke-width="4"
-  />
-  <path
-    d="M13 31H20.5"
-    stroke="white"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    stroke-width="4"
-  />
-  <path
-    d="M26 31L26 19"
-    stroke="white"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    stroke-width="4"
-  />
-  <path
-    d="M26 31L26 24.5C26 22.0147 28.0147 20 30.5 20V20C32.9853 20 35 22.0147 35 24.5L35 31"
-    stroke="white"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    stroke-width="4"
-  />
-</svg>
-
+                <svg
+                  fill="none"
+                  height="48"
+                  viewBox="0 0 48 48"
+                  width="48"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect
+                    fill="#2F88FF"
+                    height="36"
+                    rx="3"
+                    stroke="#666666"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="4"
+                    width="36"
+                    x="6"
+                    y="6"
+                  />
+                  <path
+                    d="M13 31V17H21"
+                    stroke="white"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="4"
+                  />
+                  <path
+                    d="M13 24H20.5"
+                    stroke="white"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="4"
+                  />
+                  <path
+                    d="M13 31H20.5"
+                    stroke="white"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="4"
+                  />
+                  <path
+                    d="M26 31L26 19"
+                    stroke="white"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="4"
+                  />
+                  <path
+                    d="M26 31L26 24.5C26 22.0147 28.0147 20 30.5 20V20C32.9853 20 35 22.0147 35 24.5L35 31"
+                    stroke="white"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="4"
+                  />
+                </svg>
               </Box>
               <Text m={"5%"} fontSize={"20"}>
                 English
@@ -336,12 +339,13 @@ const Home = ({ setchoosesub }) => {
                 transform: "scale(1.1)",
                 transition: "0.5s ease-in-out",
               }}
+              mt={{ base: "5%", lg: "" }}
               border={"3px solid #41d8d5"}
               bg={"#41d8d5"}
               color={"white"}
               borderRadius={"3px"}
               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
-              w={"15%"}
+              w={{ base: "100%", lg: "15%" }}
               onClick={() => setsub("math")}
             >
               <Box>
@@ -497,12 +501,13 @@ const Home = ({ setchoosesub }) => {
                 transform: "scale(1.1)",
                 transition: "0.5s ease-in-out",
               }}
+              mt={{ base: "5%", lg: "" }}
               border={"3px solid #48bb78"}
               borderRadius={"3px"}
               bg={"#48bb78"}
               color={"white"}
               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
-              w={"15%"}
+              w={{ base: "100%", lg: "15%" }}
               onClick={() => setsub("Reasoning")}
             >
               <Box>
@@ -625,12 +630,13 @@ const Home = ({ setchoosesub }) => {
                 transform: "scale(1.1)",
                 transition: "0.5s ease-in-out",
               }}
+              mt={{ base: "5%", lg: "" }}
               border={"3px solid #ff782c"}
               bg={"#ff782c"}
               color={"white"}
               borderRadius={"3px"}
               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
-              w={"15%"}
+              w={{ base: "100%", lg: "15%" }}
               onClick={() => setsub("gs")}
             >
               <Box>
@@ -808,12 +814,13 @@ const Home = ({ setchoosesub }) => {
                 transform: "scale(1.1)",
                 transition: "0.5s ease-in-out",
               }}
+              mt={{ base: "5%", lg: "" }}
               border={"3px solid #5c4ce3"}
               color={"white"}
               bg={"#5c4ce3"}
               borderRadius={"3px"}
               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
-              w={"15%"}
+              w={{ base: "100%", lg: "15%" }}
             >
               <Box>
                 <svg

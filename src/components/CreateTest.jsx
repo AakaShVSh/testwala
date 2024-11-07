@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { MdAddBox } from "react-icons/md";
 import { getLocalStorage } from "../helpers/localStorage";
 
-function CollapseEx({setlist,setnoOfQus,setq}) {
+function CollapseEx({setlist,setnoOfQus,setq,setname}) {
  const { isOpen: isOpen1, onToggle: onToggle1 } = useDisclosure();
   const { isOpen: isOpen2, onToggle: onToggle2 } = useDisclosure();
   const [totalqus,setTotalQus] = useState(20);
@@ -48,6 +48,7 @@ function CollapseEx({setlist,setnoOfQus,setq}) {
                 defaultValue="Test 1"
                 // onChange={"handleChange"}
                 placeholder="Here is a sample placeholder"
+                onChange={(e) => setname(e.target.value)}
                 size="sm"
               />
             </GridItem>
@@ -273,19 +274,25 @@ function CollapseEx({setlist,setnoOfQus,setq}) {
                 ) : TestSubject === "math" ? (
                   <>
                     <option></option>
-                    <option
+                    {/* <option
                       value="Average"
                       style={{
                         backgroundColor: arr.includes("Average") ? "gray" : "",
                         // color: "white",
                       }}
                     >
-                      <Select>
-                        Average<option value="Game">Game</option>
-                        <option value="MoneyBased">MoneyBased</option>
-                        <option value="Pencil">Pencil</option>
-                        <option value="Salary">Salary</option>
-                      </Select>
+                      Average
+                    </option>{" "} */}
+                    <option
+                      value="Mean,Median and Mode"
+                      style={{
+                        backgroundColor: arr.includes("Mean,Median and Mode")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Mean,Median and Mode
                     </option>{" "}
                     <option
                       value="L.C.M and H.C.F"
@@ -298,7 +305,7 @@ function CollapseEx({setlist,setnoOfQus,setq}) {
                     >
                       L.C.M and H.C.F
                     </option>{" "}
-                    <option
+                    {/* <option
                       value="Surds and Indices"
                       style={{
                         backgroundColor: arr.includes("Surds and Indices")
@@ -501,7 +508,7 @@ function CollapseEx({setlist,setnoOfQus,setq}) {
                       }}
                     >
                       Data Interpretation
-                    </option>{" "}
+                    </option>{" "} */}
                     {/* <option
                       value="General Studies"
                       style={{
@@ -514,7 +521,23 @@ function CollapseEx({setlist,setnoOfQus,setq}) {
                       General Studies
                     </option>{" "} */}
                   </>
-                ) : null}
+                ) : TestSubject === "gs" ? (
+                  <>
+                    <option
+                      value="Vedic age"
+                      style={{
+                        backgroundColor: arr.includes("Vedic age")
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Vedic age
+                    </option>
+                  </>
+                ) : (
+                  ""
+                )}
               </Select>
 
               <Box display="flex" flexWrap="wrap" gap="8px" mt="10px">
