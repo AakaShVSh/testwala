@@ -55,7 +55,7 @@ function CollapseEx({setlist,setnoOfQus,setq,setname}) {
             <GridItem>
               <Text mb="3px">Select Question Types</Text>
               <Select
-                onClick={(e) => {
+                onChange={(e) => {
                   if (!arr.includes(e.target.value) && e.target.value !== "") {
                     setarr([...arr, e.target.value]);
                   }
