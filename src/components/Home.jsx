@@ -18,14 +18,16 @@ import { Link, useNavigate } from "react-router-dom";
 import Slideshow from "./Slideshow";
 import FeedbackSlideshow from "./Userfeedback";
 import Feedback from "./Feedback";
+import { setLocalStorage } from "../helpers/localStorage";
 // import { RiEnglishInput } from "react-icons/ri";
 // import CalculateIcon from '@mui/icons-material/Calculate';
 const Home = ({ setchoosesub }) => {
   // console.log("c==", category[0].question);
   const navigate = useNavigate();
-  const setsub = (pro) => {
+  const setsub = (pro,sub=null) => {
     setchoosesub(pro);
-    console.log(pro);
+    console.log(pro,sub);
+  setLocalStorage("cat",sub)
 
     navigate("/questionList");
   };
@@ -821,7 +823,7 @@ const Home = ({ setchoosesub }) => {
               borderRadius={"3px"}
               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
               w={{ base: "100%", lg: "15%" }}
-              onClick={() => setsub("vocabulary")}
+              onClick={() => setsub("Eng","vocabulary")}
             >
               <Box>
                 <svg

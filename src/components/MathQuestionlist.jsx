@@ -189,15 +189,25 @@ const MathQuestionlist = ({
     const cate = category;
     setLocalStorage("questiondata", cate);
     const h = getLocalStorage("questiondata");
-    setdata(h);
+    const hh = getLocalStorage("cat");
+    // setdata(h);
+console.log("hh",hh,h);
 
     // Update topics based on `currentSub`
-    if (currentSub === "Eng") {
+    if (currentSub === "Eng"&&hh==null) {
+
       setcurrentTopic(englishTopics);
     } else if (currentSub === "math") {
       setcurrentTopic(sscCglMathsSyllabus);
     } else if (currentSub === "gs") {
       setcurrentTopic(Gs);
+    }else if(hh=="vocabulary"){
+const questionDatav = getLocalStorage("questiondata");
+const pp = questionDatav.filter((e) => e.topic=="Vocabulary");
+console.log("pp",pp)
+setcurrentTopic(null)
+setdata(pp)
+    // maketest(dd, true, "Test 1");
     }
   }, [category, currentSub, englishTopics, sscCglMathsSyllabus, Gs]);
 
@@ -283,43 +293,72 @@ const MathQuestionlist = ({
             ))
           ) : (
             <Box>
-              {MathSubject
-                ? category.map((e, i) =>
-                    e.topic === MathSubject ? (
-                      <Box
-                        key={i}
-                        cursor="pointer"
-                        w="100%"
-                        mt="2"
-                        bg="#4285f4"
-                        p="2"
-                        borderRadius="3px"
-                      >
-                        <Box
-                          color="white"
-                          onClick={() => maketest(e.question, true, e.section)}
-                        >
-                          <b>{e.section}</b>
-                        </Box>
-                      </Box>
-                    ) : null
-                  )
-                : currentTopic.map((topic, i) => (
+              {MathSubject ? (
+                category.map((e, i) =>
+                  e.topic === MathSubject ? (
                     <Box
                       key={i}
+                      cursor="pointer"
                       w="100%"
                       mt="2"
                       bg="#4285f4"
-                      p="1"
+                      p="2"
                       borderRadius="3px"
-                      onClick={() => setMathSubject(topic)}
-                      cursor="pointer"
                     >
-                      <Box color="white">
-                        <b>{topic}</b>
+                      <Box
+                        color="white"
+                        onClick={() => maketest(e.question, true, e.section)}
+                      >
+                        <b>{e.section}</b>
                       </Box>
                     </Box>
-                  ))}
+                  ) : null
+                )
+              ) : (
+                <>
+                  {currentTopic === null ? (
+                    <>
+                      {data.map((e, i) => (
+                        <Box
+                          key={i}
+                          cursor="pointer"
+                          w="100%"
+                          mt="2"
+                          bg="#4285f4"
+                          p="2"
+                          borderRadius="3px"
+                        >
+                          <Box
+                            color="white"
+                            onClick={() =>
+                              maketest(e.question, true, e.section)
+                            }
+                          >
+                            <b>{e.section}</b>
+                          </Box>
+                        </Box>
+                      ))}
+                    </>
+                  ) : (
+                    currentTopic.map((topic, i) => (
+                      <Box
+                        key={i}
+                        w="100%"
+                        mt="2"
+                        bg="#4285f4"
+                        p="1"
+                        borderRadius="3px"
+                        onClick={() => setMathSubject(topic)}
+                        cursor="pointer"
+                      >
+                        <Box color="white">
+                          <b>{topic}</b>
+                        </Box>
+                      </Box>
+                    ))
+                  )}
+                </>
+              )}
             </Box>
           )}
         </Box>
