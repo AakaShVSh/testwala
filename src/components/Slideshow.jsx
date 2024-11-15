@@ -82,6 +82,7 @@ const Carousel = () => {
             <Box key={index} boxSize="full" flex="none">
               <Image
                 src={src}
+                draggable="false" 
                 alt={`Slide ${index}`}
                 objectFit="cover"
                 w="full"
