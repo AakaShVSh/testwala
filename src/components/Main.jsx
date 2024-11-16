@@ -20,6 +20,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { QuestionApi } from "../redux/questions/questions.ActionType";
 import Feedback from "./Feedback";
 import ResultPage from "./ResultPage";
+import Analysis from "./Analysis";
 
 const Main = () => {
   const [mark, setMark] = useState(0);
@@ -135,6 +136,7 @@ const Main = () => {
           }
         />
         <Route path="/GiveFeedback" element={<Feedback />} />
+        <Route path="/Analysis" element={<Analysis/>}/>
       </Routes>
       {isFullScreen === true ? null : <Footer />}
     </>

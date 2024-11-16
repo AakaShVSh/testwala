@@ -36,6 +36,7 @@ import {
 import { useEffect, useState } from "react";
 import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
 import { userTestFetchDataApi } from "../redux/userTestData/userTestData_ActionType";
+import { Link } from "react-router-dom";
 
 // Register required components for Chart.js
 ChartJS.register(
@@ -196,6 +197,9 @@ console.log("s", score, sortedScoresrank,sortedScoresrank.indexOf(score));
           </ListItem>
           <ListItem mr={4} pb={2} color="gray.500">
             All
+          </ListItem>
+          <ListItem mr={4} pb={2} color="gray.500">
+            <Link to="/Review-Test">Analysis</Link>
           </ListItem>
           <ListItem mr={4} pb={2} color="gray.500">
             Correct
