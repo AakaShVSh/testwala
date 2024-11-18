@@ -67,7 +67,7 @@ const MathQuestionlist = ({
     "Phrasal Verbs",
   ]);
 
-  const [Gs] = useState(["Vedic age"]);
+  const [Gs] = useState(["Vedic age","Polity"]);
   const navigate = useNavigate();
 
   const maketest = (qus, full, sec) => {
