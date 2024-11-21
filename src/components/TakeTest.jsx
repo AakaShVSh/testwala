@@ -54,7 +54,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
   const dispatch = useDispatch();
   // const [newTestDataStore,setNewTestDataStore] = useState(null)
   const [min, setmin] = useState(59);
-  const [hour, sethour] = useState(2);
+  const [hour, sethour] = useState(11);
   const [size, setSize] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
 
