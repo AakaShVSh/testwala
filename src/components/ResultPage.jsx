@@ -196,10 +196,10 @@ console.log("s", score, sortedScoresrank,sortedScoresrank.indexOf(score));
             Overview
           </ListItem>
           <ListItem mr={4} pb={2} color="gray.500">
-            All
+           <Link to="/Review-Test">Review Test</Link>
           </ListItem>
           <ListItem mr={4} pb={2} color="gray.500">
-            <Link to="/Review-Test">Analysis</Link>
+             Analysis
           </ListItem>
           <ListItem mr={4} pb={2} color="gray.500">
             Correct
