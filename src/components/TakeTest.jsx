@@ -30,7 +30,10 @@ import ModalPause from "./ModalPause";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
 import { useDispatch } from "react-redux";
-import { userTestDataApi, userTestFetchDataApi } from "../redux/userTestData/userTestData_ActionType.js";
+import {
+  userTestDataApi,
+  userTestFetchDataApi,
+} from "../redux/userTestData/userTestData_ActionType.js";
 import { HamburgerIcon } from "@chakra-ui/icons";
 
 const TakeTest = ({ quest, handleFullScreen }) => {
@@ -50,7 +53,8 @@ const TakeTest = ({ quest, handleFullScreen }) => {
   const [correctQus, setcorrectQus] = useState([]);
   const dispatch = useDispatch();
   // const [newTestDataStore,setNewTestDataStore] = useState(null)
-
+  const [min, setmin] = useState(59);
+  const [hour, sethour] = useState(2);
   const [size, setSize] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -350,7 +354,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     const category = getLocalStorage("category");
     const user = getLocalStorage("_user");
     const subject = getLocalStorage("Subject");
-    console.log(user,subject);
+    console.log(user, subject);
     const newTestData = {
       user: user,
       subject: subject,
@@ -373,7 +377,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     // const getStorage = getLocalStorage("test");
     const d = userTestFetchDataApi();
     console.log(d);
-    
+
     setLocalStorage("Total", mark);
     setLocalStorage("test", [newTestData]);
     navigate("/test-result");
@@ -392,6 +396,22 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     //  }
   };
   // useEffect(() =>{
+
+  useEffect(() => {
+    if (hour === 0 && min === 0) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (min != 0) {
+        setmin(min - 1);
+      } else {
+        setmin(59);
+        sethour(hour - 1);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [hour, min]);
 
   const handleClick = (newSize) => {
     setSize(newSize);
@@ -447,8 +467,8 @@ const TakeTest = ({ quest, handleFullScreen }) => {
           w={isMobile ? "40%" : "10.5%"}
         >
           Time Left <Spacer />
-          <Text as={"span"}>00</Text>:<Text as={"span"}>59</Text>:
-          <Text as={"span"}>39</Text>
+          <Text as={"span"}>00</Text>:<Text as={"span"}>{hour}</Text>:
+          <Text as={"span"}>{min}</Text>
         </Center>
         <Box w={"20%"} mr={"0"}>
           {isMobile ? null : (
