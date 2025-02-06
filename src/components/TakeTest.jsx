@@ -35,6 +35,7 @@ import {
   userTestFetchDataApi,
 } from "../redux/userTestData/userTestData_ActionType.js";
 import { HamburgerIcon } from "@chakra-ui/icons";
+import ReportQuestionDropdown from "./ReportQuestionDropdown.jsx";
 
 const TakeTest = ({ quest, handleFullScreen }) => {
   const [currentquestion, setcurrentquestion] = useState(0);
@@ -495,6 +496,8 @@ const TakeTest = ({ quest, handleFullScreen }) => {
       <Box display={"flex"} h={"100%"}>
         <Box w={"100%"}>
           <Box
+          display={"inline-flex"}
+          justifyContent={"space-between"}
             boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
             p={"1%"}
             w={"100%"}
@@ -502,6 +505,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
             <Text>
               SECTIONS | <Text as={"span"}>Elementary maths</Text>
             </Text>
+            <ReportQuestionDropdown/>
           </Box>{" "}
           <Box p={"1%"} w={"100%"}>
             <Text>

@@ -4,9 +4,9 @@ import { useState, useEffect, useRef } from "react";
 const Carousel = () => {
   // Sample array of image URLs
   const images = [
-    "https://www.nism.ac.in/wp-content/uploads/2024/07/1600-1-4.jpg",
-    "https://www.nism.ac.in/wp-content/uploads/2024/07/1600-1-4.jpg",
-    "https://www.nism.ac.in/wp-content/uploads/2024/07/1600-1-4.jpg",
+    "https://res.cloudinary.com/dmg0guany/image/upload/v1734874571/df7vcrrsru2etwqefmxa.jpg",
+    "https://res.cloudinary.com/dmg0guany/image/upload/v1734874560/csindrazgawkc3fikmme.jpg",
+    "https://res.cloudinary.com/dmg0guany/image/upload/v1734874526/u8egidighnwgwgmxoo2y.jpg",
   ];
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -59,7 +59,7 @@ const Carousel = () => {
 
   return (
     <Flex
-      w="90%" 
+      w="90%"
       m="auto"
       mt="2%"
       overflow="hidden"
@@ -76,15 +76,20 @@ const Carousel = () => {
       onTouchEnd={handleMouseUp} // Touch event for mobile
     >
       {/* Image Slide Container */}
-      <Box w="full" h={{ base: "250px",  md: "400px" }} overflow="hidden" borderRadius="2px">
+      <Box
+        w="full"
+        h={{ base: "250px", md: "400px" }}
+        overflow="hidden"
+        borderRadius="2px"
+      >
         <Flex {...carouselStyle}>
           {images.map((src, index) => (
             <Box key={index} boxSize="full" flex="none">
               <Image
                 src={src}
-                draggable="false" 
+                draggable="false"
                 alt={`Slide ${index}`}
-                objectFit="cover"
+                objectFit="fit"
                 w="full"
                 h={{ base: "250px", md: "400px" }} // Responsive height
               />

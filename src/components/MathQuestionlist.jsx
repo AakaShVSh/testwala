@@ -20,6 +20,7 @@ const MathQuestionlist = ({
   const [quslist, setquslist] = useState([]);
   const [name, setname] = useState("Test");
   const [noOfQus, setnoOfQus] = useState(0);
+  const [Vocabularydata] = useState(["One Word Substitution"]);
   const [sscCglMathsSyllabus] = useState([
     "Number System",
     "L.C.M and H.C.F",
@@ -67,15 +68,26 @@ const MathQuestionlist = ({
     "Phrasal Verbs",
   ]);
 
+  const [mathtwo] = useState([
+    "Average Wala",
+    "mathtwo",
+    "Police and Thief",
+    "Time and Distance (Meeting Wala)",
+    "Time and distance basic",
+    "Train Wala (Relative Speed)",
+  ]);
   const [Gs] = useState(["Vedic age","Polity"]);
   const navigate = useNavigate();
 
   const maketest = (qus, full, sec) => {
+    console.log("jkjk",qus,full,sec);
+    
     setQuestions(qus);
     handleFullScreen(full);
     settestTitle(sec);
     navigate("/test");
   };
+console.log("current",currentTopic);
 
   // Handle increment and decrement in quslist
   const updateCounter = (index, operation) => {
@@ -179,7 +191,7 @@ const MathQuestionlist = ({
         count: index === 0 ? baseCount + remainder : baseCount, // First item gets baseCount + remainder
         qusdata: item,
       }));
-
+// if()
       setquslist(updatedQuslist);
     }
   }, [list, noOfQus]);
@@ -193,6 +205,10 @@ const MathQuestionlist = ({
     // setdata(h);
 console.log("hh",hh,h);
 
+console.log(currentSub,"ccc");
+if(currentSub==="mathtwo"){
+   setcurrentTopic(mathtwo);
+}
     // Update topics based on `currentSub`
     if (currentSub === "Eng"&&hh==null) {
 
@@ -201,15 +217,13 @@ console.log("hh",hh,h);
       setcurrentTopic(sscCglMathsSyllabus);
     } else if (currentSub === "gs") {
       setcurrentTopic(Gs);
-    }else if(hh=="vocabulary"){
-const questionDatav = getLocalStorage("questiondata");
-const pp = questionDatav.filter((e) => e.topic=="Vocabulary");
-console.log("pp",pp)
-setcurrentTopic(null)
-setdata(pp)
+    }else if(currentSub=="vocabulary"){
+
+setcurrentTopic(Vocabularydata);
+
     // maketest(dd, true, "Test 1");
     }
-  }, [category, currentSub, englishTopics, sscCglMathsSyllabus, Gs]);
+  }, [category, currentSub, englishTopics, sscCglMathsSyllabus, Gs, Vocabularydata, mathtwo]);
 
   useEffect(() => {
     const f = getLocalStorage("allTypeWiseTests");

@@ -29,6 +29,7 @@ import ModalPause from "./ModalPause";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
 import { HamburgerIcon } from "@chakra-ui/icons";
+import ReportQuestionDropdown from "./ReportQuestionDropdown";
 
 const ReviewTest = () => {
   const [question, setQuestion] = useState([]);
@@ -74,6 +75,8 @@ const handleQuestion = (con=null) => {
 
     getData();
   }, []);
+  console.log(currentquestion);
+  
   console.log("pp", question);
   return (
     <>
@@ -93,7 +96,8 @@ const handleQuestion = (con=null) => {
             Time Left <Text as={"span"}>00</Text>:<Text as={"span"}>59</Text>:
             <Text as={"span"}>39</Text>
           </Text> */}
-          <Box>
+          <Box display={"flex"} gap={6}>
+            <ReportQuestionDropdown/>
             <Button
               // onClick={() => handleFullScreen(true)}
               border={"1px solid #01bfbd"}
@@ -195,6 +199,9 @@ const handleQuestion = (con=null) => {
                 </Box>
               ))}
             </RadioGroup>
+            <hr/>
+            <Box p={3}><b>Explaination : </b><Text>{question[currentquestion]?.explanation}</Text> </Box>
+           
           </Box>
           <Box
             display={"flex"}

@@ -9,10 +9,12 @@ import {
   FormControl,
   FormLabel,
   Heading,
+  Image,
   Input,
   Text,
   Textarea,
 } from "@chakra-ui/react";
+import Youtube from "../services/svgs/media_svgs/Youtube.svg" 
 import { Link, useNavigate } from "react-router-dom";
 // import { Container,Grid,GridItem } from "@chakra-ui/react";
 import Slideshow from "./Slideshow";
@@ -25,6 +27,7 @@ const Home = ({ setchoosesub }) => {
   // console.log("c==", category[0].question);
   const navigate = useNavigate();
   const setsub = (pro,sub=null) => {
+     console.log(pro, sub);
     setchoosesub(pro);
     console.log(pro,sub);
   setLocalStorage("cat",sub)
@@ -75,20 +78,13 @@ const Home = ({ setchoosesub }) => {
           </Text>
           <Flex justifyContent={"space-around"} mt={"2%"}>
             <Box textAlign={"center"}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                x="0px"
-                y="0px"
-                width="70"
-                height="70"
-                viewBox="0 0 48 48"
-              >
-                <path
-                  fill="#FF3D00"
-                  d="M43.2,33.9c-0.4,2.1-2.1,3.7-4.2,4c-3.3,0.5-8.8,1.1-15,1.1c-6.1,0-11.6-0.6-15-1.1c-2.1-0.3-3.8-1.9-4.2-4C4.4,31.6,4,28.2,4,24c0-4.2,0.4-7.6,0.8-9.9c0.4-2.1,2.1-3.7,4.2-4C12.3,9.6,17.8,9,24,9c6.2,0,11.6,0.6,15,1.1c2.1,0.3,3.8,1.9,4.2,4c0.4,2.3,0.9,5.7,0.9,9.9C44,28.2,43.6,31.6,43.2,33.9z"
-                ></path>
-                <path fill="#FFF" d="M20 31L20 17 32 24z"></path>
-              </svg>
+              <Image
+                src={Youtube}
+                // bg={"#4285f4"}
+                // // pb={"3%"}
+                // fontColor={"White"}
+                // alt="logo"
+              />
               <Text fontFamily={"sans-serif"} fontSize={"16"}>
                 Youtube
               </Text>
@@ -823,174 +819,15 @@ const Home = ({ setchoosesub }) => {
               borderRadius={"3px"}
               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
               w={{ base: "100%", lg: "15%" }}
-              onClick={() => setsub("Eng","vocabulary")}
+              onClick={() => setsub("vocabulary")}
+              // onClick={() => setsub("Eng")}
             >
-              <Box>
-                <svg
-                  viewBox="0 0 64 64"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="50"
-                  // height="64"
-                >
-                  <circle
-                    cx="27"
-                    cy="30"
-                    r="24"
-                    fill="#84d2f4"
-                    stroke="#333"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M33,42A23.983,23.983,0,0,1,9.392,13.7,24,24,0,1,0,50.608,34.3,23.93,23.93,0,0,1,33,42Z"
-                    fill="#57b7eb"
-                    stroke="#333"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M15,39l5-2V33H16V28l3-1,1-4-5-5,1-3-4.055-3.686A23.985,23.985,0,0,0,9.47,46.384L15,44Z"
-                    fill="#c4f236"
-                    stroke="#333"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M31,45l-4-1V40H22l-3,5,2,5-.614,3.07A24.019,24.019,0,0,0,27,54l4-5Z"
-                    fill="#c4f236"
-                    stroke="#333"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M21,15h3l-1,4,4,4,5-5-2-3V10l2.751-3.3a24,24,0,0,0-14.477.944L19,12Z"
-                    fill="#c4f236"
-                    stroke="#333"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M44,39l3-3,2.77,1.558a23.953,23.953,0,0,0-8.691-26.99L35,13l2,5-4,6,3,5-4,2,1,6-2,3,8,2-3,5,1.881,4.389a24.09,24.09,0,0,0,6.906-5.3Z"
-                    fill="#c4f236"
-                    stroke="#333"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M18.92,37.43,15,39v5L9.47,46.38a23.964,23.964,0,0,1-.08-32.67A23.286,23.286,0,0,0,9,18,23.96,23.96,0,0,0,18.92,37.43Z"
-                    fill="#a1d51c"
-                    stroke="#333"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M31,45v4l-4,5a23.991,23.991,0,0,1-6.61-.93L21,50l-2-5,3-5h1.42A22.933,22.933,0,0,0,27,41.24V44Z"
-                    fill="#a1d51c"
-                    stroke="#333"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M44.03,39.3l.76,6.79a24.4,24.4,0,0,1-6.91,5.3L36,47l3-5-1.63-.41A22.749,22.749,0,0,0,44.03,39.3Z"
-                    fill="#a1d51c"
-                    stroke="#333"
-                    strokeWidth="1.5"
-                  />
-                  <circle
-                    cx="11"
-                    cy="30"
-                    r="2"
-                    fill="#f89c8d"
-                    stroke="#333"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M11.194,28.02A1.8,1.8,0,0,0,11,28a2,2,0,1,0,1.776,2.9A23.873,23.873,0,0,1,11.194,28.02Z"
-                    fill="#f8664f"
-                    stroke="#333"
-                    strokeWidth="1.5"
-                  />
-                  <circle
-                    cx="43"
-                    cy="27"
-                    r="4"
-                    fill="#f89c8d"
-                    stroke="#333"
-                    strokeWidth="1.5"
-                  />
-                  <g>
-                    <circle
-                      cx="13"
-                      cy="13"
-                      r="10"
-                      fill="#f89c8d"
-                      stroke="#333"
-                      strokeWidth="1.5"
-                    />
-                    <path
-                      d="M18,17A10,10,0,0,1,8.427,4.114,10,10,0,1,0,22.573,15.886,9.94,9.94,0,0,1,18,17Z"
-                      fill="#f8664f"
-                      stroke="#333"
-                      strokeWidth="1.5"
-                    />
-                    <g>
-                      <path
-                        d="M13,11h0a2,2,0,0,0-2-2h0a2,2,0,0,0-2,2H9a6,6,0,0,0,6,6h0a2,2,0,0,0,2-2h0a2,2,0,0,0-2-2h0A2,2,0,0,1,13,11Z"
-                        fill="#c4f236"
-                        stroke="#333"
-                        strokeWidth="1.5"
-                      />
-                      <path
-                        d="M16,15a6,6,0,0,1-5.986-5.73A1.99,1.99,0,0,0,9,11a6,6,0,0,0,6,6,2,2,0,0,0,2-2,1.905,1.905,0,0,0-.027-.263A1.972,1.972,0,0,1,16,15Z"
-                        fill="#a1d51c"
-                        stroke="#333"
-                        strokeWidth="1.5"
-                      />
-                    </g>
-                    <path
-                      d="M15.9,16.776a10.006,10.006,0,0,1-6.883-5.4A6,6,0,0,0,15,17,1.986,1.986,0,0,0,15.9,16.776Z"
-                      fill="#7ab92d"
-                      stroke="#333"
-                      strokeWidth="1.5"
-                    />
-                  </g>
-                  <g>
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="13"
-                      fill="#f9e109"
-                      stroke="#333"
-                      strokeWidth="1.5"
-                    />
-                    <path
-                      d="M55,56A12.988,12.988,0,0,1,44.377,35.522,13,13,0,1,0,58.623,55.478,12.972,12.972,0,0,1,55,56Z"
-                      fill="#fcbc04"
-                      stroke="#333"
-                      strokeWidth="1.5"
-                    />
-                    <circle
-                      cx="48"
-                      cy="48"
-                      r="6"
-                      fill="#c4f236"
-                      stroke="#333"
-                      strokeWidth="1.5"
-                    />
-                    <path
-                      d="M51,51a5.993,5.993,0,0,1-5.466-8.466,6,6,0,1,0,7.932,7.932A5.974,5.974,0,0,1,51,51Z"
-                      fill="#a1d51c"
-                      stroke="#333"
-                      strokeWidth="1.5"
-                    />
-                    <path
-                      d="M48.084,53.994a13,13,0,0,1-5.724-8A5.967,5.967,0,0,0,48,54C48.029,54,48.055,53.994,48.084,53.994Z"
-                      fill="#7ab92d"
-                      stroke="#333"
-                      strokeWidth="1.5"
-                    />
-                  </g>
-                  <path
-                    d="M45,29a3.985,3.985,0,0,1-3.64-5.64,3.995,3.995,0,1,0,5.28,5.28A3.985,3.985,0,0,1,45,29Z"
-                    fill="#f89c8d"
-                    stroke="#333"
-                    strokeWidth="1.5"
-                  />
-                </svg>
-              </Box>
-
+              <Image
+                w="60px"
+                height={"50px"}
+                src="https://img.icons8.com/external-flaticons-lineal-color-flat-icons/64/external-vocabulary-literature-flaticons-lineal-color-flat-icons.png"
+                alt="vocabulary"
+              />
               <Text m={"5%"} fontSize={"20"}>
                 Vocabulary
               </Text>
@@ -1007,6 +844,7 @@ const Home = ({ setchoosesub }) => {
               borderRadius={"3px"}
               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
               w={{ base: "100%", lg: "15%" }}
+              onClick={() => setsub("mathtwo")}
             >
               <Box>
                 <svg
@@ -1240,3 +1078,462 @@ const Home = ({ setchoosesub }) => {
 };
 
 export default Home;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import React from "react";
+// import { Box, Flex, Image, Text, IconButton } from "@chakra-ui/react";
+// import {
+//   FaYoutube,
+//   FaTelegram,
+//   FaInstagram,
+//   FaFacebook,
+//   FaWhatsapp,
+// } from "react-icons/fa";
+// import { useNavigate } from "react-router-dom";
+// import Slideshow from "./Slideshow";
+// import FeedbackSlideshow from "./Userfeedback";
+// import { setLocalStorage } from "../helpers/localStorage";
+
+// const subjects = [
+//   { name: "English", color: "#66afdd" },
+//   { name: "Maths", color: "#41d8d5" },
+//   { name: "Reasoning", color: "#48bb78" },
+//   { name: "General Studies", color: "#ff782c" },
+//   {
+//     name: "Vocabulary",
+//     color: "#2c64ff",
+//     icon: "https://img.icons8.com/external-flaticons-lineal-color-flat-icons/64/external-vocabulary-literature-flaticons-lineal-color-flat-icons.png",
+//   },
+//   { name: "Coming Soon", color: "#5c4ce3" },
+// ];
+
+// const Home = ({ setchoosesub }) => {
+//   const navigate = useNavigate();
+
+//   const setSubject = (subject) => {
+//     setchoosesub(subject);
+//     setLocalStorage("cat", subject);
+//     navigate("/questionList");
+//   };
+
+//   return (
+//     <Box>
+//       <Slideshow />
+
+//       <Box textAlign="center" mt={6}>
+//         <Text fontSize="xl" fontWeight="bold">
+//           Follow us on
+//         </Text>
+//         <Flex justifyContent="center" gap={4} mt={3}>
+//           {[FaYoutube, FaTelegram, FaInstagram, FaFacebook, FaWhatsapp].map(
+//             (Icon, index) => (
+//               <IconButton
+//                 key={index}
+//                 icon={<Icon size={24} />}
+//                 variant="ghost"
+//                 colorScheme="blue"
+//                 aria-label="Social Media"
+//               />
+//             )
+//           )}
+//         </Flex>
+//       </Box>
+
+//       <Box textAlign="center" mt={8}>
+//         <Text fontSize="xl" fontWeight="bold">
+//           Top Competitive Subject Quizzes
+//         </Text>
+//         <Flex wrap="wrap" justifyContent="center" gap={5} mt={4}>
+//           {subjects.map(({ name, color, icon }) => (
+//             <Box
+//               key={name}
+//               w={{ base: "45%", md: "20%" }}
+//               p={4}
+//               bg={color}
+//               color="white"
+//               borderRadius="md"
+//               textAlign="center"
+//               boxShadow="lg"
+//               cursor="pointer"
+//               transition="transform 0.3s"
+//               _hover={{ transform: "scale(1.05)" }}
+//               onClick={() => name !== "Coming Soon" && setSubject(name)}
+//             >
+//               {icon && <Image src={icon} w={12} mx="auto" mb={2} />}
+//               <Text fontSize="lg" fontWeight="bold">
+//                 {name}
+//               </Text>
+//             </Box>
+//           ))}
+//         </Flex>
+//       </Box>
+
+//       <Box textAlign="center" mt={10}>
+//         <Text fontSize="xl" fontWeight="bold">
+//           Top Feedbacks
+//         </Text>
+//         <FeedbackSlideshow />
+//       </Box>
+//     </Box>
+//   );
+// };
+
+// export default Home;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// // import React, { useEffect, useState } from "react";
+// // import TakeTest from "./TakeTest";
+// import {
+//   border,
+//   Box,
+//   Button,
+//   Center,
+//   Flex,
+//   FormControl,
+//   FormLabel,
+//   Heading,
+//   Image,
+//   Input,
+//   Text,
+//   Textarea,
+// } from "@chakra-ui/react";
+// import Youtube from "../services/svgs/media_svgs/Youtube.svg" 
+// import { Link, useNavigate } from "react-router-dom";
+// import Slideshow from "./Slideshow";
+// import FeedbackSlideshow from "./Userfeedback";
+// import { setLocalStorage } from "../helpers/localStorage";
+// const Home = ({ setchoosesub }) => {
+//   const navigate = useNavigate();
+//   const setsub = (pro,sub=null) => {
+//      console.log(pro, sub);
+//     setchoosesub(pro);
+//     console.log(pro,sub);
+//   setLocalStorage("cat",sub)
+
+//     navigate("/questionList");
+//   };
+//   return (
+//     <>
+    
+//       <Box>
+//         <Box>
+         
+//           <Slideshow />
+//         </Box>
+//         <Box
+//           // border={"1px solid #d7efef"}
+//           // borderRadius={"7px"}
+//           p={"1%"}
+//           w={"90%"}
+//           m={"6% auto"}
+//         >
+//           <Text fontFamily={"sans-serif"} textAlign="center" fontSize={"18"}>
+//             Follow us on
+//           </Text>
+//           <Flex justifyContent={"space-around"} mt={"2%"}>
+//             <Box textAlign={"center"}>
+//               <Image
+//                 src={Youtube}
+//                 // bg={"#4285f4"}
+//                 // // pb={"3%"}
+//                 // fontColor={"White"}
+//                 // alt="logo"
+//               />
+//               <Text fontFamily={"sans-serif"} fontSize={"16"}>
+//                 Youtube
+//               </Text>
+//             </Box>{" "}
+//             <Box textAlign={"center"}>
+             
+//               <Text fontFamily={"sans-serif"} fontSize={"16"}>
+//                 Telegram
+//               </Text>
+//             </Box>
+//             <Box textAlign={"center"}>
+
+//               <Text fontFamily={"sans-serif"} fontSize={"16"}>
+//                 Instagram
+//               </Text>
+//             </Box>
+//             <Box textAlign={"center"}>
+      
+//               <Text fontFamily={"sans-serif"} fontSize={"16"}>
+//                 Facebook
+//               </Text>
+//             </Box>
+//             <Box textAlign={"center"}>
+
+//               <Text fontFamily={"sans-serif"} fontSize={"16"}>
+//                 WhatsApp
+//               </Text>
+//             </Box>
+//           </Flex>
+//         </Box>{" "}
+//         <Box p={"1%"} w={"90%"} textAlign="center" m={"1% auto"}>
+//           <Text fontFamily={"sans-serif"} fontSize={"18"}>
+//             Top compitative Subject Quize
+//           </Text>
+//           <Box
+//             display={{ base: "grid", lg: "flex" }}
+//             justifyContent={"space-around"}
+//             // gridTemplateColumns={"repeat(2,1fr)"}
+//             // w={"100%"}
+//             gap="5"
+//             // mt={"1%"}
+//           >
+//             <Box
+//               _hover={{
+//                 transform: "scale(1.1)",
+//                 transition: "0.5s ease-in-out",
+//               }}
+//               border={"3px solid #66afdd"}
+//               bg={"#66afdd"}
+//               color={"white"}
+//               borderRadius={"3px"}
+//               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
+//               w={{ base: "100%", lg: "15%" }}
+//               // h={"20%"}
+//               mt={{ base: "5%", lg: "" }}
+//               onClick={() => {
+//                 setsub("Eng");
+//                 console.log("e");
+//               }}
+//             >
+//               <Box>
+            
+//               </Box>
+//               <Text m={"5%"} fontSize={"20"}>
+//                 English
+//               </Text>
+//             </Box>
+//             <Box
+//               // to={"/questionList"}
+//               _hover={{
+//                 transform: "scale(1.1)",
+//                 transition: "0.5s ease-in-out",
+//               }}
+//               mt={{ base: "5%", lg: "" }}
+//               border={"3px solid #41d8d5"}
+//               bg={"#41d8d5"}
+//               color={"white"}
+//               borderRadius={"3px"}
+//               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
+//               w={{ base: "100%", lg: "15%" }}
+//               onClick={() => setsub("math")}
+//             >
+//               <Box>
+        
+//               </Box>
+//               <Text m={"5%"} fontSize={"20"}>
+//                 Maths
+//               </Text>
+//             </Box>
+//             <Box
+//               _hover={{
+//                 transform: "scale(1.1)",
+//                 transition: "0.5s ease-in-out",
+//               }}
+//               mt={{ base: "5%", lg: "" }}
+//               border={"3px solid #48bb78"}
+//               borderRadius={"3px"}
+//               bg={"#48bb78"}
+//               color={"white"}
+//               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
+//               w={{ base: "100%", lg: "15%" }}
+//               onClick={() => setsub("Reasoning")}
+//             >
+//               <Box>
+           
+//               </Box>
+
+//               <Text m={"5%"} fontSize={"20"}>
+//                 Reasoning
+//               </Text>
+//             </Box>
+//             <Box
+//               _hover={{
+//                 transform: "scale(1.1)",
+//                 transition: "0.5s ease-in-out",
+//               }}
+//               mt={{ base: "5%", lg: "" }}
+//               border={"3px solid #ff782c"}
+//               bg={"#ff782c"}
+//               color={"white"}
+//               borderRadius={"3px"}
+//               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
+//               w={{ base: "100%", lg: "15%" }}
+//               onClick={() => setsub("gs")}
+//             >
+//               <Box>
+          
+//               </Box>
+
+//               <Text m={"5%"} fontSize={"20"}>
+//                 General studies
+//               </Text>
+//             </Box>{" "}
+//             <Box
+//               _hover={{
+//                 transform: "scale(1.1)",
+//                 transition: "0.5s ease-in-out",
+//               }}
+//               mt={{ base: "5%", lg: "" }}
+//               border={"3px solid #2c64ff"}
+//               bg={"#2c64ff"}
+//               color={"white"}
+//               borderRadius={"3px"}
+//               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
+//               w={{ base: "100%", lg: "15%" }}onClick={() => setsub("vocabulary")}
+//               // onClick={() => setsub("Eng")}
+//             >
+      
+//               <Image w="60px" height={"50px"}
+//                 src="https://img.icons8.com/external-flaticons-lineal-color-flat-icons/64/external-vocabulary-literature-flaticons-lineal-color-flat-icons.png"
+//                 alt="vocabulary"
+//               />
+//               <Text m={"5%"} fontSize={"20"}>
+//                 Vocabulary
+//               </Text>
+//             </Box>
+//             <Box
+//               _hover={{
+//                 transform: "scale(1.1)",
+//                 transition: "0.5s ease-in-out",
+//               }}
+//               mt={{ base: "5%", lg: "" }}
+//               border={"3px solid #5c4ce3"}
+//               color={"white"}
+//               bg={"#5c4ce3"}
+//               borderRadius={"3px"}
+//               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
+//               w={{ base: "100%", lg: "15%" }}
+//             >
+//               <Box>
+              
+//               </Box>
+
+//               <Text m={"5%"} fontSize={"20"}>
+//                 Coming soon
+//               </Text>
+//             </Box>
+//             {/* <Box
+//               _hover={{
+//                 transform: "scale(1.1)",
+//                 transition: "0.5s ease-in-out",
+//               }}
+//               border={"3px solid #ec407a"}
+//               bg={"#ec407a"}
+//               color={"white"}
+//               borderRadius={"3px"}
+//               // fontFamily={"serif"}
+//               boxShadow="rgba(99, 99, 99, 0.2) 0px 2px 8px 0px"
+//               w={"15%"}
+//             >
+//               <Text m={"5%"} fontSize={"20"}>
+//                 Coming soon
+//               </Text>
+//             </Box> */}
+//           </Box>
+//         </Box>
+//         {/* <Feedback /> */}
+//         <Box>
+//           <Text
+//             textAlign="center"
+//             p="2%"
+//             fontFamily={"sans-serif"}
+//             fontSize="x-large"
+//           >
+//             Top Feedback's
+//           </Text>
+//           <FeedbackSlideshow />
+//         </Box>
+//       </Box>
+//     </>
+//   );
+// };
+
+// export default Home;

@@ -63,6 +63,8 @@ const Main = () => {
     // SetTotalQuestion(quest.length);
     // fetchData(setQuestionsCategory);
     // if(!questionSuccess){
+    console.log("cho",chooseSub);
+    
     if (chooseSub !== "") {
       console.log("i", chooseSub);
       setCurrentSub(chooseSub);

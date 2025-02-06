@@ -305,6 +305,19 @@ function CollapseEx({setlist,setnoOfQus,setq,setname}) {
                     >
                       L.C.M and H.C.F
                     </option>{" "}
+                    <option
+                      value="Simple and Compound Interest"
+                      style={{
+                        backgroundColor: arr.includes(
+                          "Simple and Compound Interest"
+                        )
+                          ? "gray"
+                          : "",
+                        // color: "white",
+                      }}
+                    >
+                      Simple and Compound Interest
+                    </option>{" "}
                     {/* <option
                       value="Surds and Indices"
                       style={{
@@ -349,19 +362,7 @@ function CollapseEx({setlist,setnoOfQus,setq,setname}) {
                     >
                       Profit and Loss
                     </option>{" "}
-                    <option
-                      value="Simple and Compound Interest"
-                      style={{
-                        backgroundColor: arr.includes(
-                          "Simple and Compound Interest"
-                        )
-                          ? "gray"
-                          : "",
-                        // color: "white",
-                      }}
-                    >
-                      Simple and Compound Interest
-                    </option>{" "}
+                   
                     <option
                       value="Number System"
                       style={{
@@ -645,7 +646,7 @@ function CollapseEx({setlist,setnoOfQus,setq,setname}) {
               />
             </GridItem>
             <GridItem>
-              <Text mb="3px">Number of Questions</Text>
+              <Text mb="3px">Questions Per Sections</Text>
               <Input
                 // value={"select"}
                 type="number"
