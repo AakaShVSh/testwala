@@ -83,7 +83,7 @@ const MathQuestionlist = ({
     "Time and distance basic",
     "Train Wala (Relative Speed)",
   ]);
-  const [Gs] = useState(["Vedic age","Polity"]);
+  const [Gs] = useState(["Vedic age", "Polity", "Ancient History"]);
   const navigate = useNavigate();
 console.log(directTest)
   const maketest = (qus, full, sec) => {
