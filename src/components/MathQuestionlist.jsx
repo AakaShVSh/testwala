@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
 import CollapseEx from "./CreateTest";
-
+import { GrCheckboxSelected } from "react-icons/gr";
 const MathQuestionlist = ({
   category,
   chooseSub,
@@ -12,14 +12,21 @@ const MathQuestionlist = ({
   handleFullScreen,
   settestTitle,
 }) => {
+  const [totalques,settotalques] = useState(false)
   const [MathSubject, setMathSubject] = useState("");
+  const [h,seth] = useState([])
+  const [selectallstate,setselectallstate] = useState(false)
+  const [directTest,setdirectTest] = useState([])
+  const [check,setcheck] = useState(false)
   const [currentTopic, setcurrentTopic] = useState([]);
   const [dataTypeWiseTest, setdataTypeWiseTest] = useState([]);
   const [data, setdata] = useState([]);
   const [list, setlist] = useState([]);
+  const [totaltestno,settotaltestno] = useState(10);
   const [quslist, setquslist] = useState([]);
   const [name, setname] = useState("Test");
-  const [noOfQus, setnoOfQus] = useState(0);
+  const [sum, setsum] = useState(0);
+  const [noOfQus, setnoOfQus] = useState(3);
   const [Vocabularydata] = useState(["One Word Substitution"]);
   const [sscCglMathsSyllabus] = useState([
     "Number System",
@@ -28,7 +35,8 @@ const MathQuestionlist = ({
     "Algebraic Identities",
     "Percentage",
     "Profit and Loss",
-    "Simple and Compound Interest",
+    "Simple Interest",
+    "Compound Interest",
     "Average",
     "Ratio and Proportion",
     "Partnership",
@@ -36,7 +44,6 @@ const MathQuestionlist = ({
     "Time and Distance",
     "Pipe and Cistern",
     "Mixture and Alligation",
-    "Distance, Time, and Speed",
     "Problems based on Train, Boat, and Stream",
     "Mensuration 2D & 3D",
     "Coordinate Geometry",
@@ -78,7 +85,7 @@ const MathQuestionlist = ({
   ]);
   const [Gs] = useState(["Vedic age","Polity"]);
   const navigate = useNavigate();
-
+console.log(directTest)
   const maketest = (qus, full, sec) => {
     console.log("jkjk",qus,full,sec);
     
@@ -92,7 +99,6 @@ console.log("current",currentTopic);
   // Handle increment and decrement in quslist
   const updateCounter = (index, operation) => {
     setquslist((prevQuslist) => {
-      // Calculate the new count for the current topic
       let newQuslist = [...prevQuslist];
       const currentItem = newQuslist[index];
       const updatedItem = {
@@ -132,6 +138,78 @@ console.log("current",currentTopic);
   };
 
   // console.log(20%quslist.length);
+  const [devidedqus,setdevidedqus] = useState();
+  const [totalQuestions, setTotalQuestions] = useState(0);
+  const [allquestotaltaketest,setallquestotaltaketest] = useState([]);
+const findtotal = () => {
+  if (!category || !Array.isArray(category)) {
+    console.error("Category data is missing or invalid.");
+    return;
+  }
+
+  // Step 1: Filter only MathSubject questions
+  let filtered = category.filter((e) => e.topic === MathSubject);
+
+  // Step 2: Count total questions and sections
+  let total = filtered.reduce((sum, e) => sum + e.question.length, 0);
+  let totalSections = filtered.length;
+
+  setTotalQuestions(total); // Update state with total questions
+
+  if (totalSections === 0) {
+    setdevidedqus([]);
+    console.log("No sections found for", MathSubject);
+    return;
+  }
+
+  // Step 3: Distribute questions evenly
+  let baseCount = Math.floor(total / totalSections);
+  let extra = total % totalSections;
+  let distribution = filtered.map((e) =>
+    Math.min(e.question.length, baseCount)
+  );
+
+  for (let i = 0; i < extra; i++) {
+    if (distribution[i] < filtered[i].question.length) {
+      distribution[i] += 1; // Distribute extra questions
+    }
+  }
+let newState = { ...allquestotaltaketest };
+
+setdevidedqus(distribution);
+
+filtered.forEach((e, i) => {
+  e.question.slice(0, distribution[i]).forEach((item, index) => {
+    newState[`question_${i}_${index}`] = item; // Ensure unique keys
+  });
+});
+
+setallquestotaltaketest(newState);
+
+console.log("data", newState);
+
+
+  // Step 4: Log the distribution for debugging
+  let result = filtered.map((e, i) => ({
+    section: e.topic,
+    totalQuestions: e.question.length,
+    assignedQuestions: distribution[i],
+  }));
+
+
+
+
+  console.log("Question Distribution:", result);
+};
+
+
+// Ensure logging after state update
+useEffect(() => {
+  console.log(devidedqus);
+}, [devidedqus]);
+
+console.log(devidedqus);
+
 
   const setq = async () => {
     const questionData = getLocalStorage("questiondata");
@@ -162,6 +240,7 @@ console.log("current",currentTopic);
   };
 
   console.log(quslist, name);
+console.log(h);
 
   // const setq = async () => {
   //   const questionData = getLocalStorage("questiondata"); // Fetch data once
@@ -195,6 +274,7 @@ console.log("current",currentTopic);
       setquslist(updatedQuslist);
     }
   }, [list, noOfQus]);
+console.log(category);
 
   useEffect(() => {
     // Category-related actions
@@ -230,6 +310,9 @@ setcurrentTopic(Vocabularydata);
     console.log(f, name);
     setdataTypeWiseTest(f);
   }, [name]);
+console.log(noOfQus);
+console.log(totaltestno);
+console.log(sum);
 
   return (
     <>
@@ -250,7 +333,23 @@ setcurrentTopic(Vocabularydata);
           <Heading>{MathSubject !== "" ? MathSubject : currentSub}</Heading>
           <Divider />
           <CollapseEx
+          seth={seth}
+          sum={sum}
+          setdirecttest={setdirectTest}
+          directTest={directTest}
+          h={h}
+          selectallstate={selectallstate}
+          setselectallstate={setselectallstate}
+          setcheck={setcheck}
+          check={check}
+    maketest={maketest}
+          MathSubject={MathSubject}
+          category={category}
+            findtotal={findtotal}
+            settotalques={settotalques}
+            totalques={totalques}
             setlist={setlist}
+            settotaltestno={settotaltestno}
             setq={setq}
             setname={setname}
             setnoOfQus={setnoOfQus}
@@ -308,10 +407,12 @@ setcurrentTopic(Vocabularydata);
           ) : (
             <Box>
               {MathSubject ? (
-                category.map((e, i) =>
+                category.map((e, k) =>
                   e.topic === MathSubject ? (
                     <Box
-                      key={i}
+                      display={"flex"}
+                      justifyContent={"space-between"}
+                      key={k}
                       cursor="pointer"
                       w="100%"
                       mt="2"
@@ -321,9 +422,31 @@ setcurrentTopic(Vocabularydata);
                     >
                       <Box
                         color="white"
-                        onClick={() => maketest(e.question, true, e.section)}
+                        // onClick={() => maketest(e.question, true, e.section)}
                       >
                         <b>{e.section}</b>
+                      </Box>
+                      <Box
+                        display={"inline-flex"}
+                        justifyContent={"space-between"}
+                        w={"10%"}
+                        paddingRight={"5px"}
+                        textDecoration={"underline"}
+                      >
+                        {check? <><GrCheckboxSelected
+                          color={h?.includes(k) || selectallstate? "green" : "black"}
+                          onClick={() =>{
+                            setdirectTest([...directTest,e])
+                            setsum(sum+e.question.length)
+                            seth((prev) =>
+                              prev.includes(k)
+                                ? prev.filter((item) => item !== k)
+                                : [...prev, k]
+                            )}
+                          }
+                          style={{ border: "2px solid" }}
+                        /></>:null}
+                        <Text>{e.question.length}</Text>
                       </Box>
                     </Box>
                   ) : null

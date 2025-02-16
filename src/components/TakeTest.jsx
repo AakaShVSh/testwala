@@ -54,8 +54,8 @@ const TakeTest = ({ quest, handleFullScreen }) => {
   const [correctQus, setcorrectQus] = useState([]);
   const dispatch = useDispatch();
   // const [newTestDataStore,setNewTestDataStore] = useState(null)
-  const [min, setmin] = useState(59);
-  const [hour, sethour] = useState(11);
+  const [min, setmin] = useState(0);
+  const [hour, sethour] = useState(1);
   const [size, setSize] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -71,6 +71,8 @@ const TakeTest = ({ quest, handleFullScreen }) => {
   });
   console.log("jjjl", testData);
   const handlequestion = (con) => {
+    sethour(1);
+    setmin(0);
     if (con === "svn") {
       if (
         answer !== null &&
@@ -225,6 +227,8 @@ const TakeTest = ({ quest, handleFullScreen }) => {
   // console.log(currentquestion);
   // console.log("g", allAns[currentquestion]);
   const markedQuestion = () => {
+    setmin(0);
+    sethour(1)
     if (allAns[currentquestion] === undefined && answer !== null) {
       setAllAns((prevState) => ({
         ...prevState,

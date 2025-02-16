@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import logo from "../logo.svg";
+import { TbReportSearch } from "react-icons/tb";
 import {
   Container,
   Text,
@@ -60,21 +61,9 @@ const Navbar = () => {
         // bg={"#4285f4"}
         boxShadow="rgba(14, 30, 37, 0.12) 0px 2px 4px 0px, rgba(14, 30, 37, 0.32) 0px 2px 16px 0px"
       >
-        <Box
-          boxSize={"sm"}
-          w={{ base: "40%", md: "22%", lg: "13%" }}
-          h={"auto"}
-          bg="#465074"
-        >
-          <Link to={"/"}>
-            {" "}
-            <Image
-              src={logo}
-              bg={"#4285f4"}
-              // pb={"3%"}
-              fontColor={"White"}
-              alt="logo"
-            />
+        <Box w={{ base: "40%", md: "22%", lg: "13%" }}>
+          <Link to="/">
+            <Image src={logo} alt="logo" borderRadius="md" />
           </Link>
         </Box>
         <Box
@@ -95,8 +84,11 @@ const Navbar = () => {
             bg="#fbfbfb"
           />
         </Box>
+        <Link to={"/ReportAdmin"}>
+          <TbReportSearch fontSize={"30"} />
+        </Link>
         {stateSignin ? (
-          <Icon  fontSize={"100%"} as={FaRegUserCircle} />
+          <Icon fontSize={"100%"} as={FaRegUserCircle} />
         ) : (
           <Link to={"/auth/signin"}>
             {/* <Button 

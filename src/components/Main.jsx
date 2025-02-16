@@ -21,6 +21,9 @@ import { QuestionApi } from "../redux/questions/questions.ActionType";
 import Feedback from "./Feedback";
 import ResultPage from "./ResultPage";
 import Analysis from "./Analysis";
+import SaveQuestion from "./SaveQuestion";
+import ReportAdminPage from "./ReportAdminPage";
+import SavedPage from "./SavedData";
 
 const Main = () => {
   const [mark, setMark] = useState(0);
@@ -139,6 +142,9 @@ const Main = () => {
         />
         <Route path="/GiveFeedback" element={<Feedback />} />
         <Route path="/Analysis" element={<Analysis/>}/>
+        <Route path="/Saved-Question" element={<SaveQuestion/>}/>
+        <Route path="/ReportAdmin" element={<ReportAdminPage/>}/>
+        <Route path="/savedData" element={<SavedPage/>}/>
       </Routes>
       {isFullScreen === true ? null : <Footer />}
     </>

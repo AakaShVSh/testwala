@@ -27,7 +27,7 @@ function Sidebar() {
         top="0"
         left="0"
         bottom="0"
-        w="250px"
+        w="30vh"
         p={"3"}
         bg={"#465074"}
         color="white"

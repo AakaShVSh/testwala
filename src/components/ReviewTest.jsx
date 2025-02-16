@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { BsFillJournalBookmarkFill } from "react-icons/bs";
 import {
   Box,
   Button,
@@ -42,6 +43,7 @@ const ReviewTest = () => {
   const [markedNotAnswer, setMarkedNotAnswer] = useState(null);
   const [currentquestion, setcurrentQuestion] = useState(0);
     const [isMobile] = useMediaQuery("(max-width: 768px)");
+    const [i,seti] = useState(null);
   const [size, setSize] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -59,6 +61,8 @@ const handleQuestion = (con=null) => {
  };
 
   useEffect(() => {
+    // console.log("g",getLocalStorage("saveData"));
+    // if()
     const getData = () => {
       const data = getLocalStorage("test");
 
@@ -77,10 +81,45 @@ const handleQuestion = (con=null) => {
   }, []);
   console.log(currentquestion);
   
+  const save = (quest) => {
+    let savedata = getLocalStorage("saveData") || []; // Ensure it's always an array
+let savequsnoqusdata = getLocalStorage("qusno") || [];
+    if (!Array.isArray(savedata)) {
+      savedata = []; // Reset to empty array if it's corrupted
+      savequsnoqusdata= [];
+    }
+console.log(savedata);
+
+    const newQuestion = question[quest];
+ const newQuestionnoqus = question[quest].qus;
+
+    if (savequsnoqusdata.includes(newQuestionnoqus)) {
+      alert("Duplicate entry!");
+      return;
+    }
+if(savedata.length===0){
+  const sub = getLocalStorage("Subject");
+const updatedData = [{subject:sub}, newQuestion];
+console.log(updatedData);
+
+  setLocalStorage("saveData", updatedData);
+   const updatedDataqusnoqus = [...savequsnoqusdata, newQuestionnoqus];
+   setLocalStorage("qusno", updatedDataqusnoqus);
+   return;
+}
+    const updatedData = [...savedata, newQuestion];
+    setLocalStorage("saveData", updatedData);
+ const updatedDataqusnoqus = [...savequsnoqusdata, newQuestionnoqus];
+ setLocalStorage("qusno", updatedDataqusnoqus);
+    // console.log("Saved successfully:", updatedData);
+  };
+
+
+
   console.log("pp", question);
   return (
     <>
-      <Container bg={"white"} color={"black"} p={"%"} maxWidth={"100%"}>
+      <Container bg={"white"} color={"black"} maxWidth={"100%"}>
         <Box
           display={"flex"}
           bg={"#4286f5"}
@@ -97,7 +136,7 @@ const handleQuestion = (con=null) => {
             <Text as={"span"}>39</Text>
           </Text> */}
           <Box display={"flex"} gap={6}>
-            <ReportQuestionDropdown/>
+            <ReportQuestionDropdown />
             <Button
               // onClick={() => handleFullScreen(true)}
               border={"1px solid #01bfbd"}
@@ -121,6 +160,9 @@ const handleQuestion = (con=null) => {
       <Box display={"flex"} h={"100%"}>
         <Box w={"100%"}>
           <Box
+          display={"flex"}
+          // paddingRight={10}
+          justifyContent={"space-between"}
             boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
             p={"1%"}
             w={"100%"}
@@ -128,6 +170,7 @@ const handleQuestion = (con=null) => {
             <Text>
               SECTIONS | <Text as={"span"}>Elementary maths</Text>
             </Text>
+        <Button onClick={() => save(currentquestion)}><BsFillJournalBookmarkFill  /></Button>
           </Box>{" "}
           <Box p={"1%"} w={"100%"}>
             <Text>
@@ -199,9 +242,11 @@ const handleQuestion = (con=null) => {
                 </Box>
               ))}
             </RadioGroup>
-            <hr/>
-            <Box p={3}><b>Explaination : </b><Text>{question[currentquestion]?.explanation}</Text> </Box>
-           
+            <hr />
+            <Box p={3}>
+              <b>Explaination : </b>
+              <Text>{question[currentquestion]?.explanation}</Text>{" "}
+            </Box>
           </Box>
           <Box
             display={"flex"}
