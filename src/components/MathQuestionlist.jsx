@@ -61,7 +61,7 @@ const MathQuestionlist = ({
     "Sentence Improvement",
     "Spotting Errors",
     "Para Jumbles",
-    "Idioms and Phrases",
+    "Idioms & Phrases",
     "One Word Substitution",
     "Active and Passive Voice",
     "Direct and Indirect Speech",
