@@ -118,7 +118,7 @@ const handleSubmit = async () => {
 
   try {
     const response = await fetch(
-      "https://script.google.com/macros/s/AKfycbxNS1MaEFOFch4oCJku3F2psmheLIHlwn26Qmww8xB-3O6_g8JrwlgJzZY4y05lVT3X/exec",
+      "https://script.google.com/macros/s/AKfycbx-FXKkyaSzrZQzTKqJkJ8w9wXLIWW5-bm5P6eWx04bT9yLB884_c0_5b4fDmsXkhhW/exec",
       {
         method: "POST",
         mode: "no-cors", // for Google Apps Script
@@ -161,7 +161,7 @@ useEffect(() => {
   const fetchSheetData = async () => {
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbxNS1MaEFOFch4oCJku3F2psmheLIHlwn26Qmww8xB-3O6_g8JrwlgJzZY4y05lVT3X/exec"
+        "https://script.google.com/macros/s/AKfycbx-FXKkyaSzrZQzTKqJkJ8w9wXLIWW5-bm5P6eWx04bT9yLB884_c0_5b4fDmsXkhhW/exec"
       );
       const json = await response.json();
       setAttendanceData(json);
