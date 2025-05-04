@@ -51,14 +51,11 @@ const stations = [
 
 // Worker list
 const workerList = [
-  "Raju",
-  "Seema",
-  "Manoj",
-  "Anita",
-  "Vikram",
-  "Pooja",
-  "Sanjay",
-  "Meena",
+  "Chotu",
+  "Jaysingh",
+  "Dharam Raj",
+  "Jinku",
+  "Jitender"
 ];
 
 const LabourList = () => {
