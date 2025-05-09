@@ -15,6 +15,7 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
+  HStack,
 } from "@chakra-ui/react";
 
 const NewsFeed = () => {
@@ -25,10 +26,10 @@ const NewsFeed = () => {
   const fetchNews = async () => {
     try {
       const response = await fetch(
-        `https://newsdata.io/api/1/news?apikey=pub_8518774f935bc6fcf4019c775e39278d5ae57&country=in&language=en&category=top`
+        `https://newsdata.io/api/1/news?apikey=pub_8518774f935bc6fcf4019c775e39278d5ae57&country=in&language=hi&category=top`
       );
       const data = await response.json();
-      console.log("API Response:", data); // Debugging: Log the response
+      console.log("API Response:", data);
 
       if (data.status === "success" && data.results) {
         setArticles(data.results);
@@ -120,12 +121,41 @@ const NewsFeed = () => {
                   objectFit="cover"
                 />
               )}
-              <Text fontSize="md">{selectedNews?.description}</Text>
+              <Text fontSize="lg" fontWeight="bold" color="teal.700">
+                {selectedNews?.title}
+              </Text>
+
+              <HStack spacing={6} mt={4} mb={4}>
+                <Text fontSize="sm" color="gray.500">
+                  <strong>Source:</strong>{" "}
+                  {selectedNews?.source_id || "Unknown"}
+                </Text>
+                <Text fontSize="sm" color="gray.500">
+                  <strong>Category:</strong>{" "}
+                  {selectedNews?.category || "General"}
+                </Text>
+              </HStack>
+
+              <Text fontSize="md" lineHeight="1.6" color="gray.800">
+                {selectedNews?.description || "No description available."}
+              </Text>
+
+              <Text fontSize="sm" color="gray.600" mt={4}>
+                <strong>Full Content:</strong> <br />
+                {selectedNews?.content || "No full article content available."}
+              </Text>
+
+              <Text fontSize="sm" color="gray.500" mt={2}>
+                <strong>Published on:</strong>{" "}
+                {new Date(selectedNews?.pubDate).toLocaleString() || "No date"}
+              </Text>
+
               <Link
                 href={selectedNews?.link}
                 color="teal.500"
                 fontWeight="bold"
                 isExternal
+                mt={4}
               >
                 🔗 Read Full Article
               </Link>

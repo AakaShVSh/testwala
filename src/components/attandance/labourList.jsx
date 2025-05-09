@@ -435,7 +435,13 @@ const USERS = {
     password: "85918",
     workers: ["Chotu", "Jaysingh", "Dharam Raj", "Jinku", "Jitender"],
   },
+  rohit: {
+    username: "rohit",
+    password: "1234",
+    workers: ["Aman", "Vikas", "Tarun", "Sonu", "Monu"], // Add any names
+  },
 };
+
 
 const stations = [
   "Nalasopara",
@@ -466,6 +472,7 @@ const stations = [
 const LabourList = () => {
   const toast = useToast();
 
+
   const getToday = () => {
     const today = new Date();
     today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -485,8 +492,13 @@ const LabourList = () => {
     site: "",
     status: "Present",
     duration: "1",
+    amount:"0",
   });
-
+const totalDays = attendanceData.filter((d) => d.status === "Present").length;
+const totalSalary = attendanceData.reduce(
+  (acc, curr) => acc + Number(curr.amount || 0),
+  0
+);
   const handleLoginChange = (e) => {
     const { name, value } = e.target;
     setLoginForm((prev) => ({ ...prev, [name]: value }));
@@ -556,7 +568,7 @@ const LabourList = () => {
 
     try {
       await fetch(
-        "https://script.google.com/macros/s/AKfycbx-FXKkyaSzrZQzTKqJkJ8w9wXLIWW5-bm5P6eWx04bT9yLB884_c0_5b4fDmsXkhhW/exec",
+        "https://script.google.com/macros/s/AKfycby4PByNnvrsxh5wElvwFdT3N2jBbVOGihpX1UnGEucQc4QZ73MiR2pVczfkWnslwNOk/exec",
         {
           method: "POST",
           mode: "no-cors",
@@ -579,6 +591,7 @@ const LabourList = () => {
         status: "Present",
         date: getToday(),
         duration: "1",
+        amount:""
       });
     } catch (error) {
       console.error("Submit failed", error);
@@ -607,20 +620,22 @@ const downloadCSV = (data, filename = "attendance.csv") => {
   URL.revokeObjectURL(url);
 };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(
-          "https://script.google.com/macros/s/AKfycbx-FXKkyaSzrZQzTKqJkJ8w9wXLIWW5-bm5P6eWx04bT9yLB884_c0_5b4fDmsXkhhW/exec"
-        );
-        const json = await res.json();
-        setAttendanceData(json);
-      } catch (err) {
-        console.error("Fetch error:", err);
-      }
-    };
-    fetchData();
-  }, []);
+const fetchWorkerData = async (workerName) => {
+  try {
+
+    const res = await fetch(
+      "https://script.google.com/macros/s/AKfycby4PByNnvrsxh5wElvwFdT3N2jBbVOGihpX1UnGEucQc4QZ73MiR2pVczfkWnslwNOk/exec"
+    );
+    const data = await res.json();
+    const workerData = data.filter((entry) => entry.name === workerName);
+   console.log((workerData));
+   
+    setAttendanceData(workerData);
+  } catch (err) {
+    console.error("Fetch error:", err);
+  }
+};
+
 
   const workerList = loggedInUser?.workers || [];
 
@@ -671,7 +686,7 @@ const downloadCSV = (data, filename = "attendance.csv") => {
         <HStack justifyContent="space-between" maxW="6xl" mx="auto">
           <Box>
             <Heading size="2xl" textAlign={"left"} fontWeight="bold" mb={2}>
-             Hajari Card
+              Hajari Card
             </Heading>
             <Text fontSize="lg" fontWeight="medium">
               Labour Attendance Management System
@@ -703,8 +718,12 @@ const downloadCSV = (data, filename = "attendance.csv") => {
               <Select
                 placeholder="Select your name"
                 name="name"
-                value={form.name}    
-                onChange={handleChange}
+                value={form.name}
+                onChange={(e) => {
+                  const selected = e.target.value;
+                  setForm((prev) => ({ ...prev, name: selected }));
+                  fetchWorkerData(selected);
+                }}
               >
                 {workerList.map((worker, idx) => (
                   <option key={idx} value={worker}>
@@ -747,7 +766,14 @@ const downloadCSV = (data, filename = "attendance.csv") => {
                 <option value="1">1</option>
                 <option value="1/2">1/2</option>
                 <option value="1 1/2">1 1/2</option>
+                <option value="1 1/2">2</option>
               </Select>
+              <Input
+                name="amount"
+                value={form.amount}
+                onChange={handleChange}
+                type="number"
+              />
             </Stack>
 
             <Button colorScheme="teal" w="100%" onClick={handleSubmit}>
@@ -780,6 +806,15 @@ const downloadCSV = (data, filename = "attendance.csv") => {
           <Text>No attendance records yet.</Text>
         ) : (
           <Box overflowX={{ base: "auto", md: "visible" }}>
+            <Box mb={4}>
+              <Text fontSize="lg">
+                Total Days Worked: <strong>{totalDays}</strong>
+              </Text>
+              <Text fontSize="lg">
+                Total Salary: <strong>₹{totalSalary}</strong>
+              </Text>
+            </Box>
+
             <Table variant="simple" size="sm">
               <Thead>
                 <Tr>
@@ -788,6 +823,7 @@ const downloadCSV = (data, filename = "attendance.csv") => {
                   <Th>Site</Th>
                   <Th>Status</Th>
                   <Th>Duration</Th>
+                  <Th>Amount</Th>
                 </Tr>
               </Thead>
               <Tbody>
@@ -813,6 +849,7 @@ const downloadCSV = (data, filename = "attendance.csv") => {
                         </Badge>
                       </Td>
                       <Td>{record.duration}</Td>
+                      <Td>{record.amount}</Td>
                     </Tr>
                   ))}
               </Tbody>
