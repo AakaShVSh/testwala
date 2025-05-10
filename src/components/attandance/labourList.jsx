@@ -1,404 +1,3 @@
-// import React, { useState, useEffect } from "react";
-// import {
-//   ChakraProvider,
-//   Box,
-//   Heading,
-//   Table,
-//   Thead,
-//   Tbody,
-//   Tr,
-//   Th,
-//   Td,
-//   Container,
-//   Text,
-//   Badge,
-//   Select,
-//   Input,
-//   Button,
-//   VStack,
-//   Stack,
-//   useToast,
-//   extendTheme,
-//   ThemeProvider,
-//   Flex,
-//   HStack,
-// } from "@chakra-ui/react";
-
-// const theme = extendTheme({
-//   fonts: {
-//     heading: "Poppins, sans-serif",
-//     body: "Inter, sans-serif",
-//   },
-//   styles: {
-//     global: {
-//       body: {
-//         bg: "gray.50",
-//       },
-//     },
-//   },
-// });
-
-// const stations = ["Nalasopara", "Virar", "Vasai Road", "Naigaon", "Bhayandar"];
-
-// const contractors = {
-//   rajendra: {
-//     username: "rajendra",
-//     workers: ["Chotu", "Jaysingh", "Dharam Raj", "Jinku", "Jitender"],
-//   },
-//   satyam: {
-//     username: "satyam",
-//     workers: ["Ramesh", "Suresh", "Mahesh", "Naresh"],
-//   },
-// };
-
-// const downloadCSV = (data, filename = "attendance.csv") => {
-//   const headers = ["Date", "Name", "Site", "Status", "Duration"];
-//   const csvRows = [
-//     headers.join(","),
-//     ...data.map((row) =>
-//       [row.date, row.name, row.site, row.status, row.duration].join(",")
-//     ),
-//   ];
-//   const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
-//   const url = URL.createObjectURL(blob);
-//   const a = document.createElement("a");
-//   a.href = url;
-//   a.download = filename;
-//   a.click();
-//   URL.revokeObjectURL(url);
-// };
-
-// const LabourList = () => {
-//   const [loggedInUser, setLoggedInUser] = useState(null);
-//   const [attendanceData, setAttendanceData] = useState([]);
-//   const [form, setForm] = useState({
-//     date: new Date().toISOString().split("T")[0],
-//     name: "",
-//     site: "",
-//     status: "Present",
-//     duration: "1",
-//   });
-//   const [filters, setFilters] = useState({
-//     name: "",
-//     date: "",
-//     site: "",
-//     status: "",
-//   });
-//   const toast = useToast();
-
-//   useEffect(() => {
-//     const storedUser = JSON.parse(localStorage.getItem("loggedInUser"));
-//     if (storedUser) setLoggedInUser(storedUser);
-//   }, []);
-
-//   const handleLogin = (contractor) => {
-//     localStorage.setItem(
-//       "loggedInUser",
-//       JSON.stringify(contractors[contractor])
-//     );
-//     setLoggedInUser(contractors[contractor]);
-//   };
-
-//   const handleChange = (e) => {
-//     const { name, value } = e.target;
-//     setForm((prev) => ({ ...prev, [name]: value }));
-//   };
-
-//   const handleFilterChange = (e) => {
-//     const { name, value } = e.target;
-//     setFilters((prev) => ({ ...prev, [name]: value }));
-//   };
-
-//   const handleSubmit = async () => {
-//     const { name, site, duration } = form;
-//     if (!name || !site || !duration) {
-//       toast({
-//         title: "Please fill all fields.",
-//         status: "warning",
-//         duration: 3000,
-//         isClosable: true,
-//       });
-//       return;
-//     }
-//     const duplicate = attendanceData.find(
-//       (entry) => entry.name === name && entry.date === form.date
-//     );
-//     if (duplicate) {
-//       toast({
-//         title: "Already marked for today.",
-//         status: "error",
-//         duration: 3000,
-//         isClosable: true,
-//       });
-//       return;
-//     }
-//     try {
-//       await fetch(
-//         "https://script.google.com/macros/s/AKfycbznXXrrqMnq7XPN7LzP20e_ETkrE2xkJgXRiETIOto6_HRsjOB5TleKHWzp35ePvLps/exec",
-//         {
-//           method: "POST",
-//           mode: "no-cors",
-//           headers: { "Content-Type": "application/json" },
-//           body: JSON.stringify(form),
-//         }
-//       );
-//       setAttendanceData((prev) => [...prev, form]);
-//       toast({
-//         title: "Submitted!",
-//         status: "success",
-//         duration: 2000,
-//         isClosable: true,
-//       });
-//       setForm({
-//         name: "",
-//         site: "",
-//         status: "Present",
-//         date: new Date().toISOString().split("T")[0],
-//         duration: "1",
-//       });
-//     } catch (error) {
-//       console.error("Submit failed", error);
-//       toast({
-//         title: "Failed to submit.",
-//         status: "error",
-//         duration: 3000,
-//         isClosable: true,
-//       });
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetch(
-//       "https://script.google.com/macros/s/AKfycbznXXrrqMnq7XPN7LzP20e_ETkrE2xkJgXRiETIOto6_HRsjOB5TleKHWzp35ePvLps/exec"
-//     )
-//       .then((res) => res.json())
-//       .then((json) => setAttendanceData(json))
-//       .catch((err) => console.error("Fetch error", err));
-//   }, []);
-
-//   if (!loggedInUser) {
-//     return (
-//       <ChakraProvider theme={theme}>
-//         <Flex
-//           minH="100vh"
-//           align="center"
-//           justify="center"
-//           bgGradient="linear(to-tr, blue.400, purple.400)"
-//         >
-//           <Box bg="white" p={10} rounded="2xl" shadow="2xl" textAlign="center">
-//             <Heading mb={6} color="gray.800">
-//               Select Contractor
-//             </Heading>
-//             <VStack spacing={4}>
-//               <Button
-//                 colorScheme="blue"
-//                 size="lg"
-//                 w="full"
-//                 onClick={() => handleLogin("rajendra")}
-//               >
-//                 Rajendra
-//               </Button>
-//               <Button
-//                 colorScheme="purple"
-//                 size="lg"
-//                 w="full"
-//                 onClick={() => handleLogin("satyam")}
-//               >
-//                 Satyam
-//               </Button>
-//             </VStack>
-//           </Box>
-//         </Flex>
-//       </ChakraProvider>
-//     );
-//   }
-
-//   const filteredData = attendanceData.filter((record) => {
-//     return (
-//       loggedInUser.workers.includes(record.name) &&
-//       (filters.name === "" || record.name === filters.name) &&
-//       (filters.site === "" || record.site === filters.site) &&
-//       (filters.date === "" || record.date === filters.date) &&
-//       (filters.status === "" || record.status === filters.status)
-//     );
-//   });
-
-//   return (
-//     <ChakraProvider theme={theme}>
-//       <Box minH="100vh" bg="gray.50" p={6}>
-//         <Container maxW="container.xl">
-//           <Box
-//             textAlign="center"
-//             bgGradient="linear(to-r, blue.500, cyan.400)"
-//             p={6}
-//             borderRadius="xl"
-//             color="white"
-//             shadow="lg"
-//             mb={8}
-//           >
-//             <Heading fontSize="3xl">R.K Interior Design</Heading>
-//             <Text fontSize="lg">Attendance Management System</Text>
-//             <Text mt={1}>
-//               Logged in as <b>{loggedInUser.username}</b>
-//             </Text>
-//           </Box>
-
-//           <Box bg="white" p={6} rounded="xl" shadow="md" mb={6}>
-//             <Heading size="md" mb={4}>
-//               Mark Attendance
-//             </Heading>
-//             <HStack spacing={4} flexWrap="wrap">
-//               <Select
-//                 name="name"
-//                 placeholder="Select Name"
-//                 value={form.name}
-//                 onChange={handleChange}
-//                 maxW="200px"
-//               >
-//                 {loggedInUser.workers.map((worker, i) => (
-//                   <option key={i} value={worker}>
-//                     {worker}
-//                   </option>
-//                 ))}
-//               </Select>
-//               <Select
-//                 name="site"
-//                 placeholder="Select Site"
-//                 value={form.site}
-//                 onChange={handleChange}
-//                 maxW="200px"
-//               >
-//                 {stations.map((station, i) => (
-//                   <option key={i} value={station}>
-//                     {station}
-//                   </option>
-//                 ))}
-//               </Select>
-//               <Select
-//                 name="status"
-//                 value={form.status}
-//                 onChange={handleChange}
-//                 maxW="150px"
-//               >
-//                 <option value="Present">Present</option>
-//                 <option value="Absent">Absent</option>
-//               </Select>
-//               <Select
-//                 name="duration"
-//                 value={form.duration}
-//                 onChange={handleChange}
-//                 maxW="150px"
-//               >
-//                 <option value="1">1</option>
-//                 <option value="1/2">1/2</option>
-//                 <option value="1 1/2">1 1/2</option>
-//               </Select>
-//               <Button colorScheme="teal" onClick={handleSubmit}>
-//                 Submit
-//               </Button>
-//             </HStack>
-//           </Box>
-
-//           <Box bg="white" p={6} rounded="xl" shadow="md" mb={6}>
-//             <Heading size="md" mb={4}>
-//               Filter Records
-//             </Heading>
-//             <HStack spacing={4} flexWrap="wrap">
-//               <Select
-//                 name="name"
-//                 placeholder="Filter by Name"
-//                 value={filters.name}
-//                 onChange={handleFilterChange}
-//                 maxW="200px"
-//               >
-//                 {loggedInUser.workers.map((w, i) => (
-//                   <option key={i}>{w}</option>
-//                 ))}
-//               </Select>
-//               <Select
-//                 name="site"
-//                 placeholder="Filter by Site"
-//                 value={filters.site}
-//                 onChange={handleFilterChange}
-//                 maxW="200px"
-//               >
-//                 {stations.map((s, i) => (
-//                   <option key={i}>{s}</option>
-//                 ))}
-//               </Select>
-//               <Select
-//                 name="status"
-//                 placeholder="Filter by Status"
-//                 value={filters.status}
-//                 onChange={handleFilterChange}
-//                 maxW="150px"
-//               >
-//                 <option value="Present">Present</option>
-//                 <option value="Absent">Absent</option>
-//               </Select>
-//               <Input
-//                 type="date"
-//                 name="date"
-//                 value={filters.date}
-//                 onChange={handleFilterChange}
-//                 maxW="180px"
-//               />
-//               <Button
-//                 colorScheme="blue"
-//                 onClick={() =>
-//                   downloadCSV(
-//                     filteredData,
-//                     `${loggedInUser.username}_attendance.csv`
-//                   )
-//                 }
-//               >
-//                 Download CSV
-//               </Button>
-//             </HStack>
-//           </Box>
-
-//           <Box bg="white" p={6} rounded="xl" shadow="md">
-//             <Heading size="md" mb={4}>
-//               Attendance Records
-//             </Heading>
-//             <Table variant="simple" size="sm">
-//               <Thead bg="gray.100">
-//                 <Tr>
-//                   <Th>Date</Th>
-//                   <Th>Name</Th>
-//                   <Th>Site</Th>
-//                   <Th>Status</Th>
-//                   <Th>Duration</Th>
-//                 </Tr>
-//               </Thead>
-//               <Tbody>
-//                 {filteredData.map((rec, i) => (
-//                   <Tr key={i}>
-//                     <Td>{rec.date}</Td>
-//                     <Td>{rec.name}</Td>
-//                     <Td>{rec.site}</Td>
-//                     <Td>
-//                       <Badge
-//                         colorScheme={rec.status === "Present" ? "green" : "red"}
-//                       >
-//                         {rec.status}
-//                       </Badge>
-//                     </Td>
-//                     <Td>{rec.duration}</Td>
-//                   </Tr>
-//                 ))}
-//               </Tbody>
-//             </Table>
-//           </Box>
-//         </Container>
-//       </Box>
-//     </ChakraProvider>
-//   );
-// };
-
-// export default LabourList;
-
-
 import React, { useState, useEffect } from "react";
 import {
   ChakraProvider,
@@ -438,10 +37,9 @@ const USERS = {
   rohit: {
     username: "rohit",
     password: "1234",
-    workers: ["Aman", "Vikas", "Tarun", "Sonu", "Monu"], // Add any names
+    workers: ["Aman", "Vikas", "Tarun", "Sonu", "Monu"],
   },
 };
-
 
 const stations = [
   "Nalasopara",
@@ -472,7 +70,6 @@ const stations = [
 const LabourList = () => {
   const toast = useToast();
 
-
   const getToday = () => {
     const today = new Date();
     today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -492,13 +89,49 @@ const LabourList = () => {
     site: "",
     status: "Present",
     duration: "1",
-    amount:"0",
+    amount: "",
   });
-const totalDays = attendanceData.filter((d) => d.status === "Present").length;
-const totalSalary = attendanceData.reduce(
-  (acc, curr) => acc + Number(curr.amount || 0),
-  0
-);
+
+  const parseDuration = (str) => {
+    if (!str) return 0;
+    if (typeof str === "number") return str;
+    str = String(str).trim();
+    if (str.includes(" ")) {
+      const [whole, fraction] = str.split(" ");
+      const [num, denom] = fraction.split("/");
+      return parseInt(whole) + parseFloat(num) / parseFloat(denom);
+    } else if (str.includes("/")) {
+      const [num, denom] = str.split("/");
+      return parseFloat(num) / parseFloat(denom);
+    } else {
+      return parseFloat(str);
+    }
+  };
+
+  const convertDurationToNumber = (str) => {
+    switch (str) {
+      case "1":
+        return 1;
+      case "1/2":
+        return 0.5;
+      case "1 1/2":
+        return 1.5;
+      case "2":
+        return 2;
+      default:
+        return parseDuration(str);
+    }
+  };
+
+  const totalDays = attendanceData
+    .filter((d) => d.status === "Present")
+    .reduce((sum, curr) => sum + convertDurationToNumber(curr.duration), 0);
+
+  const totalSalary = attendanceData.reduce(
+    (acc, curr) => acc + Number(curr.amount || 0),
+    0
+  );
+
   const handleLoginChange = (e) => {
     const { name, value } = e.target;
     setLoginForm((prev) => ({ ...prev, [name]: value }));
@@ -539,13 +172,23 @@ const totalSalary = attendanceData.reduce(
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+
+    // If status changes to Absent, force amount = 0
+    if (name === "status") {
+      if (value === "Absent") {
+        setForm((prev) => ({ ...prev, status: value, amount: "0" }));
+      } else {
+        setForm((prev) => ({ ...prev, status: value, amount: "" }));
+      }
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async () => {
-    if (!form.name || !form.site || !form.duration) {
+    if (!form.name || !form.status) {
       toast({
-        title: "Please fill all fields.",
+        title: "Please fill name and status.",
         status: "warning",
         duration: 3000,
         isClosable: true,
@@ -591,7 +234,7 @@ const totalSalary = attendanceData.reduce(
         status: "Present",
         date: getToday(),
         duration: "1",
-        amount:""
+        amount: "",
       });
     } catch (error) {
       console.error("Submit failed", error);
@@ -603,39 +246,29 @@ const totalSalary = attendanceData.reduce(
       });
     }
   };
-const downloadCSV = (data, filename = "attendance.csv") => {
-  const headers = ["Date", "Name", "Site", "Status", "Duration"];
-  const csvRows = [
-    headers.join(","),
-    ...data.map((row) =>
-      [row.date, row.name, row.site, row.status, row.duration].join(",")
-    ),
-  ];
-  const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-};
+  const fetchWorkerData = async (workerName) => {
+    try {
+      const res = await fetch(
+        "https://script.google.com/macros/s/AKfycbzsxUojI55ojgr7WK5AsgWanarZlkb5GMJ25QVESvtSoXTC-ytyndHJEZh86ujLqc8W/exec"
+      );
+      const data = await res.json();
 
-const fetchWorkerData = async (workerName) => {
-  try {
+      // Sanitize duration and amount fields
+      const workerData = data
+        .filter((entry) => entry.name === workerName)
+        .map((entry) => ({
+          ...entry,
+          duration: entry.duration, // Force as string to prevent "1/2" issues
+          amount: String(entry.amount || "0"), // Default empty amounts to 0
+        }));
 
-    const res = await fetch(
-      "https://script.google.com/macros/s/AKfycby4PByNnvrsxh5wElvwFdT3N2jBbVOGihpX1UnGEucQc4QZ73MiR2pVczfkWnslwNOk/exec"
-    );
-    const data = await res.json();
-    const workerData = data.filter((entry) => entry.name === workerName);
-   console.log((workerData));
-   
-    setAttendanceData(workerData);
-  } catch (err) {
-    console.error("Fetch error:", err);
-  }
-};
-
+      console.log(workerData);
+      setAttendanceData(workerData);
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
+  };
+  
 
   const workerList = loggedInUser?.workers || [];
 
@@ -764,15 +397,18 @@ const fetchWorkerData = async (workerName) => {
                 onChange={handleChange}
               >
                 <option value="1">1</option>
-                <option value="1/2">1/2</option>
+                <option value="1 / 2">1 / 2</option>
                 <option value="1 1/2">1 1/2</option>
-                <option value="1 1/2">2</option>
+                <option value="2">2</option>
               </Select>
+
               <Input
                 name="amount"
+                type="number"
+                placeholder="Enter salary"
                 value={form.amount}
                 onChange={handleChange}
-                type="number"
+                isReadOnly={form.status === "Absent"}
               />
             </Stack>
 
@@ -790,7 +426,7 @@ const fetchWorkerData = async (workerName) => {
           <Button
             colorScheme="blue"
             onClick={() =>
-              downloadCSV(
+              DownloadCSV(
                 attendanceData.filter((entry) =>
                   loggedInUser.workers.includes(entry.name)
                 ),
@@ -808,7 +444,7 @@ const fetchWorkerData = async (workerName) => {
           <Box overflowX={{ base: "auto", md: "visible" }}>
             <Box mb={4}>
               <Text fontSize="lg">
-                Total Days Worked: <strong>{totalDays}</strong>
+                Total Duration Worked: <strong>{totalDays} hours</strong>
               </Text>
               <Text fontSize="lg">
                 Total Salary: <strong>₹{totalSalary}</strong>
@@ -848,7 +484,7 @@ const fetchWorkerData = async (workerName) => {
                           {record.status}
                         </Badge>
                       </Td>
-                      <Td>{record.duration}</Td>
+                      <Td>{String(record.duration)}</Td>
                       <Td>{record.amount}</Td>
                     </Tr>
                   ))}
