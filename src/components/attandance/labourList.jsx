@@ -173,17 +173,29 @@ const LabourList = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // If status changes to Absent, force amount = 0
     if (name === "status") {
       if (value === "Absent") {
-        setForm((prev) => ({ ...prev, status: value, amount: "0" }));
+        setForm((prev) => ({
+          ...prev,
+          status: value,
+          amount: "0",
+          duration: "0",
+          site: "None",
+        }));
       } else {
-        setForm((prev) => ({ ...prev, status: value, amount: "" }));
+        setForm((prev) => ({
+          ...prev,
+          status: value,
+          amount: "",
+          duration: "1",
+          site: "",
+        }));
       }
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
+  
 
   const handleSubmit = async () => {
     if (!form.name || !form.status) {
@@ -325,6 +337,15 @@ const LabourList = () => {
               Labour Attendance Management System
             </Text>
           </Box>
+          <Button
+            size="sm"
+            colorScheme="blue"
+            onClick={() => {
+              window.open("https://your-app-download-link.com", "_blank");
+            }}
+          >
+            Download App
+          </Button>
           <Button size="sm" colorScheme="red" onClick={handleLogout}>
             Logout
           </Button>
@@ -369,6 +390,7 @@ const LabourList = () => {
                 placeholder="Select site"
                 name="site"
                 value={form.site}
+                disabled={form.status === "Absent"}
                 onChange={handleChange}
               >
                 {stations.map((station, idx) => (
@@ -393,12 +415,14 @@ const LabourList = () => {
 
               <Select
                 name="duration"
+                placeholder="Enter Duration"
                 value={form.duration}
+                disabled={form.status === "Absent"}
                 onChange={handleChange}
               >
                 <option value="1">1</option>
-                <option value="1 / 2">1 / 2</option>
-                <option value="1 1/2">1 1/2</option>
+                <option value="0.5">1 / 2</option>
+                <option value="1.5">1 1/2</option>
                 <option value="2">2</option>
               </Select>
 
@@ -408,7 +432,7 @@ const LabourList = () => {
                 placeholder="Enter salary"
                 value={form.amount}
                 onChange={handleChange}
-                isReadOnly={form.status === "Absent"}
+                // disabled={form.status === "Absent"}
               />
             </Stack>
 
@@ -423,19 +447,7 @@ const LabourList = () => {
           Full Attendance Record
         </Heading>
         <Box mb={6}>
-          <Button
-            colorScheme="blue"
-            onClick={() =>
-              DownloadCSV(
-                attendanceData.filter((entry) =>
-                  loggedInUser.workers.includes(entry.name)
-                ),
-                `${loggedInUser.username}_attendance.csv`
-              )
-            }
-          >
-            Download CSV
-          </Button>
+          <DownloadCSV filteredData={attendanceData} />
         </Box>
 
         {attendanceData.length === 0 ? (
@@ -484,7 +496,19 @@ const LabourList = () => {
                           {record.status}
                         </Badge>
                       </Td>
-                      <Td>{String(record.duration)}</Td>
+                      <Td>
+                        {record.duration === "0.5" ? (
+                          "1 / 2"
+                        ) : (
+                          <>
+                            {record.duration === "1.5" ? (
+                              "1 1/2"
+                            ) : (
+                              <>{record.duration}</>
+                            )}
+                          </>
+                        )}
+                      </Td>
                       <Td>{record.amount}</Td>
                     </Tr>
                   ))}
