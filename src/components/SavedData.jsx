@@ -5,14 +5,20 @@ import { getLocalStorage } from "../helpers/localStorage";
 
 const SavedPage = () => {
    const topic = getLocalStorage("savedtopic");
-   const [saveData,setsaveData] = useState([])
+   const [saveData,setsaveData] = useState(null)
    console.log(topic);
    useEffect(() => {
   if(topic === "math"){
         const loval = getLocalStorage("saveData")
         console.log(loval[1]);
         
-        setsaveData([loval[1]])
+        setsaveData(loval)
+   }
+   if(topic === "eng"){
+      const loval = getLocalStorage("saveData")
+        console.log(loval[1]);
+        
+        setsaveData([loval])
    }
 
    },[])
@@ -24,27 +30,37 @@ const SavedPage = () => {
       <Heading size="lg">Saved Page</Heading>
       <Text mt={2}>Review reported questions categorized by type.</Text>
       <VStack spacing={4} mt={4} align="start">
-        {saveData?.map((Saved, index) => (
-          <Box key={index} p={4} borderWidth={1} borderRadius="md" width="100%">
-            <Heading size="md">
-              Category: {Saved.exam} 
-            </Heading>
-            <Text mt={2}>
-              <strong>Question:</strong> {Saved.qus}
-            </Text>
-            {Saved.options.length > 0 && (
+        {saveData?.map((Saved, index) => {
+          if (index === 0) return null;
+
+          return (
+            <Box
+              key={index}
+              p={4}
+              borderWidth={1}
+              borderRadius="md"
+              width="100%"
+            >
+              <Heading size="md">Category: {Saved.exam}</Heading>
               <Text mt={2}>
-                <strong>Options:</strong> {Saved.options.join(", ")}
+                <strong>Question:</strong> {Saved.qus}
               </Text>
-            )}
-            <Text mt={2}>
-              <strong>Answer:</strong> {Saved.answer}
-            </Text>
-            <Text mt={2}>
-              <strong>Explanation:</strong> {Saved.explanation}
-            </Text>
-          </Box>
-        ))}
+
+              {Saved?.options?.length > 0 && (
+                <Text mt={2}>
+                  <strong>Options:</strong> {Saved.options.join(", ")}
+                </Text>
+              )}
+
+              <Text mt={2}>
+                <strong>Answer:</strong> {Saved.answer}
+              </Text>
+              <Text mt={2}>
+                <strong>Explanation:</strong> {Saved.explanation}
+              </Text>
+            </Box>
+          );
+        })}
       </VStack>
     </Box>
   );

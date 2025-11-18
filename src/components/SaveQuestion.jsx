@@ -13,9 +13,9 @@ const SaveQuestion = ({ MathSubject = "", currentSub = "" }) => {
     { title: "General studies", color: "red.400" },
   ];
   const navi = () => {
-    const math ="math"
+    const math ="Eng"
     console.log(math,"jjjjjjjjj");
-    setLocalStorage("savedtopic",math)
+    setLocalStorage("savedtopic","math")
     navigate("/savedData")
   }
   return (

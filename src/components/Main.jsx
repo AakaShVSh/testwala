@@ -3,7 +3,6 @@ import TakeTest from "./TakeTest";
 // import Router, { Route } from 'router'
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import SubmitTest from "./SubmitTest";
-import Home from "./attandance/Home";
 import Signin from "./Signin";
 import Signup from "./Signup";
 import Navbar from "./Navbar";
@@ -24,6 +23,7 @@ import Analysis from "./Analysis";
 import SaveQuestion from "./SaveQuestion";
 import ReportAdminPage from "./ReportAdminPage";
 import SavedPage from "./SavedData";
+import Home from "./Home";
 
 const Main = () => {
   const [mark, setMark] = useState(0);
@@ -83,76 +83,76 @@ const Main = () => {
   }, [questionSuccess, chooseSub, testTitle, dispatch, questionData]);
   // console.log("qqqq", questionLoading, "sss", questionSuccess,"dddd",questionData);
   return (
-    // <>
-    //   {isFullScreen === true ? null : <Navbar />}
-    //   {/* <Sidebar/> */}
-    //   <Routes>
-    //     <Route path="/" element={<Home setchoosesub={setchoosesub} />} />
-    //     <Route
-    //       path="/auth/signin"
-    //       element={
-    //         <Signin
-    //           message={message}
-    //           setMessage={setMessage}
-    //           checkNavigation={checkNavigation}
-    //           setCheckNavigation={setCheckNavigation}
-    //         />
-    //       }
-    //     />
-    //     <Route
-    //       path="/auth/signup"
-    //       element={
-    //         <Signup
-    //           message={message}
-    //           setMessage={setMessage}
-    //           checkNavigation={checkNavigation}
-    //           setCheckNavigation={setCheckNavigation}
-    //         />
-    //       }
-    //     />
-    //     <Route
-    //       path="/auth/forgotPassword"
-    //       element={<ForgotPassword message={message} setMessage={setMessage} />}
-    //     />
-    //     <Route
-    //       path="/test"
-    //       element={
-    //         <TakeTest
-    //           handleFullScreen={handleFullScreen}
-    //           // setIsFullScreen={}
-    //           // chooseSub={chooseSub}
-    //           quest={quest}
-    //         />
-    //       }
-    //     />
-    //     <Route path="/test-result" element={<ResultPage />} />
-    //     <Route path="/Review-Test" element={<ReviewTest />} />
-    //     <Route
-    //       path="/questionList"
-    //       element={
-    //         <MathQuestionlist
-    //           currentSub={currentSub}
-    //           chooseSub={chooseSub}
-    //           category={questionCategory}
-    //           handleFullScreen={handleFullScreen}
-    //           setQuestions={setQuestions}
-    //           settestTitle={settestTitle}
-    //         />
-    //       }
-    //     />
-    //     <Route path="/GiveFeedback" element={<Feedback />} />
-    //     <Route path="/Analysis" element={<Analysis/>}/>
-    //     <Route path="/Saved-Question" element={<SaveQuestion/>}/>
-    //     <Route path="/ReportAdmin" element={<ReportAdminPage/>}/>
-    //     <Route path="/savedData" element={<SavedPage/>}/>
-    //   </Routes>
-    //   {isFullScreen === true ? null : <Footer />}
-    // </>
-
     <>
-    {/* attendance */}
-        <Home/>
+      {isFullScreen === true ? null : <Navbar />}
+      {/* <Sidebar/> */}
+      <Routes>
+        <Route path="/" element={<Home setchoosesub={setchoosesub} />} />
+        <Route
+          path="/auth/signin"
+          element={
+            <Signin
+              message={message}
+              setMessage={setMessage}
+              checkNavigation={checkNavigation}
+              setCheckNavigation={setCheckNavigation}
+            />
+          }
+        />
+        <Route
+          path="/auth/signup"
+          element={
+            <Signup
+              message={message}
+              setMessage={setMessage}
+              checkNavigation={checkNavigation}
+              setCheckNavigation={setCheckNavigation}
+            />
+          }
+        />
+        <Route
+          path="/auth/forgotPassword"
+          element={<ForgotPassword message={message} setMessage={setMessage} />}
+        />
+        <Route
+          path="/test"
+          element={
+            <TakeTest
+              handleFullScreen={handleFullScreen}
+              // setIsFullScreen={}
+              // chooseSub={chooseSub}
+              quest={quest}
+            />
+          }
+        />
+        <Route path="/test-result" element={<ResultPage />} />
+        <Route path="/Review-Test" element={<ReviewTest />} />
+        <Route
+          path="/questionList"
+          element={
+            <MathQuestionlist
+              currentSub={currentSub}
+              chooseSub={chooseSub}
+              category={questionCategory}
+              handleFullScreen={handleFullScreen}
+              setQuestions={setQuestions}
+              settestTitle={settestTitle}
+            />
+          }
+        />
+        <Route path="/GiveFeedback" element={<Feedback />} />
+        <Route path="/Analysis" element={<Analysis/>}/>
+        <Route path="/Saved-Question" element={<SaveQuestion/>}/>
+        <Route path="/ReportAdmin" element={<ReportAdminPage/>}/>
+        <Route path="/savedData" element={<SavedPage/>}/>
+      </Routes>
+      {isFullScreen === true ? null : <Footer />}
     </>
+
+    // <>
+    // {/* attendance */}
+    //     <Home/>
+    // </>
   );
 };
 

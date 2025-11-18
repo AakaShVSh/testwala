@@ -39,7 +39,11 @@ import ReportQuestionDropdown from "./ReportQuestionDropdown.jsx";
 
 const TakeTest = ({ quest, handleFullScreen }) => {
   const [currentquestion, setcurrentquestion] = useState(0);
-  const [question] = useState(quest);
+ const shuffleArray = (arr) => [...arr]?.sort(() => Math.random() - 0.5);
+
+ const shuffledQuest = shuffleArray(quest);
+ const [question] = useState(shuffledQuest);
+
   // const [answerSelected, setAnswerSelected] = useState(false);
   const [answeredQuestion, setAnsweredQuestion] = useState([]);
   const [markedAndAnswer, setMarkedAndAnswer] = useState([]);
