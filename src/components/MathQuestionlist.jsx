@@ -27,7 +27,10 @@ const MathQuestionlist = ({
   const [name, setname] = useState("Test");
   const [sum, setsum] = useState(0);
   const [noOfQus, setnoOfQus] = useState(3);
-  const [Vocabularydata] = useState(["One Word Substitution"]);
+  const [Vocabularydata] = useState([
+    "One Word Substitution",
+    "English Vocabulary",
+  ]);
   const [sscCglMathsSyllabus] = useState([
     "Number System",
     "L.C.M and H.C.F",
