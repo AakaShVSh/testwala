@@ -4,53 +4,65 @@ import {
   Heading,
   Icon,
   Text,
-  List,
-  ListItem,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  HStack,
+  Badge,
+  Progress,
+  Container,
+  Grid,
+  GridItem,
+  Card,
+  CardBody,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatHelpText,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
+  useColorModeValue,
+  Divider,
+  Circle,
 } from "@chakra-ui/react";
 import {
-  FaArrowLeft,
-  FaTrophy,
-  FaMedal,
-  FaPercentage,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaMinusCircle,
-  FaBullseye,
-} from "react-icons/fa";
-import { Bar } from "react-chartjs-2";
+  FiAward,
+  FiTrendingUp,
+  FiTarget,
+  FiCheckCircle,
+  FiXCircle,
+  FiCircle,
+  FiArrowLeft,
+} from "react-icons/fi";
+import { Doughnut, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
+  ArcElement,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
-  // chartOptions
 } from "chart.js";
 import { useEffect, useState } from "react";
 import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
 import { userTestFetchDataApi } from "../redux/userTestData/userTestData_ActionType";
 import { Link } from "react-router-dom";
 
-// Register required components for Chart.js
+// Register Chart.js components
 ChartJS.register(
+  ArcElement,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
-const ResultPage = ({chartOptions}) => {
+const ResultPage = () => {
   const [totalMark, setTotalMark] = useState(0);
   const [TotalQuestion, SetTotalQuestion] = useState([]);
   const [marknotans, setmarknotans] = useState(0);
@@ -60,276 +72,447 @@ const ResultPage = ({chartOptions}) => {
   const [wrongAns, setwrongAns] = useState(0);
   const [wrongAnsqus, setwrongAnsqus] = useState([]);
   const [correctqus, setcorrectqus] = useState([]);
-  const [rank,setrank] = useState(1);
-   const [TotalStudent, setTotalStudent] = useState(0);
+  const [rank, setrank] = useState(1);
+  const [TotalStudent, setTotalStudent] = useState(0);
   const [percentile, setPercentile] = useState(0);
 
-  console.log();
+  // Color mode values
+  const bgGradient = useColorModeValue(
+    "linear(to-br, blue.50, purple.50)",
+    "linear(to-br, gray.900, gray.800)",
+  );
+  const cardBg = useColorModeValue("white", "gray.800");
+  const textColor = useColorModeValue("gray.700", "gray.100");
+  const accentColor = useColorModeValue("purple.600", "purple.300");
+
   const calculateAccuracy = () => {
-    return (totalMark / TotalQuestion.length) * 100;
+    return totalMark > 0 && TotalQuestion.length > 0
+      ? (totalMark / TotalQuestion.length) * 100
+      : 0;
   };
 
-  const calculatePercentile =async (score, allScores) => {
-    // Sort the array of scores in ascending order
+  const calculatePercentile = async (score, allScores) => {
     const sub = getLocalStorage("Subject");
-    const t = getLocalStorage("test");
     const topic = getLocalStorage("category");
     const g = await allScores?.filter(
-      (e) => e.subject === sub && e.section === topic
+      (e) => e.subject === sub && e.section === topic,
     );
-    console.log(g); 
-    if(g!==undefined){  
-setTotalStudent(g?.length)
-    const sortedScores = g?.sort((a, b) => a.score - b.score);
-    // Find how many scores are less than the user's score
-    console.log(sortedScores);
 
-    const belowYourScore = sortedScores.filter((s) => s.score < score).length;
+    if (g !== undefined && g.length > 0) {
+      setTotalStudent(g?.length);
+      const sortedScores = g?.sort((a, b) => a.score - b.score);
+      const belowYourScore = sortedScores.filter((s) => s.score < score).length;
+      const percent = (belowYourScore / sortedScores.length) * 100;
+      setPercentile(percent.toFixed(2));
 
-    // Calculate percentile
-    const percent = (belowYourScore / sortedScores.length) * 100;
-    console.log("p", percent);
+      await userTestFetchDataApi();
 
-    setPercentile(percent.toFixed(2));
- 
-    //rank
-    // Sort scores in descending order
-  await  userTestFetchDataApi()
-    
-     const alluser = getLocalStorage("AllUserTestData");
-     const gp = await alluser?.filter(
-       (e) => e.subject === sub && e.section === topic
-     );
-     console.log(gp);
-     setTotalStudent(gp.length);
-    const sortedScoresrank = gp?.sort((a, b) => b.score - a.score);
-console.log("s", score, sortedScoresrank,sortedScoresrank.indexOf(score));
-
-    // Calculate rank (index of the user's score + 1 in the sorted array)
-    const strank = sortedScoresrank.filter((s) => s.score < score).length+1;
-
-    console.log("k",strank,sortedScoresrank);
-    setLocalStorage("rank",strank)
-    setrank(strank) 
+      const alluser = getLocalStorage("AllUserTestData");
+      const gp = await alluser?.filter(
+        (e) => e.subject === sub && e.section === topic,
+      );
+      setTotalStudent(gp.length);
+      const sortedScoresrank = gp?.sort((a, b) => b.score - a.score);
+      const strank = sortedScoresrank.filter((s) => s.score < score).length + 1;
+      setLocalStorage("rank", strank);
+      setrank(strank);
     }
-  }; 
-  
-  const handleCalculate = () => { 
+  };
+
+  const handleCalculate = () => {
     const yourScore = getLocalStorage("Total");
     const scores = getLocalStorage("AllUserTestData");
-    const result = calculatePercentile(yourScore, scores);
-    // setPercentile(result);
+    calculatePercentile(yourScore, scores);
   };
 
   useEffect(() => {
-    setTotalMark(getLocalStorage("Total"));
-    SetTotalQuestion(getLocalStorage("Testdata"));
+    setTotalMark(getLocalStorage("Total") || 0);
+    SetTotalQuestion(getLocalStorage("Testdata") || []);
     const s = getLocalStorage("test");
-    setmarknotans(s[0].markedNotAnswer.length);
-    setnotans(s[0].notAnswer.length);
-    setmarkedAndAnswered(s[0].markedAndAnswer.length);
-    setansweredQuestioned(s[0].answeredQuestion.length);
-    setwrongAns(s[0].wrongans);
-    setwrongAnsqus(s[0].wrongansqus);
-    setcorrectqus(s[0].correctQus);
-    console.log(marknotans);
-    handleCalculate()
-    // SetTotalQuestion(TotalQuestion.questions);
+    if (s && s[0]) {
+      setmarknotans(s[0].markedNotAnswer?.length || 0);
+      setnotans(s[0].notAnswer?.length || 0);
+      setmarkedAndAnswered(s[0].markedAndAnswer?.length || 0);
+      setansweredQuestioned(s[0].answeredQuestion?.length || 0);
+      setwrongAns(s[0].wrongans || 0);
+      setwrongAnsqus(s[0].wrongansqus || []);
+      setcorrectqus(s[0].correctQus || []);
+    }
+    handleCalculate();
   }, []);
 
-
- 
-
-  // Data for the bar chart
-  const chartData = {
+  // Doughnut chart data
+  const doughnutData = {
     labels: ["Correct", "Incorrect", "Unattempted"],
     datasets: [
       {
-        label: "Question Stats",
         data: [
-          totalMark,
-          wrongAns,
+          correctqus.length,
+          wrongAnsqus.length,
           TotalQuestion.length - (answeredQuestioned + markedAndAnswered),
-        ], // These values should be dynamic based on your app logic
-        backgroundColor: ["#48bb50", "#F56565", "#A0AEC0"], // Chakra UI colors (green, red, gray)
+        ],
+        backgroundColor: ["#48BB78", "#F56565", "#CBD5E0"],
+        borderWidth: 0,
+        cutout: "75%",
       },
     ],
   };
-  console.log(
-    totalMark,
-    markedAndAnswered,
-    answeredQuestioned + markedAndAnswered
-  );
-  //  3 10 4
-return (
-  <Box
-    mx="auto"
-    p={6}
-    mt={5}
-    maxW="1000px"
-    bgGradient="linear(to-r, blue.50, teal.50)"
-    borderRadius="2xl"
-    boxShadow="lg"
-  >
-    <Flex alignItems="center" mb={8} justifyContent="space-between">
-      <Flex alignItems="center">
-        <Icon
-          as={FaArrowLeft}
-          color="teal.600"
-          boxSize={6}
-          mr={3}
-          cursor="pointer"
-        />
-        <Heading as="h1" size="xl" fontWeight="extrabold" color="teal.700">
-          Your Results
-        </Heading>
-      </Flex>
-    
-    </Flex>
 
-    {/* Navigation Tabs */}
-    <Flex
-      borderBottom="4px"
-      borderColor="teal.300"
-      mb={6}
-      justifyContent="space-around"
+  const doughnutOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: "rgba(0,0,0,0.8)",
+        padding: 12,
+        borderRadius: 8,
+      },
+    },
+  };
+
+  // Performance metric card component
+  const MetricCard = ({ icon, label, value, subtext, color, bgColor }) => (
+    <Card
+      bg={cardBg}
+      shadow="sm"
+      borderRadius="xl"
+      overflow="hidden"
+      transition="all 0.3s"
+      _hover={{ shadow: "md", transform: "translateY(-4px)" }}
+      border="1px"
+      borderColor={useColorModeValue("gray.100", "gray.700")}
     >
-      <List display="flex" flexDirection="row" gap={4} fontWeight="bold">
-        <ListItem
-          pb={2}
-          borderBottom="4px"
-          borderColor="teal.500"
-          color="teal.700"
-          cursor="pointer"
-          _hover={{ color: "teal.900" }}
-        >
-          Overview
-        </ListItem>
-        <ListItem
-          pb={2}
-          color="gray.600"
-          cursor="pointer"
-          _hover={{ color: "teal.900" }}
-        >
-          <Link to="/Review-Test">Review Test</Link>
-        </ListItem>
-        <ListItem
-          pb={2}
-          color="gray.600"
-          cursor="pointer"
-          _hover={{ color: "teal.900" }}
-        >
-          Analysis
-        </ListItem>
-        <ListItem
-          pb={2}
-          color="gray.600"
-          cursor="pointer"
-          _hover={{ color: "teal.900" }}
-        >
-          Correct
-        </ListItem>
-        <ListItem
-          pb={2}
-          color="gray.600"
-          cursor="pointer"
-          _hover={{ color: "teal.900" }}
-        >
-          Incorrect
-        </ListItem>
-        <ListItem
-          pb={2}
-          color="gray.600"
-          cursor="pointer"
-          _hover={{ color: "teal.900" }}
-        >
-          Unattempted
-        </ListItem>
-      </List>
-    </Flex>
-
-    {/* Question Stats */}
-    <HStack m={"auto"}>
-      <Box mb={""} w={"30%"} p={6} bg="white" borderRadius="lg" boxShadow="md">
-        <Heading as="h4" size="lg" fontWeight="bold" color="teal.600" mb={6}>
-          Test Result
-        </Heading>
-
-        <Flex direction="column" gap={5}>
-          <Flex alignItems="center">
-            <Icon as={FaTrophy} color="orange.400" boxSize={6} mr={4} />
-            <Text fontSize="lg" fontWeight="medium" color="gray.700">
-              Your Score:{" "}
-              <b>
-                {totalMark}/{TotalQuestion.length}
-              </b>
-            </Text>
-          </Flex>
-
-          <Flex alignItems="center">
-            <Icon as={FaMedal} color="purple.500" boxSize={6} mr={4} />
-            <Text fontSize="lg" fontWeight="medium" color="gray.700">
-              Rank:{" "}
-              <b>
-                {rank}/{TotalStudent}
-              </b>
-            </Text>
-          </Flex>
-
-          <Flex alignItems="center">
-            <Icon as={FaPercentage} color="blue.500" boxSize={6} mr={4} />
-            <Text fontSize="lg" fontWeight="medium" color="gray.700">
-              Percentile: <b>{percentile}%</b>
-            </Text>
-          </Flex>
-
-          <Flex alignItems="center">
-            <Icon as={FaCheckCircle} color="green.500" boxSize={6} mr={4} />
-            <Text fontSize="lg" fontWeight="medium" color="gray.700">
-              Correct: <b>{correctqus.length}</b>
-            </Text>
-          </Flex>
-
-          <Flex alignItems="center">
-            <Icon as={FaTimesCircle} color="red.400" boxSize={6} mr={4} />
-            <Text fontSize="lg" fontWeight="medium" color="gray.700">
-              Incorrect: <b>{wrongAnsqus.length}</b>
-            </Text>
-          </Flex>
-
-          <Flex alignItems="center">
-            <Icon as={FaMinusCircle} color="gray.500" boxSize={6} mr={4} />
-            <Text fontSize="lg" fontWeight="medium" color="gray.700">
-              Unattempted:{" "}
-              <b>
-                {TotalQuestion.length -
-                  (answeredQuestioned + markedAndAnswered)}
-              </b>
-            </Text>
-          </Flex>
-
-          <Flex alignItems="center">
-            <Icon as={FaBullseye} color="blue.400" boxSize={6} mr={4} />
-            <Text fontSize="lg" fontWeight="medium" color="gray.700">
-              Accuracy: <b>{calculateAccuracy().toFixed(2)}%</b>
-            </Text>
-          </Flex>
+      <CardBody p={5}>
+        <Flex align="center" justify="space-between" mb={3}>
+          <Circle size="48px" bg={bgColor}>
+            <Icon as={icon} boxSize={5} color={color} />
+          </Circle>
+          <Badge
+            colorScheme={color.split(".")[0]}
+            fontSize="xs"
+            px={3}
+            py={1}
+            borderRadius="full"
+          >
+            {subtext}
+          </Badge>
         </Flex>
-      </Box>
+        <Stat>
+          <StatLabel fontSize="sm" color="gray.500" mb={1}>
+            {label}
+          </StatLabel>
+          <StatNumber fontSize="2xl" fontWeight="bold" color={textColor}>
+            {value}
+          </StatNumber>
+        </Stat>
+      </CardBody>
+    </Card>
+  );
 
-      {/* Bar Chart */}
-      <Box w={"70%"}>
-        <Box p={6} bg="white" borderRadius="lg" boxShadow="md">
-          {" "}
-          <Heading as="h4" size="lg" fontWeight="bold" color="teal.600" mb={6}>
-            Graphical Representation
-          </Heading>
-          <Bar data={chartData} options={chartOptions} />
-        </Box>
+  // Score breakdown item
+  const ScoreItem = ({ icon, label, value, color }) => (
+    <Flex align="center" py={3}>
+      <Circle size="40px" bg={`${color}.50`} mr={4}>
+        <Icon as={icon} color={`${color}.600`} boxSize={5} />
+      </Circle>
+      <Box flex="1">
+        <Text fontSize="sm" color="gray.600" mb={1}>
+          {label}
+        </Text>
+        <Text fontSize="lg" fontWeight="semibold" color={textColor}>
+          {value}
+        </Text>
       </Box>
-    </HStack>
-  </Box>
-);
+    </Flex>
+  );
+
+  return (
+    <Box minH="100vh" bgGradient={bgGradient} py={8} px={10}>
+      <Container maxW="1400px">
+        {/* Header */}
+        <Flex align="center" mb={8}>
+          <Link to="/">
+            <Icon
+              as={FiArrowLeft}
+              boxSize={6}
+              color={accentColor}
+              cursor="pointer"
+              mr={4}
+              _hover={{ transform: "translateX(-4px)" }}
+              transition="all 0.2s"
+            />
+          </Link>
+          <Box>
+            <Heading
+              fontSize={{ base: "2xl", md: "3xl" }}
+              fontWeight="bold"
+              color={textColor}
+              mb={1}
+            >
+              Test Results
+            </Heading>
+            <Text color="gray.500" fontSize="sm">
+              Detailed performance analysis and insights
+            </Text>
+          </Box>
+        </Flex>
+
+        {/* Main Content */}
+        <Grid templateColumns={{ base: "1fr", lg: "400px 1fr" }} gap={6} mb={8}>
+          {/* Left Column - Score Overview */}
+          <GridItem>
+            <Card
+              bg={cardBg}
+              shadow="lg"
+              borderRadius="2xl"
+              overflow="hidden"
+              border="1px"
+              borderColor={useColorModeValue("gray.100", "gray.700")}
+            >
+              <CardBody p={6}>
+                {/* Score Circle */}
+                <Box position="relative" mb={6}>
+                  <Box h="280px" position="relative">
+                    <Doughnut data={doughnutData} options={doughnutOptions} />
+                    <Flex
+                      position="absolute"
+                      top="50%"
+                      left="50%"
+                      transform="translate(-50%, -50%)"
+                      direction="column"
+                      align="center"
+                    >
+                      <Text
+                        fontSize="4xl"
+                        fontWeight="bold"
+                        color={accentColor}
+                      >
+                        {totalMark}
+                      </Text>
+                      <Text fontSize="lg" color="gray.500">
+                        / {TotalQuestion.length}
+                      </Text>
+                      <Text fontSize="xs" color="gray.400" mt={1}>
+                        Score
+                      </Text>
+                    </Flex>
+                  </Box>
+                </Box>
+
+                <Divider mb={4} />
+
+                {/* Score Breakdown */}
+                <Box>
+                  <ScoreItem
+                    icon={FiCheckCircle}
+                    label="Correct Answers"
+                    value={correctqus.length}
+                    color="green"
+                  />
+                  <ScoreItem
+                    icon={FiXCircle}
+                    label="Incorrect Answers"
+                    value={wrongAnsqus.length}
+                    color="red"
+                  />
+                  <ScoreItem
+                    icon={FiCircle}
+                    label="Unattempted"
+                    value={
+                      TotalQuestion.length -
+                      (answeredQuestioned + markedAndAnswered)
+                    }
+                    color="gray"
+                  />
+                </Box>
+              </CardBody>
+            </Card>
+          </GridItem>
+
+          {/* Right Column - Performance Metrics */}
+          <GridItem>
+            <Grid
+              templateColumns={{ base: "1fr", sm: "repeat(2, 1fr)" }}
+              gap={4}
+              mb={6}
+            >
+              <MetricCard
+                icon={FiAward}
+                label="Your Rank"
+                value={`#${rank}`}
+                subtext={`Top ${((rank / TotalStudent) * 100).toFixed(0)}%`}
+                color="purple.600"
+                bgColor="purple.50"
+              />
+              <MetricCard
+                icon={FiTrendingUp}
+                label="Percentile"
+                value={`${percentile}%`}
+                subtext={`${TotalStudent} students`}
+                color="blue.600"
+                bgColor="blue.50"
+              />
+              <MetricCard
+                icon={FiTarget}
+                label="Accuracy"
+                value={`${calculateAccuracy().toFixed(1)}%`}
+                subtext="Performance"
+                color="green.600"
+                bgColor="green.50"
+              />
+              <MetricCard
+                icon={FiCheckCircle}
+                label="Completion"
+                value={`${Math.round(
+                  ((answeredQuestioned + markedAndAnswered) /
+                    TotalQuestion.length) *
+                    100,
+                )}%`}
+                subtext="Attempted"
+                color="orange.600"
+                bgColor="orange.50"
+              />
+            </Grid>
+
+            {/* Accuracy Progress Bar */}
+            <Card
+              bg={cardBg}
+              shadow="sm"
+              borderRadius="xl"
+              border="1px"
+              borderColor={useColorModeValue("gray.100", "gray.700")}
+            >
+              <CardBody p={6}>
+                <Flex justify="space-between" align="center" mb={3}>
+                  <Text fontSize="md" fontWeight="semibold" color={textColor}>
+                    Overall Performance
+                  </Text>
+                  <Text fontSize="xl" fontWeight="bold" color={accentColor}>
+                    {calculateAccuracy().toFixed(1)}%
+                  </Text>
+                </Flex>
+                <Progress
+                  value={calculateAccuracy()}
+                  size="lg"
+                  borderRadius="full"
+                  colorScheme="purple"
+                  hasStripe
+                  isAnimated
+                />
+                <Flex justify="space-between" mt={2}>
+                  <Text fontSize="xs" color="gray.500">
+                    0%
+                  </Text>
+                  <Text fontSize="xs" color="gray.500">
+                    100%
+                  </Text>
+                </Flex>
+              </CardBody>
+            </Card>
+          </GridItem>
+        </Grid>
+
+        {/* Tabs Section */}
+        <Card
+          bg={cardBg}
+          shadow="lg"
+          borderRadius="2xl"
+          overflow="hidden"
+          border="1px"
+          borderColor={useColorModeValue("gray.100", "gray.700")}
+        >
+          <CardBody p={0}>
+            <Tabs colorScheme="purple" variant="soft-rounded">
+              <Box px={6} pt={6}>
+                <TabList
+                  bg={useColorModeValue("gray.50", "gray.700")}
+                  p={1}
+                  borderRadius="xl"
+                  flexWrap="wrap"
+                  gap={2}
+                >
+                  <Tab
+                    fontSize="sm"
+                    fontWeight="medium"
+                    _selected={{
+                      bg: accentColor,
+                      color: "white",
+                    }}
+                  >
+                    Overview
+                  </Tab>
+                  <Tab
+                    fontSize="sm"
+                    fontWeight="medium"
+                    _selected={{
+                      bg: accentColor,
+                      color: "white",
+                    }}
+                  >
+                    <Link to="/Review-Test">Review Test</Link>
+                  </Tab>
+                  <Tab
+                    fontSize="sm"
+                    fontWeight="medium"
+                    _selected={{
+                      bg: accentColor,
+                      color: "white",
+                    }}
+                  >
+                    Analysis
+                  </Tab>
+                  <Tab
+                    fontSize="sm"
+                    fontWeight="medium"
+                    _selected={{
+                      bg: accentColor,
+                      color: "white",
+                    }}
+                  >
+                    Correct
+                  </Tab>
+                  <Tab
+                    fontSize="sm"
+                    fontWeight="medium"
+                    _selected={{
+                      bg: accentColor,
+                      color: "white",
+                    }}
+                  >
+                    Incorrect
+                  </Tab>
+                </TabList>
+              </Box>
+
+              <TabPanels>
+                <TabPanel p={6}>
+                  <Text color={textColor}>
+                    Overview content goes here - You can add detailed
+                    statistics, question-wise breakdown, time analysis, etc.
+                  </Text>
+                </TabPanel>
+                <TabPanel p={6}>
+                  <Text color={textColor}>Review Test content</Text>
+                </TabPanel>
+                <TabPanel p={6}>
+                  <Text color={textColor}>Detailed Analysis content</Text>
+                </TabPanel>
+                <TabPanel p={6}>
+                  <Text color={textColor}>Correct answers review</Text>
+                </TabPanel>
+                <TabPanel p={6}>
+                  <Text color={textColor}>Incorrect answers review</Text>
+                </TabPanel>
+              </TabPanels>
+            </Tabs>
+          </CardBody>
+        </Card>
+      </Container>
+    </Box>
+  );
 };
 
 export default ResultPage;

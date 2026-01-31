@@ -1,115 +1,165 @@
-import { Box, Flex, Image } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  Image,
+  Heading,
+  Text,
+  Button,
+  Stack,
+} from "@chakra-ui/react";
 import { useState, useEffect, useRef } from "react";
 
-const Carousel = () => {
-  // Sample array of image URLs
-  const images = [
-    "https://res.cloudinary.com/dmg0guany/image/upload/v1734874571/df7vcrrsru2etwqefmxa.jpg",
-    "https://res.cloudinary.com/dmg0guany/image/upload/v1734874560/csindrazgawkc3fikmme.jpg",
-    "https://res.cloudinary.com/dmg0guany/image/upload/v1734874526/u8egidighnwgwgmxoo2y.jpg",
+const EduHeroCarousel = () => {
+  /* ================= SLIDES DATA ================= */
+  const slides = [
+    {
+      img: "https://res.cloudinary.com/dmg0guany/image/upload/v1734874571/df7vcrrsru2etwqefmxa.jpg",
+      title: "Crack Competitive Exams Faster 🚀",
+      desc: [
+        "Practice with real exam-level mock tests & PYQs",
+        "Analyze performance with smart reports",
+        "Boost accuracy, speed & confidence daily",
+      ],
+    },
+    {
+      img: "https://res.cloudinary.com/dmg0guany/image/upload/v1734874560/csindrazgawkc3fikmme.jpg",
+      title: "Daily Practice. Real Progress.",
+      desc: [
+        "Solve topic-wise & section-wise questions",
+        "Identify weak areas instantly",
+        "Track improvement every single day",
+      ],
+    },
+    {
+      img: "https://res.cloudinary.com/dmg0guany/image/upload/v1734874526/u8egidighnwgwgmxoo2y.jpg",
+      title: "Your Selection Journey Starts Here",
+      desc: [
+        "Reasoning, Maths, English & General Studies",
+        "Full-length mock tests like real exams",
+        "Everything you need in one smart platform",
+      ],
+    },
   ];
 
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const slidesCount = images.length;
-  const autoSlideInterval = 3000;
-  const startX = useRef(0);
-  const isDragging = useRef(false);
+  /* ================= STATE ================= */
+  const [current, setCurrent] = useState(0);
+  const intervalRef = useRef(null);
 
-  const nextSlide = () => {
-    setCurrentSlide((s) => (s === slidesCount - 1 ? 0 : s + 1));
+  /* ================= CONTROLS ================= */
+  const nextSlide = () =>
+    setCurrent((s) => (s === slides.length - 1 ? 0 : s + 1));
+
+  const startAuto = () => {
+    intervalRef.current = setInterval(nextSlide, 3500);
   };
 
-  // Auto-slide effect
-  useEffect(() => {
-    const slideInterval = setInterval(nextSlide, autoSlideInterval);
-    return () => clearInterval(slideInterval);
-  }, [currentSlide]);
+  const stopAuto = () => {
+    clearInterval(intervalRef.current);
+  };
 
-  // Slide container style for translating images
+  /* ================= AUTO SLIDE ================= */
+  useEffect(() => {
+    startAuto();
+    return stopAuto;
+  }, []);
+
+  /* ================= SLIDER STYLE ================= */
   const carouselStyle = {
     display: "flex",
-    transition: "transform 0.5s ease-in-out",
-    transform: `translateX(-${currentSlide * 100}%)`,
+    transition: "transform 0.6s ease",
+    transform: `translateX(-${current * 100}%)`,
   };
 
-  // Mouse drag handlers
-  const handleMouseDown = (e) => {
-    startX.current = e.clientX || e.touches[0].clientX; // Handle touch events
-    isDragging.current = true;
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging.current) return;
-    const clientX = e.clientX || e.touches[0].clientX; // Handle touch events
-    const diffX = startX.current - clientX;
-
-    // If dragged sufficiently, decide to switch slide
-    if (diffX > 50) {
-      nextSlide();
-      isDragging.current = false; // Stop dragging
-    } else if (diffX < -50) {
-      setCurrentSlide((s) => (s === 0 ? slidesCount - 1 : s - 1));
-      isDragging.current = false; // Stop dragging
-    }
-  };
-
-  const handleMouseUp = () => {
-    isDragging.current = false;
-  };
-
+  /* ================= UI ================= */
   return (
     <Flex
-      w="90%"
+      w="95%"
       m="auto"
-      mt="2%"
-      overflow="hidden"
-      pos="relative"
-      alignItems="center"
-      justifyContent="center"
-      direction="column"
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp} // Stop dragging if mouse leaves
-      onTouchStart={handleMouseDown} // Touch event for mobile
-      onTouchMove={handleMouseMove} // Touch event for mobile
-      onTouchEnd={handleMouseUp} // Touch event for mobile
+      // mt={12}
+      p={{ base: 5, md: 12 }}
+      gap={12}
+      direction={{ base: "column", md: "row" }}
+      align="center"
+      bg="gray.50"
+      borderRadius="20px"
+      onMouseEnter={stopAuto}
+      onMouseLeave={startAuto}
     >
-      {/* Image Slide Container */}
+      {/* ================= LEFT SIDE ================= */}
+      <Flex flex="1" direction="column" display={{base:"none",md:"flex",lg:"flex"}}>
+        {/* Small Tagline */}
+        <Text
+          fontSize="3xl"
+          fontWeight="bold"
+          color="blue.500"
+          letterSpacing="1px"
+          mb={2}
+        >
+          INDIA'S SMART EXAM PREPARATION PLATFORM
+        </Text>
+
+        {/* Main Heading */}
+        <Heading fontSize={{ base: "2xl", md: "4xl" }} mb={5}>
+          {slides[current].title}
+        </Heading>
+
+        {/* 3-Line Description */}
+        <Stack spacing={2} mb={8} color="gray.600" fontSize="lg">
+          {slides[current].desc.map((line, i) => (
+            <Text key={i}>✔ {line}</Text>
+          ))}
+        </Stack>
+
+        {/* Buttons */}
+        <Stack direction={{ base: "column", sm: "row" }} spacing={4}>
+          <Button colorScheme="blue" size="lg">
+            Start Test
+          </Button>
+        </Stack>
+      </Flex>
+
+      {/* ================= RIGHT SIDE SLIDER ================= */}
       <Box
-        w="full"
-        h={{ base: "250px", md: "400px" }}
+        flex="1"
         overflow="hidden"
-        borderRadius="2px"
+        borderRadius="16px"
+        h={{ base: "250px", md: "420px" ,lg:"auto" }}
+        w="full"
+        boxShadow="xl"
       >
         <Flex {...carouselStyle}>
-          {images.map((src, index) => (
-            <Box key={index} boxSize="full" flex="none">
+          {slides.map((item, i) => (
+            <Box key={i} flex="none" w="100%">
               <Image
-                src={src}
+                src={item.img}
+                objectFit="cover"
+                w="100%"
+                h="100%"
                 draggable="false"
-                alt={`Slide ${index}`}
-                objectFit="fit"
-                w="full"
-                h={{ base: "250px", md: "400px" }} // Responsive height
               />
             </Box>
           ))}
         </Flex>
       </Box>
 
-      {/* Dots for navigation */}
-      <Flex justify="center" mt={4}>
-        {images.map((_, index) => (
+      {/* ================= DOTS ================= */}
+      <Flex
+        position="absolute"
+        bottom="15px"
+        left="50%"
+        transform="translateX(-50%)"
+        gap={2}
+      >
+        {slides.map((_, i) => (
           <Box
-            key={index}
-            cursor="pointer"
-            boxSize="15px"
-            m="0 5px"
+            key={i}
+            w="10px"
+            h="10px"
             borderRadius="full"
-            bg={currentSlide === index ? "gray.800" : "gray.400"}
-            onClick={() => setCurrentSlide(index)}
-            transition="background-color 0.3s ease-in-out"
+            cursor="pointer"
+            bg={current === i ? "blue.500" : "gray.300"}
+            onClick={() => setCurrent(i)}
+            transition="0.3s"
           />
         ))}
       </Flex>
@@ -117,4 +167,4 @@ const Carousel = () => {
   );
 };
 
-export default Carousel;
+export default EduHeroCarousel;

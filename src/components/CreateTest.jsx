@@ -6,6 +6,7 @@ import {
   GridItem,
   Input,
   Select,
+  Spacer,
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
@@ -37,7 +38,6 @@ function CollapseEx({
   sum,
 }) {
   const { isOpen: isOpen1, onToggle: onToggle1 } = useDisclosure();
-  const { isOpen: isOpen2, onToggle: onToggle2 } = useDisclosure();
   const [totalqus, setTotalQus] = useState(0);
   const [res, resdev] = useState([]);
   const [isstate, setState] = useState(false);
@@ -60,14 +60,14 @@ function CollapseEx({
       console.warn("MathSubject is not defined.");
       return;
     }
-    if (directTest.length < 0 ) {
+    if (directTest.length < 0) {
       console.log(directTest.length, directTest);
       // setcheck(false)
       alert("should be smaller");
       return;
     }
-    console.log(MathSubject,directTest);
-    
+    console.log(MathSubject, directTest);
+
     const res = directTest?.filter((e) => e.topic === MathSubject);
     if (!res.length) {
       console.warn("No matching category found.");
@@ -84,10 +84,10 @@ function CollapseEx({
       "Selected Subject:",
       MathSubject,
       "First Category Topic:",
-      category?.[0]?.topic
+      category?.[0]?.topic,
     );
   };
- 
+
   const resdevi = (res) => {
     if (!res?.length) {
       console.warn("No questions found for this subject.");
@@ -153,86 +153,86 @@ function CollapseEx({
       maketest(dividedQuestions, true, "test 1");
     }
   };
-const directTestdatacollect = () => {
-  console.log(category);
-  if (!category?.length) return;
-  if (!MathSubject) {
-    console.warn("MathSubject is not defined.");
-    return;
-  }
-  console.log(MathSubject);
+  const directTestdatacollect = () => {
+    console.log(category);
+    if (!category?.length) return;
+    if (!MathSubject) {
+      console.warn("MathSubject is not defined.");
+      return;
+    }
+    console.log(MathSubject);
 
-  const res = category?.filter((e) => e.topic === MathSubject);
-  if (!res.length) {
-    console.warn("No matching category found.");
-    return;
-  }
-  console.log("============================", res);
+    const res = category?.filter((e) => e.topic === MathSubject);
+    if (!res.length) {
+      console.warn("No matching category found.");
+      return;
+    }
+    console.log("============================", res);
 
-  resdev(res);
-  directTestallSelectData(res);
-};
-const directTestallSelectData = (res) => {
-  if (!res?.length) {
-    console.warn("No questions found for this subject.");
-    return;
-  }
-
-  let j = noqustogive;
-  console.log("+++++++++++++++++++++++++++++++++++++++++++", j, noqustogive);
-
-  let dividedQuestions = new Set();
-
-  // Collect unique questions initially
-  res.forEach((category) => {
-    if (!Array.isArray(category.question)) {
-      console.warn(`Skipping invalid question data:`, category);
+    resdev(res);
+    directTestallSelectData(res);
+  };
+  const directTestallSelectData = (res) => {
+    if (!res?.length) {
+      console.warn("No questions found for this subject.");
       return;
     }
 
-    category.question.forEach((q) => dividedQuestions.add(q));
-  });
+    let j = noqustogive;
+    console.log("+++++++++++++++++++++++++++++++++++++++++++", j, noqustogive);
 
-  let uniqueQuestions = [...dividedQuestions];
+    let dividedQuestions = new Set();
 
-  // If we don't have enough questions, fill without repetition
-  let finalQuestions = [];
-  let usedIndexes = new Set();
+    // Collect unique questions initially
+    res.forEach((category) => {
+      if (!Array.isArray(category.question)) {
+        console.warn(`Skipping invalid question data:`, category);
+        return;
+      }
 
-  while (finalQuestions.length < j && uniqueQuestions.length > 0) {
-    let randomIndex = Math.floor(Math.random() * uniqueQuestions.length);
+      category.question.forEach((q) => dividedQuestions.add(q));
+    });
 
-    // Avoid duplicates using `usedIndexes`
-    if (!usedIndexes.has(randomIndex)) {
-      usedIndexes.add(randomIndex);
-      finalQuestions.push(uniqueQuestions[randomIndex]);
+    let uniqueQuestions = [...dividedQuestions];
+
+    // If we don't have enough questions, fill without repetition
+    let finalQuestions = [];
+    let usedIndexes = new Set();
+
+    while (finalQuestions.length < j && uniqueQuestions.length > 0) {
+      let randomIndex = Math.floor(Math.random() * uniqueQuestions.length);
+
+      // Avoid duplicates using `usedIndexes`
+      if (!usedIndexes.has(randomIndex)) {
+        usedIndexes.add(randomIndex);
+        finalQuestions.push(uniqueQuestions[randomIndex]);
+      }
+
+      // Restart when running out of new questions
+      if (usedIndexes.size === uniqueQuestions.length) {
+        usedIndexes.clear();
+      }
     }
 
-    // Restart when running out of new questions
-    if (usedIndexes.size === uniqueQuestions.length) {
-      usedIndexes.clear();
+    settotalquslength(finalQuestions.length);
+    console.log(
+      "Final Questions:",
+      finalQuestions,
+      "Total Given:",
+      finalQuestions.length,
+    );
+
+    if (finalQuestions.length > 0) {
+      setcheck(true);
+      maketest(finalQuestions, true, "test 1");
     }
-  }
-
-  settotalquslength(finalQuestions.length);
-  console.log(
-    "Final Questions:",
-    finalQuestions,
-    "Total Given:",
-    finalQuestions.length
-  );
-
-  if (finalQuestions.length > 0) {
-    setcheck(true);
-    maketest(finalQuestions, true, "test 1");
-  }
-};
-
+  };
 
   return (
     <>
       <Box display="flex" gap={3} mt={2}>
         <Button
+        gap={1}
           onClick={() => {
             onToggle1();
             findtotal();
@@ -245,133 +245,28 @@ const directTestallSelectData = (res) => {
           Create Direct Test <MdAddBox />
         </Button>
         <Button
-          onClick={() => {
-            onToggle2();
-            setState(!isstate);
-          }}
-        >
-          Create Typewise Test <MdAddBox />
-        </Button>
-        {/* {isstate ? */}
-        <Button
+        gap={1 }
           onClick={() => {
             if (!category?.length || !MathSubject) return;
 
             // Get only questions from the selected category
             const selectedCategory = category.filter(
-              (e) => e.topic === MathSubject
+              (e) => e.topic === MathSubject,
             );
 
             // Calculate total questions from selected category
             const totalQuestions = selectedCategory.reduce(
               (acc, curr) => acc + (curr.question?.length || 0),
-              0
+              0,
             );
 
             setnoqustogive(totalQuestions); // Update state with total questions count
             setselectallstate(!selectallstate);
           }}
         >
-          Select All <AiOutlineSelect size={20} style={{ marginTop: "10px" }} />
+          Select All <AiOutlineSelect   />
         </Button>
-
-        {/* // :null}  */}
       </Box>
-
-      {/* Typewise Test Section */}
-      <Collapse in={isOpen2} animateOpacity>
-        {" "}
-        <Box p={4} mt={3} bg="white" rounded="md" shadow="md">
-          <Grid templateColumns="repeat(1, 1fr)" gap={4}>
-            <GridItem>
-              <Text mb={1}>Test Name</Text>
-              <Input
-                defaultValue="Test 1"
-                placeholder="Enter test name"
-                size="sm"
-                onChange={(e) => setname(e.target.value)}
-              />
-            </GridItem>
-
-            <GridItem>
-              <Text mb={1}>Select Question Types</Text>
-              <Select
-                size="sm"
-                onChange={(e) => {
-                  if (!arr.includes(e.target.value) && e.target.value !== "") {
-                    setarr([...arr, e.target.value]);
-                  }
-                }}
-              >
-                <option value="">Select Type</option>
-                {TestSubject === "Eng" && (
-                  <option value="Spot the Error">Spot the Error</option>
-                )}
-                {TestSubject === "math" && (
-                  <>
-                    <option value="Mean,Median and Mode">
-                      Mean, Median and Mode
-                    </option>
-                    <option value="L.C.M and H.C.F">L.C.M and H.C.F</option>
-                    <option value="Simple and Compound Interest">
-                      Simple and Compound Interest
-                    </option>
-                  </>
-                )}
-                {TestSubject === "gs" && (
-                  <option value="Vedic age">Vedic age</option>
-                )}
-              </Select>
-              <Box display="flex" flexWrap="wrap" gap={2} mt={2}>
-                {arr.map((e, i) => (
-                  <Text
-                    key={i}
-                    bg="gray.100"
-                    p={2}
-                    borderRadius="md"
-                    fontSize="sm"
-                  >
-                    {e}
-                  </Text>
-                ))}
-              </Box>
-            </GridItem>
-
-            <GridItem>
-              <Text mb={1}>Number of Questions</Text>
-              <Input
-                type="number"
-                defaultValue="20"
-                size="sm"
-                onChange={(e) => setTotalQus(e.target.value)}
-              />
-            </GridItem>
-
-            <GridItem display="flex" gap={4}>
-              <Button
-                colorScheme="red"
-                variant="outline"
-                onClick={() => {
-                  onToggle2();
-                  setState(false);
-                }}
-              >
-                Discard
-              </Button>
-              <Button
-                colorScheme="green"
-                variant="outline"
-                onClick={() => {
-                  setq();
-                  setState(false);
-                }}
-              >
-                Create
-              </Button>
-            </GridItem>
-          </Grid>
-        </Box>
-      </Collapse>
 
       {/* Direct Test Section */}
       <Collapse in={isOpen1} animateOpacity>

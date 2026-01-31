@@ -4,7 +4,6 @@ import {
   Button,
   ButtonGroup,
   Center,
-  // Checkbox,
   Container,
   Drawer,
   DrawerBody,
@@ -21,10 +20,12 @@ import {
   Radio,
   RadioGroup,
   Spacer,
-  // Tag,
   Text,
   useDisclosure,
   useMediaQuery,
+  VStack,
+  HStack,
+  useToast,
 } from "@chakra-ui/react";
 import ModalPause from "./ModalPause";
 import { Link, Navigate, useNavigate } from "react-router-dom";
@@ -39,12 +40,11 @@ import ReportQuestionDropdown from "./ReportQuestionDropdown.jsx";
 
 const TakeTest = ({ quest, handleFullScreen }) => {
   const [currentquestion, setcurrentquestion] = useState(0);
- const shuffleArray = (arr) => [...arr]?.sort(() => Math.random() - 0.5);
+  const shuffleArray = (arr) => [...arr]?.sort(() => Math.random() - 0.5);
 
- const shuffledQuest = shuffleArray(quest);
- const [question] = useState(shuffledQuest);
+  const shuffledQuest = shuffleArray(quest);
+  const [question] = useState(shuffledQuest);
 
-  // const [answerSelected, setAnswerSelected] = useState(false);
   const [answeredQuestion, setAnsweredQuestion] = useState([]);
   const [markedAndAnswer, setMarkedAndAnswer] = useState([]);
   const [markedNotAnswer, setMarkedNotAnswer] = useState([]);
@@ -57,11 +57,15 @@ const TakeTest = ({ quest, handleFullScreen }) => {
   const [isMobile] = useMediaQuery("(max-width: 768px)");
   const [correctQus, setcorrectQus] = useState([]);
   const dispatch = useDispatch();
-  // const [newTestDataStore,setNewTestDataStore] = useState(null)
   const [min, setmin] = useState(0);
   const [hour, sethour] = useState(1);
   const [size, setSize] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const toast = useToast();
+
+  // State to track if fullscreen is active
+  const [isFullscreenActive, setIsFullscreenActive] = useState(false);
+  const [hasExitedFullscreen, setHasExitedFullscreen] = useState(false);
 
   const [collectAns, setcollectAns] = useState([[]]);
   const [correctAns, setCorrectAns] = useState([]);
@@ -74,6 +78,177 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     markedNotAnswer: null,
   });
   console.log("jjjl", testData);
+
+  // Prevent fullscreen exit and navigation
+  useEffect(() => {
+    let isRequestingFullscreen = false;
+
+    // Function to request fullscreen
+    const requestFullscreen = async () => {
+      if (isRequestingFullscreen) return;
+
+      isRequestingFullscreen = true;
+      const elem = document.documentElement;
+
+      try {
+        if (elem.requestFullscreen) {
+          await elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+          await elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+          await elem.msRequestFullscreen();
+        }
+        setIsFullscreenActive(true);
+      } catch (error) {
+        console.log("Fullscreen request failed:", error);
+        // Only show toast if user has already been in fullscreen mode
+        if (hasExitedFullscreen) {
+          toast({
+            title: "Fullscreen Required",
+            description:
+              "Please click anywhere on the screen to re-enter fullscreen mode.",
+            status: "warning",
+            duration: 5000,
+            isClosable: true,
+            position: "top",
+          });
+        }
+      } finally {
+        isRequestingFullscreen = false;
+      }
+    };
+
+    // Function to handle fullscreen change
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.msFullscreenElement
+      );
+
+      if (!isCurrentlyFullscreen && isFullscreenActive) {
+        // User exited fullscreen
+        setIsFullscreenActive(false);
+        setHasExitedFullscreen(true);
+
+        toast({
+          title: "Fullscreen Exited",
+          description:
+            "Click anywhere to re-enter fullscreen mode. You must stay in fullscreen during the test.",
+          status: "warning",
+          duration: 5000,
+          isClosable: true,
+          position: "top",
+        });
+      } else if (isCurrentlyFullscreen) {
+        setIsFullscreenActive(true);
+      }
+    };
+
+    // Click handler to re-enter fullscreen
+    const handleClickToFullscreen = () => {
+      if (!isFullscreenActive && hasExitedFullscreen && !isMobile) {
+        requestFullscreen();
+      }
+    };
+
+    // Function to prevent back navigation
+    const handleBackButton = (e) => {
+      e.preventDefault();
+      window.history.pushState(null, "", window.location.href);
+      toast({
+        title: "Navigation Blocked",
+        description:
+          "You cannot go back during the test. Please submit to exit.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
+      });
+    };
+
+    // Function to prevent page refresh/close
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue =
+        "Are you sure you want to leave? Your test progress may be lost.";
+      return e.returnValue;
+    };
+
+    // Add fullscreen change listeners
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+
+    // Add click listener for re-entering fullscreen
+    document.addEventListener("click", handleClickToFullscreen);
+
+    // Prevent back button
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handleBackButton);
+
+    // Prevent page close/refresh
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange,
+      );
+      document.removeEventListener(
+        "MSFullscreenChange",
+        handleFullscreenChange,
+      );
+      document.removeEventListener("click", handleClickToFullscreen);
+      window.removeEventListener("popstate", handleBackButton);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isMobile, toast, isFullscreenActive, hasExitedFullscreen]);
+
+  // Prevent right-click context menu
+  useEffect(() => {
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      return false;
+    };
+
+    document.addEventListener("contextmenu", handleContextMenu);
+
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, []);
+
+  // Prevent common keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Prevent F11 (fullscreen toggle)
+      if (e.key === "F11") {
+        e.preventDefault();
+      }
+      // Prevent Escape (exit fullscreen)
+      if (e.key === "Escape") {
+        e.preventDefault();
+      }
+      // Prevent Alt+F4 (close window)
+      if (e.altKey && e.key === "F4") {
+        e.preventDefault();
+      }
+      // Prevent Ctrl+W (close tab)
+      if (e.ctrlKey && e.key === "w") {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   const handlequestion = (con) => {
     sethour(1);
     setmin(0);
@@ -87,14 +262,12 @@ const TakeTest = ({ quest, handleFullScreen }) => {
           let removeFromMarkedNotAnswer =
             markedNotAnswer.indexOf(currentquestion);
           markedNotAnswer.splice(removeFromMarkedNotAnswer, 1);
-
           console.log(removeFromMarkedNotAnswer);
         }
 
         if (notAnswer.includes(currentquestion)) {
           let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
           notAnswer.splice(removeFromNotAnswer, 1);
-
           console.log(removeFromNotAnswer);
         }
 
@@ -102,7 +275,6 @@ const TakeTest = ({ quest, handleFullScreen }) => {
           let removeFromMarkedAndAnswer =
             markedAndAnswer.indexOf(currentquestion);
           markedAndAnswer.splice(removeFromMarkedAndAnswer, 1);
-
           console.log(removeFromMarkedAndAnswer);
         }
 
@@ -124,29 +296,21 @@ const TakeTest = ({ quest, handleFullScreen }) => {
             let removeFromMarAndAnswer =
               markedAndAnswer.indexOf(currentquestion);
             markedAndAnswer.splice(removeFromMarAndAnswer, 1);
-
             console.log(removeFromMarAndAnswer);
           }
           if (answeredQuestion.includes(currentquestion)) {
             let removeFromAnswerQuestion =
               answeredQuestion.indexOf(currentquestion);
             answeredQuestion.splice(removeFromAnswerQuestion, 1);
-
             console.log(removeFromAnswerQuestion);
           }
 
-          // if (answeredQuestion.includes(currentquestion)) {
-          //   let removeFromMarkedAndAnswer = answeredQuestion.indexOf(currentquestion);
-          //   answeredQuestion.splice(removeFromMarkedAndAnswer, 1);
-          //   console.log(removeFromMarkedAndAnswer);
-          // }
           setNotAnswer([...notAnswer, currentquestion]);
           console.log("in");
         }
       }
       if (question.length - 1 > currentquestion) {
         setcurrentquestion(currentquestion + 1);
-        // console.log("ac1", con);
       }
     } else {
       if (
@@ -177,7 +341,6 @@ const TakeTest = ({ quest, handleFullScreen }) => {
         setAnsweredQuestion([...answeredQuestion, currentquestion]);
         if (question.length - 1 > currentquestion) {
           setcurrentquestion(con);
-          // console.log("aq2");
         }
       } else if (
         answer === null &&
@@ -210,37 +373,25 @@ const TakeTest = ({ quest, handleFullScreen }) => {
 
         if (question.length - 1 > currentquestion) {
           setcurrentquestion(con);
-          // console.log("ac2", con);
         }
       }
       if (con !== isNaN) {
         setcurrentquestion(con);
-        // console.log("ac2", con);
       }
     }
     setans(null);
-    //  setTestData({
-    //    ...testData,
-    //    allAnswer: allAns,
-    //    answeredQuestion: answeredQuestion,
-    //    notAnswer: notAnswer,
-    //    markedAndAnswer: markedAndAnswer,
-    //    markedNotAnswer: markedNotAnswer,
-    //  });
   };
-  // console.log(currentquestion);
-  // console.log("g", allAns[currentquestion]);
+
   const markedQuestion = () => {
     setmin(0);
-    sethour(1)
+    sethour(1);
     if (allAns[currentquestion] === undefined && answer !== null) {
       setAllAns((prevState) => ({
         ...prevState,
-        [currentquestion]: answer, // Update the selected answer for the specific question
+        [currentquestion]: answer,
       }));
     }
     if (
-      // answer !== null &&
       allAns[currentquestion] !== undefined &&
       !markedAndAnswer.includes(currentquestion)
     ) {
@@ -267,7 +418,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     ) {
       setAllAns((prevState) => {
         const updatedState = { ...prevState };
-        delete updatedState[currentquestion]; // Remove the selected answer for the specific question
+        delete updatedState[currentquestion];
         return updatedState;
       });
       if (answeredQuestion.includes(currentquestion)) {
@@ -279,7 +430,6 @@ const TakeTest = ({ quest, handleFullScreen }) => {
       if (markedAndAnswer.includes(currentquestion)) {
         let removeFromMarkAndAnswer = markedAndAnswer.indexOf(currentquestion);
         notAnswer.splice(removeFromMarkAndAnswer, 1);
-        //     console.log(removeFromNotAnswer);
       }
       if (notAnswer.includes(currentquestion)) {
         let removeFromNotAnswer = notAnswer.indexOf(currentquestion);
@@ -332,6 +482,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     }));
   };
   console.log("m", mark);
+
   const handleClearAnswer = (questionIndex) => {
     if (answeredQuestion.includes(currentquestion)) {
       let removeFromAnswer = answeredQuestion.indexOf(currentquestion);
@@ -341,7 +492,6 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     if (markedAndAnswer.includes(currentquestion)) {
       let removeFromMarkAndAnswer = markedAndAnswer.indexOf(currentquestion);
       markedAndAnswer.splice(removeFromMarkAndAnswer, 1);
-      //     console.log(removeFromNotAnswer);
     }
 
     if (markedNotAnswer.includes(currentquestion)) {
@@ -351,7 +501,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
 
     setAllAns((prevState) => {
       const updatedState = { ...prevState };
-      delete updatedState[questionIndex]; // Remove the selected answer for the specific question
+      delete updatedState[questionIndex];
       return updatedState;
     });
     if (!notAnswer.includes(currentquestion)) {
@@ -383,28 +533,27 @@ const TakeTest = ({ quest, handleFullScreen }) => {
 
     setTestData(newTestData);
     dispatch(userTestDataApi(newTestData));
-    // const getStorage = getLocalStorage("test");
     const d = userTestFetchDataApi();
     console.log(d);
 
     setLocalStorage("Total", mark);
     setLocalStorage("test", [newTestData]);
-    navigate("/test-result");
+
+    // Exit fullscreen before navigation
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+
+    // Call the prop function to update parent state
     handleFullScreen(false);
-    // if (getStorage === null) {
 
-    // } else if (getStorage !== null) {
-
-    //   setLocalStorage("Total", mark);
-    //   setLocalStorage("test", [...getStorage, newTestData]);
-    //   navigate("/test-result");
-    //         handleFullScreen(false);
-
-    // }
-
-    //  }
+    // Navigate to results
+    navigate("/test-result");
   };
-  // useEffect(() =>{
 
   useEffect(() => {
     if (hour === 0 && min === 0) {
@@ -427,623 +576,532 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     onOpen();
   };
 
-  // },[allAns, answeredQuestion, markedAndAnswer, markedNotAnswer, newTestDataStore, notAnswer])
-  return (
-    <>
-      {/* <Box 
-      maxWidth={"100%"}
-            width="100vw"
-            height="100vh"
-            // display="flex"
-            justifyContent="center"
-            alignItems="center"
-            transform={isMobile ? "rotate(90deg)" : "rotate(0deg)"}
-            transformOrigin="center center"
-            overflow="hidden"
-            > */}
-      <Box
-        bg={"white"}
-        display={"flex"}
-        justifyContent={"space-between"}
-        // color={"black"}
-        p={isMobile ? "1.6%" : "0.6%"}
-        backgroundColor={"#4285f4"}
-        // maxWidth={"100%"}
-        width="100%"
-        color={"white"}
-        //  p={"%"} maxWidth={"100%"}
-      >
-        {/* <Box
-          
-            // height="100vh"
-            // display="flex"
-            // justifyContent="center"
-            // alignItems="center"
-            // transform={isMobile ? "rotate(90deg)" : "rotate(0deg)"}
-            // transformOrigin="center center"
-            // overflow="hidden"
-          > */}
-        <Center w={"fit-content"} fontSize={isMobile ? "16px" : "26px"}>
-          <b>Revision Karle</b>
-        </Center>
-        <Center
-          bg={"#01bfbd"}
-          // border="1px solid red"
-          boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
-          borderRadius={"4px"}
-          pl={"2"}
-          pr={"2"}
-          w={isMobile ? "40%" : "10.5%"}
-        >
-          Time Left <Spacer />
-          <Text as={"span"}>00</Text>:<Text as={"span"}>{hour}</Text>:
-          <Text as={"span"}>{min}</Text>
-        </Center>
-        <Box w={"20%"} mr={"0"}>
-          {isMobile ? null : (
-            <Button
-              onClick={() => handleFullScreen(true)}
-              border={"1px solid #01bfbd"}
-              color={"#01bfbd"}
-              mr={"10px"}
+  // Handler to enter fullscreen
+  const enterFullscreen = async () => {
+    const elem = document.documentElement;
+
+    try {
+      if (elem.requestFullscreen) {
+        await elem.requestFullscreen();
+      } else if (elem.webkitRequestFullscreen) {
+        await elem.webkitRequestFullscreen();
+      } else if (elem.msRequestFullscreen) {
+        await elem.msRequestFullscreen();
+      }
+      setIsFullscreenActive(true);
+    } catch (error) {
+      console.log("Fullscreen request failed:", error);
+      toast({
+        title: "Fullscreen Failed",
+        description: "Unable to enter fullscreen mode. Please try again.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
+      });
+    }
+  };
+
+  // Sidebar Component for better organization
+  const QuestionSidebar = () => (
+    <VStack spacing={4} align="stretch" h="100%">
+      <Box>
+        <Text fontSize="xl" fontWeight="bold" color="white">
+          Pablo
+        </Text>
+      </Box>
+
+      <Box borderTop="1px solid rgba(255,255,255,0.2)" pt={4}>
+        <VStack spacing={3} align="stretch">
+          <HStack justify="space-between">
+            <Text color="white" fontSize="sm">
+              Marked
+            </Text>
+            <Center
+              minW="28px"
+              h="28px"
+              bg="purple.500"
+              color="white"
+              borderRadius="full"
+              fontSize="sm"
+              fontWeight="600"
             >
-              Enter Full Screen
+              {markedNotAnswer.length}
+            </Center>
+          </HStack>
+
+          <HStack justify="space-between">
+            <Text color="white" fontSize="sm">
+              Not visited
+            </Text>
+            <Center
+              minW="28px"
+              h="28px"
+              bg="white"
+              color="gray.600"
+              border="1px solid"
+              borderColor="gray.300"
+              borderRadius="4px"
+              fontSize="sm"
+              fontWeight="600"
+            >
+              {question.length -
+                (markedAndAnswer.length +
+                  markedNotAnswer.length +
+                  answeredQuestion.length +
+                  notAnswer.length)}
+            </Center>
+          </HStack>
+
+          <HStack justify="space-between">
+            <Text color="white" fontSize="sm">
+              Answered
+            </Text>
+            <Center
+              minW="28px"
+              h="28px"
+              bg="green.500"
+              color="white"
+              borderRadius="50% 50% 0 0"
+              fontSize="sm"
+              fontWeight="600"
+            >
+              {answeredQuestion.length}
+            </Center>
+          </HStack>
+
+          <HStack justify="space-between">
+            <Text color="white" fontSize="sm">
+              Not Answered
+            </Text>
+            <Center
+              minW="28px"
+              h="28px"
+              bg="red.500"
+              color="white"
+              borderRadius="0 0 50% 50%"
+              fontSize="sm"
+              fontWeight="600"
+            >
+              {notAnswer.length}
+            </Center>
+          </HStack>
+
+          <HStack justify="space-between">
+            <Text color="white" fontSize="sm">
+              Marked & Answered
+            </Text>
+            <Center
+              minW="28px"
+              h="28px"
+              bg="purple.500"
+              color="white"
+              borderRadius="full"
+              fontSize="sm"
+              fontWeight="600"
+            >
+              {markedAndAnswer.length}
+            </Center>
+          </HStack>
+        </VStack>
+      </Box>
+
+      <Box borderTop="1px solid rgba(255,255,255,0.2)" pt={4}>
+        <Text color="white" fontSize="sm" mb={3}>
+          Section: Elementary maths
+        </Text>
+      </Box>
+
+      <Box
+        flex="1"
+        overflowY="auto"
+        css={{
+          "&::-webkit-scrollbar": {
+            width: "4px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "rgba(255,255,255,0.1)",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "rgba(255,255,255,0.3)",
+            borderRadius: "2px",
+          },
+        }}
+      >
+        <Grid templateColumns="repeat(5, 1fr)" gap={3}>
+          {question?.map((d, i) => (
+            <Center
+              key={i}
+              w="100%"
+              h="40px"
+              bg={
+                markedNotAnswer.includes(i)
+                  ? "purple.500"
+                  : answeredQuestion.includes(i)
+                    ? "green.500"
+                    : notAnswer.includes(i)
+                      ? "red.500"
+                      : markedAndAnswer.includes(i)
+                        ? "purple.500"
+                        : "white"
+              }
+              color={
+                markedNotAnswer.includes(i) ||
+                answeredQuestion.includes(i) ||
+                notAnswer.includes(i) ||
+                markedAndAnswer.includes(i)
+                  ? "white"
+                  : "gray.600"
+              }
+              borderRadius={
+                markedAndAnswer.includes(i)
+                  ? "full"
+                  : markedNotAnswer.includes(i)
+                    ? "full"
+                    : answeredQuestion.includes(i)
+                      ? "50% 50% 0 0"
+                      : notAnswer.includes(i)
+                        ? "0 0 50% 50%"
+                        : "4px"
+              }
+              border="1px solid"
+              borderColor={
+                markedNotAnswer.includes(i) ||
+                answeredQuestion.includes(i) ||
+                notAnswer.includes(i) ||
+                markedAndAnswer.includes(i)
+                  ? "transparent"
+                  : "gray.300"
+              }
+              cursor="pointer"
+              onClick={() => handlequestion(i)}
+              transition="all 0.2s"
+              _hover={{
+                transform: "scale(1.05)",
+                shadow: "md",
+              }}
+              fontSize="sm"
+              fontWeight="600"
+            >
+              {markedAndAnswer.includes(i) ? <>{i + 1} ✓</> : i + 1}
+            </Center>
+          ))}
+        </Grid>
+      </Box>
+
+      <VStack spacing={3} pt={4} borderTop="1px solid rgba(255,255,255,0.2)">
+        <Button
+          w="100%"
+          bg="white"
+          color="#4285f4"
+          fontWeight="600"
+          _hover={{ bg: "gray.100" }}
+        >
+          Instructions
+        </Button>
+        <Button
+          w="100%"
+          bg="#01bfbd"
+          color="white"
+          fontWeight="600"
+          _hover={{ bg: "#00a8a6" }}
+          onClick={() => giveMark()}
+        >
+          Submit Test
+        </Button>
+      </VStack>
+    </VStack>
+  );
+
+  return (
+    <Box
+      h="100vh"
+      display="flex"
+      flexDirection="column"
+      bg="white"
+      position="relative"
+    >
+      {/* Fullscreen Warning Overlay */}
+      {!isMobile && !isFullscreenActive && hasExitedFullscreen && (
+        <Box
+          position="fixed"
+          top="0"
+          left="0"
+          right="0"
+          bottom="0"
+          bg="rgba(0,0,0,0.85)"
+          zIndex="9999"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          onClick={enterFullscreen}
+          cursor="pointer"
+        >
+          <VStack spacing={4} color="white" textAlign="center" p={8}>
+            <Heading size="xl">⚠️ Fullscreen Required</Heading>
+            <Text fontSize="lg">
+              You must stay in fullscreen mode during the test.
+            </Text>
+            <Button
+              size="lg"
+              colorScheme="blue"
+              onClick={enterFullscreen}
+              mt={4}
+            >
+              Click Here to Re-enter Fullscreen
+            </Button>
+            <Text fontSize="sm" color="gray.300">
+              You can only exit fullscreen by submitting the test
+            </Text>
+          </VStack>
+        </Box>
+      )}
+
+      {/* Header - ONLY RESPONSIVE UPDATES HERE */}
+      <Flex
+        bg="#4285f4"
+        color="white"
+        px={{ base: 3, sm: 4, md: 6 }}
+        py={{ base: 2, sm: 3 }}
+        align="center"
+        justify="space-between"
+        flexShrink={0}
+        gap={{ base: 2, sm: 3 }}
+      >
+        <Text
+          fontSize={{ base: "md", sm: "lg", md: "2xl" }}
+          fontWeight="bold"
+          flexShrink={0}
+        >
+          Revision Karle
+        </Text>
+
+        <Center
+          bg="#01bfbd"
+          px={{ base: 2, sm: 3, md: 4 }}
+          py={{ base: 1.5, sm: 2 }}
+          borderRadius="md"
+          fontWeight="600"
+          fontSize={{ base: "xs", sm: "sm", md: "md" }}
+          minW={{ base: "80px", sm: "110px", md: "140px" }}
+          flexShrink={0}
+        >
+          <HStack spacing={{ base: 0.5, sm: 1 }}>
+            <Text display={{ base: "none", sm: "inline" }}>Time Left</Text>
+            <Text>
+              00:{hour}:{min < 10 ? `0${min}` : min}
+            </Text>
+          </HStack>
+        </Center>
+
+        <HStack spacing={{ base: 1, sm: 2 }} flexShrink={0}>
+          {!isMobile && !isFullscreenActive && (
+            <Button
+              size={{ base: "xs", sm: "sm" }}
+              variant="solid"
+              bg="#01bfbd"
+              color="white"
+              _hover={{ bg: "#00a8a6" }}
+              onClick={enterFullscreen}
+              fontSize={{ base: "xs", sm: "sm" }}
+              px={{ base: 2, sm: 3 }}
+              fontWeight="600"
+            >
+              Enter Fullscreen
             </Button>
           )}
           <ModalPause
-            // testSection=
             markedAndAnswer={markedAndAnswer}
             question={question}
             markedNotAnswer={markedNotAnswer}
             notAnswer={notAnswer}
             answered={answeredQuestion}
           />
-        </Box>
-      </Box>{" "}
-      {/* </Box> */}
-      <Box display={"flex"} h={"100%"}>
-        <Box w={"100%"}>
-          <Box
-          display={"inline-flex"}
-          justifyContent={"space-between"}
-            boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
-            p={"1%"}
-            w={"100%"}
+        </HStack>
+      </Flex>
+
+      {/* Main Content - UNCHANGED */}
+      <Flex flex="1" overflow="hidden">
+        {/* Question Area */}
+        <VStack flex="1" spacing={0} align="stretch" overflow="hidden">
+          {/* Section Header */}
+          <Flex
+            px={6}
+            py={3}
+            borderBottom="1px solid"
+            borderColor="gray.200"
+            justify="space-between"
+            align="center"
+            bg="gray.50"
           >
-            <Text>
-              SECTIONS | <Text as={"span"}>Elementary maths</Text>
+            <Text fontSize="sm" color="gray.600">
+              SECTIONS |{" "}
+              <Text as="span" fontWeight="600">
+                Elementary maths
+              </Text>
             </Text>
-            <ReportQuestionDropdown/>
-          </Box>{" "}
-          <Box p={"1%"} w={"100%"}>
-            <Text>
-              <b>Question no {currentquestion + 1}</b>
+            <ReportQuestionDropdown />
+          </Flex>
+
+          {/* Question Number */}
+          <Box px={6} py={3} bg="white">
+            <Text fontWeight="600" fontSize="md">
+              Question no {currentquestion + 1}
             </Text>
           </Box>
+
+          {/* Question Content */}
           <Box
-            boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
-            p={"1%"}
-            h={isMobile ? "82vh" : "574px"}
-            w={"100%"}
+            flex="1"
+            overflow="auto"
+            px={6}
+            py={4}
+            bg="white"
+            borderTop="1px solid"
+            borderColor="gray.200"
           >
-            {/* {question.length>0 && question.quest.map((d) )} */}
-            <Text m={"1%"}>{question[currentquestion]?.qus}</Text>
+            <Text mb={6} fontSize="md" lineHeight="tall">
+              {question[currentquestion]?.qus}
+            </Text>
+
             <RadioGroup
               value={allAns[currentquestion] || ""}
               onChange={(value) => handleAnswer(currentquestion, value)}
             >
-              {question[currentquestion]?.options.map((d, i) => (
-                <Box
-                  onClick={() => {
-                    handleAnswer(d, i);
-                  }}
-                >
-                  <Radio
-                    m={"1%"}
-                    checked={allAns[currentquestion] === d}
-                    value={d}
+              <VStack align="stretch" spacing={3}>
+                {question[currentquestion]?.options.map((d, i) => (
+                  <Box
+                    key={i}
+                    p={3}
+                    borderRadius="md"
+                    border="1px solid"
+                    borderColor={
+                      allAns[currentquestion] === d ? "blue.400" : "gray.200"
+                    }
+                    bg={allAns[currentquestion] === d ? "blue.50" : "white"}
+                    cursor="pointer"
+                    transition="all 0.2s"
+                    _hover={{
+                      borderColor: "blue.300",
+                      bg: "gray.50",
+                    }}
+                    onClick={() => handleAnswer(d, i)}
                   >
-                    {d}
-                  </Radio>
-                  <br></br>{" "}
-                </Box>
-              ))}
+                    <Radio
+                      value={d}
+                      isChecked={allAns[currentquestion] === d}
+                      colorScheme="blue"
+                    >
+                      <Text ml={2}>{d}</Text>
+                    </Radio>
+                  </Box>
+                ))}
+              </VStack>
             </RadioGroup>
-            <Box
-              position="fixed"
-              bottom="10"
-              width="100%"
-              // bg="teal.500"
-              // color="white"
-              textAlign="end"
-              // p="4"
-            >
-              {isMobile ? (
-                <>
-                  {" "}
-                  <Button onClick={() => handleClick("xs")} key={"xs"} m={4}>
-                    <HamburgerIcon />
-                  </Button>
-                  <Drawer onClose={onClose} isOpen={isOpen} size={"xs"}>
-                    <DrawerOverlay />
-                    <DrawerContent>
-                      <DrawerCloseButton />
-                      <DrawerHeader>Revision Karle</DrawerHeader>
-                      <DrawerBody>
-                        {/* <Box
-                boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
-                p={"1%"}
-                w={"100%"}
-                // h={""}
-                // height="100vh"
-                color={"white"}
-                bg={"#4285f4"}
-              > */}
-                        <Box>
-                          <Text fontSize={"x-large"}>
-                            <b>Pablo</b>
-                          </Text>
-                        </Box>
-                        <hr />
-                        <Box mt={"3%"} mb={"3%"}>
-                          <Box mb={"3%"} justifyContent={"space-between"}>
-                            <Text mb={"2%"}>
-                              Marked{" "}
-                              <Text
-                                w={"auto"}
-                                pl={"4.5%"}
-                                pr={"4.5%"}
-                                backgroundColor={"purple"}
-                                color={"white"}
-                                borderRadius={"50%"}
-                                as={"span"}
-                              >
-                                {markedNotAnswer.length}
-                              </Text>{" "}
-                            </Text>{" "}
-                            <Text mb={"2%"}>
-                              Not visited{" "}
-                              <Text
-                                w={"auto"}
-                                pl={"4.5%"}
-                                pr={"4.5%"}
-                                // backgroundColor={"purple"}
-                                color={"gray"}
-                                bg={"white"}
-                                border={"1px solid gray"}
-                                // borderRadius={"50%"}
-                                as={"span"}
-                              >
-                                {question.length -
-                                  (markedAndAnswer.length +
-                                    markedNotAnswer.length +
-                                    answeredQuestion.length +
-                                    notAnswer.length)}
-                              </Text>
-                            </Text>
-                            <Text mb={"2%"}>
-                              Answered{" "}
-                              <Text
-                                w={"auto"}
-                                pl={"4.5%"}
-                                pr={"4.5%"}
-                                backgroundColor={"green"}
-                                color={"white"}
-                                borderTopLeftRadius={"50%"}
-                                borderTopRightRadius={"50%"}
-                                as={"span"}
-                              >
-                                {answeredQuestion.length}
-                              </Text>
-                            </Text>
-                            <Text mb={"2%"}>
-                              Not Answered{" "}
-                              <Text
-                                w={"auto"}
-                                pl={"4.5%"}
-                                pr={"4.5%"}
-                                backgroundColor={"red"}
-                                color={"white"}
-                                borderBottomLeftRadius={"50%"}
-                                borderBottomRightRadius={"50%"}
-                                as={"span"}
-                              >
-                                {notAnswer.length}
-                              </Text>
-                            </Text>
-                            <Text>
-                              Marked & Answered{" "}
-                              <Text
-                                w={"auto"}
-                                pl={"4.5%"}
-                                pr={"4.5%"}
-                                backgroundColor={"purple"}
-                                color={"white"}
-                                borderRadius={"50%"}
-                                as={"span"}
-                              >
-                                {markedAndAnswer.length} ✓
-                              </Text>
-                            </Text>
-                          </Box>
-                          <hr />
-                        </Box>
-
-                        <Text mb={"3%"}>Section : Average Type 1</Text>
-                        <hr />
-                        <Box
-                          mt={"8%"}
-                          mb={"6.5%"}
-                          height="48vh"
-                          p={"2%"}
-                          overflow={"scroll"}
-                          sx={{
-                            "::-webkit-scrollbar": {
-                              display: "none",
-                            },
-                            "-ms-overflow-style": "none", // IE and Edge
-                            "scrollbar-width": "none", // Firefox
-                          }}
-                          // borderBottom={"1px solid gray"}
-                        >
-                          <Box>
-                            {" "}
-                            <Grid
-                              templateColumns="repeat(5, 1fr)"
-                              rowGap={"10%"}
-                              columnGap={"6%"}
-                              textAlign={"center"}
-                            >
-                              {question?.map((d, i) => (
-                                <Box
-                                  pl={"4.5%"}
-                                  pr={"4.5%"}
-                                  boxShadow={
-                                    " rgba(0, 0, 0, 0.35) 0px 5px 15px"
-                                  }
-                                  onClick={() => handlequestion(i)}
-                                  background={
-                                    markedNotAnswer.includes(i)
-                                      ? "purple"
-                                      : answeredQuestion.includes(i)
-                                      ? "green"
-                                      : notAnswer.includes(i)
-                                      ? "red"
-                                      : markedAndAnswer.includes(i)
-                                      ? "purple"
-                                      : "white"
-                                  }
-                                  borderRadius={
-                                    markedAndAnswer.includes(i)
-                                      ? "50%"
-                                      : markedNotAnswer.includes(i)
-                                      ? "50%"
-                                      : answeredQuestion.includes(i)
-                                      ? "50% 50% 0% 0%"
-                                      : notAnswer.includes(i)
-                                      ? "0% 0% 50% 50%"
-                                      : null
-                                  }
-                                  color={
-                                    markedAndAnswer.includes(i)
-                                      ? "white"
-                                      : markedNotAnswer.includes(i)
-                                      ? "white"
-                                      : answeredQuestion.includes(i)
-                                      ? "white"
-                                      : notAnswer.includes(i)
-                                      ? "white"
-                                      : "gray"
-                                  }
-                                  cursor={"pointer"}
-                                  border={"1px solid gray"}
-                                >
-                                  {markedAndAnswer.includes(i) ? (
-                                    <>
-                                      {i + 1}
-                                      <b> ✓</b>
-                                    </>
-                                  ) : (
-                                    <>{i + 1}</>
-                                  )}
-                                </Box>
-                              ))}
-                            </Grid>{" "}
-                          </Box>
-                        </Box>
-                        <Box
-                        // border={"1px solid red"}
-                        >
-                          <Box borderBottom={"1px solid #00d9ff"}>
-                            <Button
-                              mt={"3%"}
-                              mb={"3%"}
-                              border={"1px solid #01bfbd"}
-                              w={"100%"}
-                              color={"#01bfbd"}
-                            >
-                              Instruction
-                            </Button>{" "}
-                          </Box>{" "}
-                          <Button
-                            onClick={() => giveMark()}
-                            mt={"3%"}
-                            // mb={"3%"}
-                            border={"1px solid #01bfbd"}
-                            w={"100%"}
-                            color={"#01bfbd"}
-                          >
-                            Submit Test
-                          </Button>{" "}
-                        </Box>
-                        {/* <Box> */}
-                        {/* <Link to={"/test-result"}> */}
-
-                        {/* </Link> */}
-                        {/* </Box> */}
-                        {/* </Box> */}
-                      </DrawerBody>
-                    </DrawerContent>
-                  </Drawer>
-                </>
-              ) : null}
-            </Box>
           </Box>
-          <Box
-            display={"flex"}
-            boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
-            w={"100%"}
-            p={"0.5%"}
-            justifyContent={"space-between"}
+
+          {/* Bottom Action Bar */}
+          <Flex
+            px={6}
+            py={3}
+            borderTop="1px solid"
+            borderColor="gray.200"
+            justify="space-between"
+            align="center"
+            bg="white"
+            flexShrink={0}
           >
-            <ButtonGroup>
+            <HStack spacing={2}>
               <Button
-                fontSize={isMobile ? "12" : "auto"}
+                size="sm"
+                variant="outline"
+                colorScheme="blue"
                 onClick={() => markedQuestion()}
-                border={"1px solid #01bfbd"}
-                color={"#01bfbd"}
               >
-                Mark for priview & Next
+                Review & Next
               </Button>
               <Button
-                fontSize={isMobile ? "12" : "auto"}
+                size="sm"
+                variant="outline"
+                colorScheme="blue"
                 onClick={() => handleClearAnswer(currentquestion)}
-                border={"1px solid #01bfbd"}
-                color={"#01bfbd"}
               >
                 Clear Response
               </Button>
-            </ButtonGroup>
+            </HStack>
+
             <Button
-              fontSize={isMobile ? "12" : "auto"}
+              size="sm"
+              display={{ base: "none", md: "inline-flex", lg: "inline-flex" }}
+              colorScheme="blue"
               onClick={() => handlequestion("svn")}
-              border={"1px solid #01bfbd"}
-              color={"#01bfbd"}
             >
               Save & Next
             </Button>
+          </Flex>
+          <Button
+            size="sm"
+            display={{ base: "flex", md: "none" }}
+            w="90%"
+            mx="auto"
+            mt={0}
+            colorScheme="blue"
+            onClick={() => handlequestion("svn")}
+          >
+            Save & Next
+          </Button>
+        </VStack>
+
+        {/* Sidebar - Desktop Only */}
+        {!isMobile && (
+          <Box
+            w="320px"
+            bg="#4285f4"
+            p={6}
+            borderLeft="1px solid"
+            borderColor="gray.200"
+            flexShrink={0}
+          >
+            <QuestionSidebar />
           </Box>
-        </Box>
-
-        {/* slider */}
-        {isMobile ? null : (
-          <>
-            {" "}
-            <Box
-              boxShadow="rgba(67, 71, 85, 0.27) 0px 0px 0.25em, rgba(90, 125, 188, 0.05) 0px 0.25em 1em"
-              p={"1%"}
-              w={"25%"}
-              // h={""}
-              // height="100vh"
-              color={"white"}
-              bg={"#4285f4"}
-            >
-              <Box>
-                <Text fontSize={"x-large"}>
-                  <b>Pablo</b>
-                </Text>
-              </Box>
-              <hr />
-              <Box mt={"3%"} mb={"3%"}>
-                <Box mb={"3%"} justifyContent={"space-between"}>
-                  <Text mb={"2%"}>
-                    Marked{" "}
-                    <Text
-                      w={"auto"}
-                      pl={"4.5%"}
-                      pr={"4.5%"}
-                      backgroundColor={"purple"}
-                      color={"white"}
-                      borderRadius={"50%"}
-                      as={"span"}
-                    >
-                      {markedNotAnswer.length}
-                    </Text>{" "}
-                  </Text>{" "}
-                  <Text mb={"2%"}>
-                    Not visited{" "}
-                    <Text
-                      w={"auto"}
-                      pl={"4.5%"}
-                      pr={"4.5%"}
-                      // backgroundColor={"purple"}
-                      color={"gray"}
-                      bg={"white"}
-                      border={"1px solid gray"}
-                      // borderRadius={"50%"}
-                      as={"span"}
-                    >
-                      {question.length -
-                        (markedAndAnswer.length +
-                          markedNotAnswer.length +
-                          answeredQuestion.length +
-                          notAnswer.length)}
-                    </Text>
-                  </Text>
-                  <Text mb={"2%"}>
-                    Answered{" "}
-                    <Text
-                      w={"auto"}
-                      pl={"4.5%"}
-                      pr={"4.5%"}
-                      backgroundColor={"green"}
-                      color={"white"}
-                      borderTopLeftRadius={"50%"}
-                      borderTopRightRadius={"50%"}
-                      as={"span"}
-                    >
-                      {answeredQuestion.length}
-                    </Text>
-                  </Text>
-                  <Text mb={"2%"}>
-                    Not Answered{" "}
-                    <Text
-                      w={"auto"}
-                      pl={"4.5%"}
-                      pr={"4.5%"}
-                      backgroundColor={"red"}
-                      color={"white"}
-                      borderBottomLeftRadius={"50%"}
-                      borderBottomRightRadius={"50%"}
-                      as={"span"}
-                    >
-                      {notAnswer.length}
-                    </Text>
-                  </Text>
-                  <Text>
-                    Marked & Answered{" "}
-                    <Text
-                      w={"auto"}
-                      pl={"4.5%"}
-                      pr={"4.5%"}
-                      backgroundColor={"purple"}
-                      color={"white"}
-                      borderRadius={"50%"}
-                      as={"span"}
-                    >
-                      {markedAndAnswer.length} ✓
-                    </Text>
-                  </Text>
-                </Box>
-                <hr />
-              </Box>
-
-              <Text mb={"3%"}>Section : Average Type 1</Text>
-              <hr />
-              <Box
-                mt={"8%"}
-                mb={"6.5%"}
-                height="40vh"
-                p={"2%"}
-                overflow={"scroll"}
-                sx={{
-                  "::-webkit-scrollbar": {
-                    display: "none",
-                  },
-                  "-ms-overflow-style": "none", // IE and Edge
-                  "scrollbar-width": "none", // Firefox
-                }}
-                // borderBottom={"1px solid gray"}
-              >
-                <Box>
-                  {" "}
-                  <Grid
-                    templateColumns="repeat(5, 1fr)"
-                    rowGap={"10%"}
-                    columnGap={"6%"}
-                    textAlign={"center"}
-                  >
-                    {question?.map((d, i) => (
-                      <Box
-                        pl={"4.5%"}
-                        pr={"4.5%"}
-                        boxShadow={" rgba(0, 0, 0, 0.35) 0px 5px 15px"}
-                        onClick={() => handlequestion(i)}
-                        background={
-                          markedNotAnswer.includes(i)
-                            ? "purple"
-                            : answeredQuestion.includes(i)
-                            ? "green"
-                            : notAnswer.includes(i)
-                            ? "red"
-                            : markedAndAnswer.includes(i)
-                            ? "purple"
-                            : "white"
-                        }
-                        borderRadius={
-                          markedAndAnswer.includes(i)
-                            ? "50%"
-                            : markedNotAnswer.includes(i)
-                            ? "50%"
-                            : answeredQuestion.includes(i)
-                            ? "50% 50% 0% 0%"
-                            : notAnswer.includes(i)
-                            ? "0% 0% 50% 50%"
-                            : null
-                        }
-                        color={
-                          markedAndAnswer.includes(i)
-                            ? "white"
-                            : markedNotAnswer.includes(i)
-                            ? "white"
-                            : answeredQuestion.includes(i)
-                            ? "white"
-                            : notAnswer.includes(i)
-                            ? "white"
-                            : "gray"
-                        }
-                        cursor={"pointer"}
-                        border={"1px solid gray"}
-                      >
-                        {markedAndAnswer.includes(i) ? (
-                          <>
-                            {i + 1}
-                            <b> ✓</b>
-                          </>
-                        ) : (
-                          <>{i + 1}</>
-                        )}
-                      </Box>
-                    ))}
-                  </Grid>{" "}
-                </Box>
-              </Box>
-              <Box
-              // border={"1px solid red"}
-              >
-                <Box borderBottom={"1px solid #ffffff"}>
-                  <Button
-                    mt={"3%"}
-                    mb={"3%"}
-                    border={"1px solid #01bfbd"}
-                    w={"100%"}
-                    color={"#01bfbd"}
-                  >
-                    Instruction
-                  </Button>{" "}
-                </Box>{" "}
-                <Button
-                  onClick={() => giveMark()}
-                  mt={"3%"}
-                  // mb={"3%"}
-                  border={"1px solid #01bfbd"}
-                  w={"100%"}
-                  color={"#01bfbd"}
-                >
-                  Submit Test
-                </Button>{" "}
-              </Box>
-              {/* <Box> */}
-              {/* <Link to={"/test-result"}> */}
-
-              {/* </Link> */}
-              {/* </Box> */}
-            </Box>
-          </>
         )}
-      </Box>
-      {/* </Box> */}
-    </>
+      </Flex>
+
+      {/* Mobile Drawer */}
+      {isMobile && (
+        <>
+          <Button
+            position="fixed"
+            bottom="4"
+            right="4"
+            colorScheme="blue"
+            onClick={() => handleClick("xs")}
+            borderRadius="full"
+            w="56px"
+            h="56px"
+            shadow="lg"
+          >
+            <HamburgerIcon w={6} h={6} />
+          </Button>
+
+          <Drawer onClose={onClose} isOpen={isOpen} size="xs" placement="right">
+            <DrawerOverlay />
+            <DrawerContent bg="#4285f4">
+              <DrawerCloseButton color="white" />
+              <DrawerHeader
+                color="white"
+                borderBottom="1px solid rgba(255,255,255,0.2)"
+              >
+                Revision Karle
+              </DrawerHeader>
+              <DrawerBody p={6}>
+                <QuestionSidebar />
+              </DrawerBody>
+            </DrawerContent>
+          </Drawer>
+        </>
+      )}
+    </Box>
   );
 };
 
