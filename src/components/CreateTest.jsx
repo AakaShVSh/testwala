@@ -13,7 +13,7 @@ import {
 import { useEffect, useState } from "react";
 import { MdAddBox } from "react-icons/md";
 import { AiOutlineSelect } from "react-icons/ai";
-import { getLocalStorage } from "../helpers/localStorage";
+import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
 
 function CollapseEx({
   setlist,
@@ -36,6 +36,7 @@ function CollapseEx({
   setq,
   setname,
   sum,
+  currentSub, // Added prop for category
 }) {
   const { isOpen: isOpen1, onToggle: onToggle1 } = useDisclosure();
   const [totalqus, setTotalQus] = useState(0);
@@ -43,8 +44,8 @@ function CollapseEx({
   const [isstate, setState] = useState(false);
   const [arr, setarr] = useState([]);
   const [totalquslength, settotalquslength] = useState(0);
-  const [noqustogive, setnoqustogive] = useState(10);
-  console.log(category, "h");
+  const [noqustogive, setnoqustogive] = useState(null);
+  const [testName, setTestName] = useState("Test 1"); // State for test name
 
   const [TestSubject, setTestSubject] = useState("");
 
@@ -62,7 +63,6 @@ function CollapseEx({
     }
     if (directTest.length < 0) {
       console.log(directTest.length, directTest);
-      // setcheck(false)
       alert("should be smaller");
       return;
     }
@@ -102,7 +102,7 @@ function CollapseEx({
     let extra = j % totalCategories;
 
     let dividedQuestions = new Set();
-    let storedIndexes = JSON.parse(localStorage.getItem("lastIndexes")) || {}; // Load stored indexes
+    let storedIndexes = JSON.parse(localStorage.getItem("lastIndexes")) || {};
     let newIndexes = {};
 
     for (let i = 0; i < totalCategories; i++) {
@@ -111,19 +111,17 @@ function CollapseEx({
         continue;
       }
 
-      let prevIndex = storedIndexes[res[i].topic] || 0; // Get last used index
+      let prevIndex = storedIndexes[res[i].topic] || 0;
       let count = baseCount + (i < extra ? 1 : 0);
 
-      // Slice from the last index and update new index
       let slicedQuestions = res[i].question.slice(prevIndex, prevIndex + count);
-      newIndexes[res[i].topic] = prevIndex + count; // Update new index
+      newIndexes[res[i].topic] = prevIndex + count;
 
       slicedQuestions.forEach((q) => dividedQuestions.add(q));
     }
 
     dividedQuestions = [...dividedQuestions];
 
-    // Ensure we have enough questions
     let index = 0;
     while (dividedQuestions.length < j) {
       let categoryIndex = index % totalCategories;
@@ -138,21 +136,17 @@ function CollapseEx({
       index++;
     }
 
-    // Store updated indexes
     localStorage.setItem("lastIndexes", JSON.stringify(newIndexes));
 
     settotalquslength(dividedQuestions.length);
-    // console.log(
-    //   "Final Questions:",
-    //   dividedQuestions,
-    //   "Total Given:",
-    //   dividedQuestions.length
-    // );
 
     if (dividedQuestions.length > 0) {
-      maketest(dividedQuestions, true, "test 1");
+      // Save test metadata before starting the test
+      saveTestMetadata(dividedQuestions);
+      maketest(dividedQuestions, true, testName);
     }
   };
+
   const directTestdatacollect = () => {
     console.log(category);
     if (!category?.length) return;
@@ -172,6 +166,7 @@ function CollapseEx({
     resdev(res);
     directTestallSelectData(res);
   };
+
   const directTestallSelectData = (res) => {
     if (!res?.length) {
       console.warn("No questions found for this subject.");
@@ -183,7 +178,6 @@ function CollapseEx({
 
     let dividedQuestions = new Set();
 
-    // Collect unique questions initially
     res.forEach((category) => {
       if (!Array.isArray(category.question)) {
         console.warn(`Skipping invalid question data:`, category);
@@ -195,20 +189,17 @@ function CollapseEx({
 
     let uniqueQuestions = [...dividedQuestions];
 
-    // If we don't have enough questions, fill without repetition
     let finalQuestions = [];
     let usedIndexes = new Set();
 
     while (finalQuestions.length < j && uniqueQuestions.length > 0) {
       let randomIndex = Math.floor(Math.random() * uniqueQuestions.length);
 
-      // Avoid duplicates using `usedIndexes`
       if (!usedIndexes.has(randomIndex)) {
         usedIndexes.add(randomIndex);
         finalQuestions.push(uniqueQuestions[randomIndex]);
       }
 
-      // Restart when running out of new questions
       if (usedIndexes.size === uniqueQuestions.length) {
         usedIndexes.clear();
       }
@@ -223,16 +214,37 @@ function CollapseEx({
     );
 
     if (finalQuestions.length > 0) {
+      // Save test metadata before starting the test
+      saveTestMetadata(finalQuestions);
       setcheck(true);
-      maketest(finalQuestions, true, "test 1");
+      maketest(finalQuestions, true, testName);
     }
+  };
+
+  // NEW FUNCTION: Save test metadata to localStorage
+  const saveTestMetadata = (questions) => {
+    const testobj = {
+      testName: testName,
+      noOfQus: questions.length,
+      questions: questions,
+      createdAt: new Date().toISOString(),
+      category: currentSub,
+      subcategory: MathSubject,
+      quslist: [], // Can be populated if you track topic distribution
+    };
+
+    const existingTests = getLocalStorage("allTypeWiseTests") || [];
+    const updatedTests = [...existingTests, testobj];
+
+    setLocalStorage("allTypeWiseTests", updatedTests);
+    console.log("✅ Test metadata saved:", testobj);
   };
 
   return (
     <>
       <Box display="flex" gap={3} mt={2}>
         <Button
-        gap={1}
+          gap={1}
           onClick={() => {
             onToggle1();
             findtotal();
@@ -245,26 +257,24 @@ function CollapseEx({
           Create Direct Test <MdAddBox />
         </Button>
         <Button
-        gap={1 }
+          gap={1}
           onClick={() => {
             if (!category?.length || !MathSubject) return;
 
-            // Get only questions from the selected category
             const selectedCategory = category.filter(
               (e) => e.topic === MathSubject,
             );
 
-            // Calculate total questions from selected category
             const totalQuestions = selectedCategory.reduce(
               (acc, curr) => acc + (curr.question?.length || 0),
               0,
             );
 
-            setnoqustogive(totalQuestions); // Update state with total questions count
+            setnoqustogive(totalQuestions);
             setselectallstate(!selectallstate);
           }}
         >
-          Select All <AiOutlineSelect   />
+          Select All <AiOutlineSelect />
         </Button>
       </Box>
 
@@ -275,7 +285,8 @@ function CollapseEx({
             <GridItem>
               <Text mb={1}>Test Name</Text>
               <Input
-                defaultValue="Test 1"
+                value={testName}
+                onChange={(e) => setTestName(e.target.value)}
                 placeholder="Enter test name"
                 size="sm"
               />
@@ -283,7 +294,7 @@ function CollapseEx({
             <Input
               type="number"
               onChange={(e) => setnoqustogive(Number(e.target.value))}
-              value={noqustogive} // Use value instead of defaultValue
+              value={noqustogive || category[0]?.question?.length}
               placeholder={`Should be a multiple of ${res?.length || null}`}
               size="sm"
             />

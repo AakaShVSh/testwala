@@ -26,6 +26,12 @@ import {
   VStack,
   HStack,
   useToast,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
 } from "@chakra-ui/react";
 import ModalPause from "./ModalPause";
 import { Link, Navigate, useNavigate } from "react-router-dom";
@@ -37,12 +43,18 @@ import {
 } from "../redux/userTestData/userTestData_ActionType.js";
 import { HamburgerIcon } from "@chakra-ui/icons";
 import ReportQuestionDropdown from "./ReportQuestionDropdown.jsx";
+import { saveTestScore } from "../helpers/testProgressHelper";
 
 const TakeTest = ({ quest, handleFullScreen }) => {
   const [currentquestion, setcurrentquestion] = useState(0);
   const shuffleArray = (arr) => [...arr]?.sort(() => Math.random() - 0.5);
 
-  const shuffledQuest = shuffleArray(quest);
+  // ── fallback: if quest prop is empty, read from localStorage (written by SaveQuestion) ──
+  const effectiveQuest =
+    quest && quest.length > 0
+      ? quest
+      : getLocalStorage("savedTestQuestions") || [];
+  const shuffledQuest = shuffleArray(effectiveQuest);
   const [question] = useState(shuffledQuest);
 
   const [answeredQuestion, setAnsweredQuestion] = useState([]);
@@ -62,6 +74,10 @@ const TakeTest = ({ quest, handleFullScreen }) => {
   const [size, setSize] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
+
+  // State for submit confirmation dialog
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  const cancelSubmitRef = React.useRef();
 
   // State to track if fullscreen is active
   const [isFullscreenActive, setIsFullscreenActive] = useState(false);
@@ -83,7 +99,6 @@ const TakeTest = ({ quest, handleFullScreen }) => {
   useEffect(() => {
     let isRequestingFullscreen = false;
 
-    // Function to request fullscreen
     const requestFullscreen = async () => {
       if (isRequestingFullscreen) return;
 
@@ -101,7 +116,6 @@ const TakeTest = ({ quest, handleFullScreen }) => {
         setIsFullscreenActive(true);
       } catch (error) {
         console.log("Fullscreen request failed:", error);
-        // Only show toast if user has already been in fullscreen mode
         if (hasExitedFullscreen) {
           toast({
             title: "Fullscreen Required",
@@ -118,7 +132,6 @@ const TakeTest = ({ quest, handleFullScreen }) => {
       }
     };
 
-    // Function to handle fullscreen change
     const handleFullscreenChange = () => {
       const isCurrentlyFullscreen = !!(
         document.fullscreenElement ||
@@ -127,7 +140,6 @@ const TakeTest = ({ quest, handleFullScreen }) => {
       );
 
       if (!isCurrentlyFullscreen && isFullscreenActive) {
-        // User exited fullscreen
         setIsFullscreenActive(false);
         setHasExitedFullscreen(true);
 
@@ -145,14 +157,12 @@ const TakeTest = ({ quest, handleFullScreen }) => {
       }
     };
 
-    // Click handler to re-enter fullscreen
     const handleClickToFullscreen = () => {
       if (!isFullscreenActive && hasExitedFullscreen && !isMobile) {
         requestFullscreen();
       }
     };
 
-    // Function to prevent back navigation
     const handleBackButton = (e) => {
       e.preventDefault();
       window.history.pushState(null, "", window.location.href);
@@ -167,7 +177,6 @@ const TakeTest = ({ quest, handleFullScreen }) => {
       });
     };
 
-    // Function to prevent page refresh/close
     const handleBeforeUnload = (e) => {
       e.preventDefault();
       e.returnValue =
@@ -175,22 +184,15 @@ const TakeTest = ({ quest, handleFullScreen }) => {
       return e.returnValue;
     };
 
-    // Add fullscreen change listeners
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
     document.addEventListener("MSFullscreenChange", handleFullscreenChange);
-
-    // Add click listener for re-entering fullscreen
     document.addEventListener("click", handleClickToFullscreen);
 
-    // Prevent back button
     window.history.pushState(null, "", window.location.href);
     window.addEventListener("popstate", handleBackButton);
-
-    // Prevent page close/refresh
     window.addEventListener("beforeunload", handleBeforeUnload);
 
-    // Cleanup
     return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
       document.removeEventListener(
@@ -224,19 +226,15 @@ const TakeTest = ({ quest, handleFullScreen }) => {
   // Prevent common keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Prevent F11 (fullscreen toggle)
       if (e.key === "F11") {
         e.preventDefault();
       }
-      // Prevent Escape (exit fullscreen)
       if (e.key === "Escape") {
         e.preventDefault();
       }
-      // Prevent Alt+F4 (close window)
       if (e.altKey && e.key === "F4") {
         e.preventDefault();
       }
-      // Prevent Ctrl+W (close tab)
       if (e.ctrlKey && e.key === "w") {
         e.preventDefault();
       }
@@ -509,11 +507,48 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     }
   };
 
+  // Open submit confirmation dialog
+  const handleSubmitClick = () => {
+    setIsSubmitDialogOpen(true);
+  };
+
+  // Close submit confirmation dialog
+  const handleCancelSubmit = () => {
+    setIsSubmitDialogOpen(false);
+  };
+
+  // Confirm and submit test
+  const handleConfirmSubmit = () => {
+    setIsSubmitDialogOpen(false);
+    giveMark();
+  };
+
   const giveMark = () => {
     const category = getLocalStorage("category");
     const user = getLocalStorage("_user");
     const subject = getLocalStorage("Subject");
     console.log(user, subject);
+
+    // Calculate score percentage
+    const scorePercentage =
+      question.length > 0 ? (mark / question.length) * 100 : 0;
+
+    // Get the test metadata stored when starting the test
+    const testIndex = getLocalStorage("currentTestIndex") || 0;
+    const subcategory = getLocalStorage("currentSubcategory") || category;
+    const currentCategory = getLocalStorage("currentCategory") || subject;
+
+    // Save the score to enable progressive unlocking
+    saveTestScore(currentCategory, subcategory, testIndex, scorePercentage);
+
+    console.log("✅ Test Score Saved:", {
+      category: currentCategory,
+      subcategory: subcategory,
+      testIndex: testIndex,
+      score: scorePercentage.toFixed(1) + "%",
+      passed: scorePercentage >= 80,
+    });
+
     const newTestData = {
       user: user,
       subject: subject,
@@ -539,6 +574,9 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     setLocalStorage("Total", mark);
     setLocalStorage("test", [newTestData]);
 
+    // ── clear the saved-test questions from localStorage after test is done ──
+    setLocalStorage("savedTestQuestions", null);
+
     // Exit fullscreen before navigation
     if (document.exitFullscreen) {
       document.exitFullscreen();
@@ -549,7 +587,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     }
 
     // Call the prop function to update parent state
-    handleFullScreen(false);
+    if (handleFullScreen) handleFullScreen(false);
 
     // Navigate to results
     navigate("/test-result");
@@ -805,7 +843,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
           color="white"
           fontWeight="600"
           _hover={{ bg: "#00a8a6" }}
-          onClick={() => giveMark()}
+          onClick={handleSubmitClick}
         >
           Submit Test
         </Button>
@@ -857,7 +895,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
         </Box>
       )}
 
-      {/* Header - ONLY RESPONSIVE UPDATES HERE */}
+      {/* Header */}
       <Flex
         bg="#4285f4"
         color="white"
@@ -920,7 +958,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
         </HStack>
       </Flex>
 
-      {/* Main Content - UNCHANGED */}
+      {/* Main Content */}
       <Flex flex="1" overflow="hidden">
         {/* Question Area */}
         <VStack flex="1" spacing={0} align="stretch" overflow="hidden">
@@ -1101,6 +1139,64 @@ const TakeTest = ({ quest, handleFullScreen }) => {
           </Drawer>
         </>
       )}
+
+      {/* Submit Confirmation Dialog */}
+      <AlertDialog
+        isOpen={isSubmitDialogOpen}
+        leastDestructiveRef={cancelSubmitRef}
+        onClose={handleCancelSubmit}
+        isCentered
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent mx={4}>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Submit Test
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              <VStack align="start" spacing={3}>
+                <Text>Are you sure you want to submit the test?</Text>
+                <Box w="100%" p={3} bg="gray.50" borderRadius="md">
+                  <Text fontSize="sm" fontWeight="600" mb={2}>
+                    Test Summary:
+                  </Text>
+                  <Text fontSize="sm">Total Questions: {question.length}</Text>
+                  <Text fontSize="sm" color="green.600">
+                    Answered: {answeredQuestion.length}
+                  </Text>
+                  <Text fontSize="sm" color="red.600">
+                    Not Answered: {notAnswer.length}
+                  </Text>
+                  <Text fontSize="sm" color="purple.600">
+                    Marked for Review:{" "}
+                    {markedNotAnswer.length + markedAndAnswer.length}
+                  </Text>
+                  <Text fontSize="sm" color="gray.600">
+                    Not Visited:{" "}
+                    {question.length -
+                      (markedAndAnswer.length +
+                        markedNotAnswer.length +
+                        answeredQuestion.length +
+                        notAnswer.length)}
+                  </Text>
+                </Box>
+                <Text fontSize="sm" color="red.500" fontWeight="500">
+                  ⚠️ Once submitted, you cannot change your answers.
+                </Text>
+              </VStack>
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelSubmitRef} onClick={handleCancelSubmit}>
+                Cancel
+              </Button>
+              <Button colorScheme="blue" onClick={handleConfirmSubmit} ml={3}>
+                Yes, Submit
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Box>
   );
 };

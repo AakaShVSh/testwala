@@ -1,4 +1,4 @@
-import { Box, Flex, Text, Image } from "@chakra-ui/react";
+import { Box, Flex, Text, Image, Spinner } from "@chakra-ui/react";
 
 import {
   FaYoutube,
@@ -16,9 +16,21 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import Slideshow from "./Slideshow";
 import { setLocalStorage } from "../helpers/localStorage";
+import { useRef, useState, useEffect } from "react";
 
 const Home = ({ setchoosesub }) => {
   const navigate = useNavigate();
+  const subjectsRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate loading (you can replace this with actual data fetching)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000); // Adjust time as needed
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const setsub = (pro, sub = null) => {
     setchoosesub(pro);
@@ -26,11 +38,99 @@ const Home = ({ setchoosesub }) => {
     navigate("/questionList");
   };
 
+  const scrollToSubjects = () => {
+    subjectsRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <Box
+        minH="100vh"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        bg="white"
+      >
+        <Flex direction="column" align="center" gap={6}>
+          {/* Animated Spinner */}
+          <Box position="relative">
+            <Spinner
+              thickness="4px"
+              speed="0.65s"
+              emptyColor="gray.200"
+              color="#667eea"
+              size="xl"
+              w="80px"
+              h="80px"
+            />
+            <Box
+              position="absolute"
+              top="50%"
+              left="50%"
+              transform="translate(-50%, -50%)"
+            >
+              <FaBook size={32} color="#667eea" />
+            </Box>
+          </Box>
+
+          {/* Loading Text */}
+          <Flex direction="column" align="center" gap={2}>
+            <Text
+              color="#2d3748"
+              fontSize="24px"
+              fontWeight="700"
+              letterSpacing="0.5px"
+            >
+              Loading Quiz Portal
+            </Text>
+            <Text color="#718096" fontSize="14px" fontWeight="400">
+              Preparing your questions...
+            </Text>
+          </Flex>
+
+          {/* Animated Dots */}
+          <Flex gap={2}>
+            {[0, 1, 2].map((i) => (
+              <Box
+                key={i}
+                w="10px"
+                h="10px"
+                borderRadius="full"
+                bg="#667eea"
+                animation={`bounce 1.4s infinite ease-in-out`}
+                style={{ animationDelay: `${i * 0.16}s` }}
+              />
+            ))}
+          </Flex>
+        </Flex>
+
+        {/* CSS Animation */}
+        <style>
+          {`
+            @keyframes bounce {
+              0%, 80%, 100% { 
+                transform: scale(0);
+                opacity: 0.5;
+              }
+              40% { 
+                transform: scale(1);
+                opacity: 1;
+              }
+            }
+          `}
+        </style>
+      </Box>
+    );
+  }
+
   return (
     <Box pb={{ base: 6, md: 8, lg: 12 }}>
       {/* Slideshow */}
       <Box mb={{ base: 6, md: 8 }}>
-        <Slideshow />
+        <Slideshow scrollToSubjects={scrollToSubjects} />
       </Box>
 
       {/* ================= SOCIAL MEDIA ================= */}
@@ -204,6 +304,12 @@ const Home = ({ setchoosesub }) => {
 
           {/* WhatsApp */}
           <Box
+            onClick={() =>
+              window.open(
+                "https://api.whatsapp.com/send?phone=919696306817&text=Hi!%20want%20help.",
+                "_blank",
+              )
+            }
             textAlign="center"
             _hover={{
               transform: "translateY(-8px) scale(1.05)",
@@ -240,7 +346,12 @@ const Home = ({ setchoosesub }) => {
       </Box>
 
       {/* ================= SUBJECTS ================= */}
-      <Box w={{ base: "95%", md: "90%", lg: "85%" }} maxW="1200px" mx="auto">
+      <Box
+        ref={subjectsRef}
+        w={{ base: "95%", md: "90%", lg: "85%" }}
+        maxW="1200px"
+        mx="auto"
+      >
         <Text
           textAlign="center"
           fontSize={{ base: "20px", md: "24px", lg: "26px" }}
