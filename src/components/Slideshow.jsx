@@ -9,7 +9,7 @@ import {
 } from "@chakra-ui/react";
 import { useState, useEffect, useRef } from "react";
 
-const EduHeroCarousel = () => {
+const EduHeroCarousel = ({ scrollToSubjects }) => {
   /* ================= SLIDES DATA ================= */
   const slides = [
     {
@@ -86,7 +86,11 @@ const EduHeroCarousel = () => {
       onMouseLeave={startAuto}
     >
       {/* ================= LEFT SIDE ================= */}
-      <Flex flex="1" direction="column" display={{base:"none",md:"flex",lg:"flex"}}>
+      <Flex
+        flex="1"
+        direction="column"
+        display={{ base: "none", md: "flex", lg: "flex" }}
+      >
         {/* Small Tagline */}
         <Text
           fontSize="3xl"
@@ -112,7 +116,7 @@ const EduHeroCarousel = () => {
 
         {/* Buttons */}
         <Stack direction={{ base: "column", sm: "row" }} spacing={4}>
-          <Button colorScheme="blue" size="lg">
+          <Button colorScheme="blue" size="lg" onClick={scrollToSubjects}>
             Start Test
           </Button>
         </Stack>
@@ -123,7 +127,7 @@ const EduHeroCarousel = () => {
         flex="1"
         overflow="hidden"
         borderRadius="16px"
-        h={{ base: "250px", md: "420px" ,lg:"auto" }}
+        h={{ base: "250px", md: "420px", lg: "auto" }}
         w="full"
         boxShadow="xl"
       >
