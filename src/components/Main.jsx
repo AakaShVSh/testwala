@@ -128,7 +128,7 @@ const Main = () => {
         window.Firebug.chrome &&
         window.Firebug.chrome.isInitialized
       ) {
-        handleDevToolsOpen();
+        // handleDevToolsOpen();
       }
     };
 
@@ -138,7 +138,7 @@ const Main = () => {
       const heightDiff = window.outerHeight - window.innerHeight;
 
       if (widthDiff > 200 || heightDiff > 200) {
-        handleDevToolsOpen();
+        // handleDevToolsOpen();
       }
     };
 
