@@ -44,6 +44,7 @@ import {
 import { HamburgerIcon } from "@chakra-ui/icons";
 import ReportQuestionDropdown from "./ReportQuestionDropdown.jsx";
 import { saveTestScore } from "../helpers/testProgressHelper";
+import { getCookies } from "../helpers/cookies.jsx";
 
 const TakeTest = ({ quest, handleFullScreen }) => {
   const [currentquestion, setcurrentquestion] = useState(0);
@@ -523,9 +524,10 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     giveMark();
   };
 
-  const giveMark = () => {
+  const giveMark =async  () => {
+    try {
     const category = getLocalStorage("category");
-    const user = getLocalStorage("_user");
+    const user = await getCookies("_user");
     const subject = getLocalStorage("Subject");
     console.log(user, subject);
 
@@ -590,7 +592,12 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     if (handleFullScreen) handleFullScreen(false);
 
     // Navigate to results
-    navigate("/test-result");
+    navigate("/test-result");  
+    } catch (error) {
+      console.log(error);
+      
+    }
+    
   };
 
   useEffect(() => {

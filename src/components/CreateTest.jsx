@@ -317,7 +317,7 @@ function CollapseEx({
                 colorScheme="green"
                 variant="outline"
                 onClick={() => {
-                  if (directTest.length > 0 && totalquslength === noqustogive) {
+                  if (directTest.length > 0 && totalquslength >= noqustogive) {
                     onToggle1();
                   }
 

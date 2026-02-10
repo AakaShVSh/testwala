@@ -1,3 +1,2298 @@
+// // FIXED VERSION - ResultPage.jsx
+// // The issue was in the Overview tab - it was directly mapping TotalQuestion
+// // while other tabs use renderQuestions() which expects question indices
+
+// import {
+//   Box,
+//   Flex,
+//   Heading,
+//   Icon,
+//   Text,
+//   Badge,
+//   Progress,
+//   Container,
+//   Grid,
+//   Card,
+//   CardBody,
+//   Stat,
+//   StatLabel,
+//   StatNumber,
+//   Tabs,
+//   TabList,
+//   TabPanels,
+//   Tab,
+//   TabPanel,
+//   Divider,
+//   Circle,
+//   VStack,
+//   HStack,
+//   IconButton,
+//   useToast,
+//   Tooltip,
+// } from "@chakra-ui/react";
+// import {
+//   FiTarget,
+//   FiCheckCircle,
+//   FiXCircle,
+//   FiCircle,
+//   FiArrowLeft,
+//   FiFlag,
+//   FiAlertCircle,
+//   FiBookmark,
+// } from "react-icons/fi";
+// import { Doughnut } from "react-chartjs-2";
+// import {
+//   Chart as ChartJS,
+//   ArcElement,
+//   CategoryScale,
+//   LinearScale,
+//   PointElement,
+//   LineElement,
+//   Title,
+//   Tooltip as ChartTooltip,
+//   Legend,
+// } from "chart.js";
+// import { useEffect, useState } from "react";
+// import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
+// import { userTestFetchDataApi } from "../redux/userTestData/userTestData_ActionType";
+// import { Link } from "react-router-dom";
+
+// // Register Chart.js components
+// ChartJS.register(
+//   ArcElement,
+//   CategoryScale,
+//   LinearScale,
+//   PointElement,
+//   LineElement,
+//   Title,
+//   ChartTooltip,
+//   Legend,
+// );
+
+// const ResultPage = () => {
+//   const [totalMark, setTotalMark] = useState(0);
+//   const [TotalQuestion, SetTotalQuestion] = useState([]);
+//   const [marknotans, setmarknotans] = useState(0);
+//   const [notans, setnotans] = useState(0);
+//   const [answeredQuestioned, setansweredQuestioned] = useState(0);
+//   const [markedAndAnswered, setmarkedAndAnswered] = useState(0);
+//   const [wrongAns, setwrongAns] = useState(0);
+//   const [wrongAnsqus, setwrongAnsqus] = useState([]);
+//   const [correctqus, setcorrectqus] = useState([]);
+//   const [rank, setrank] = useState(1);
+//   const [TotalStudent, setTotalStudent] = useState(0);
+//   const [percentile, setPercentile] = useState(0);
+//   const [testData, setTestData] = useState(null);
+//   const [allAnswers, setAllAnswers] = useState({});
+//   const [savedQuestionIndices, setSavedQuestionIndices] = useState(new Set());
+//   const toast = useToast();
+
+//   const calculateAccuracy = () => {
+//     return totalMark > 0 && TotalQuestion.length > 0
+//       ? (totalMark / TotalQuestion.length) * 100
+//       : 0;
+//   };
+
+//   const calculatePercentile = async (score, allScores) => {
+//     const sub = getLocalStorage("Subject");
+//     const topic = getLocalStorage("category");
+//     const g = await allScores?.filter(
+//       (e) => e.subject === sub && e.section === topic,
+//     );
+
+//     if (g !== undefined && g.length > 0) {
+//       setTotalStudent(g?.length);
+//       const sortedScores = g?.sort((a, b) => a.score - b.score);
+//       const belowYourScore = sortedScores.filter((s) => s.score < score).length;
+//       const percent = (belowYourScore / sortedScores.length) * 100;
+//       setPercentile(percent.toFixed(2));
+
+//       await userTestFetchDataApi();
+
+//       const alluser = getLocalStorage("AllUserTestData");
+//       const gp = await alluser?.filter(
+//         (e) => e.subject === sub && e.section === topic,
+//       );
+//       if (gp && gp.length > 0) {
+//         setTotalStudent(gp.length);
+//         const sortedScoresrank = gp?.sort((a, b) => b.score - a.score);
+//         const strank =
+//           sortedScoresrank.filter((s) => s.score < score).length + 1;
+//         setLocalStorage("rank", strank);
+//         setrank(strank);
+//       }
+//     }
+//   };
+
+//   const handleCalculate = () => {
+//     const yourScore = getLocalStorage("Total");
+//     const scores = getLocalStorage("AllUserTestData");
+//     calculatePercentile(yourScore, scores);
+//   };
+
+//   // Load saved questions on mount
+//   useEffect(() => {
+//     setTotalMark(getLocalStorage("Total") || 0);
+//     SetTotalQuestion(getLocalStorage("Testdata") || []);
+//     const s = getLocalStorage("test");
+//     if (s && s[0]) {
+//       setTestData(s[0]);
+//       setmarknotans(s[0].markedNotAnswer?.length || 0);
+//       setnotans(s[0].notAnswer?.length || 0);
+//       setmarkedAndAnswered(s[0].markedAndAnswer?.length || 0);
+//       setansweredQuestioned(s[0].answeredQuestion?.length || 0);
+//       setwrongAns(s[0].wrongans || 0);
+//       setwrongAnsqus(s[0].wrongansqus || []);
+//       setcorrectqus(s[0].correctQus || []);
+//       setAllAnswers(s[0].allAnswer || {});
+//     }
+//     handleCalculate();
+//   }, []);
+
+//   // Load existing saved questions when TotalQuestion changes
+//   useEffect(() => {
+//     if (TotalQuestion.length > 0) {
+//       loadSavedQuestions();
+//     }
+//   }, [TotalQuestion]);
+
+//   // Load existing saved questions to show which are already bookmarked
+//   const loadSavedQuestions = () => {
+//     const subject = getLocalStorage("Subject");
+//     const subjectKey = subject?.toLowerCase() || "general studies";
+//     const allSaved = getLocalStorage("savedQuestionsBySubject") || {};
+//     const savedForSubject = allSaved[subjectKey] || [];
+
+//     // Create a set of question texts to check if already saved
+//     const savedTexts = new Set(savedForSubject.map((q) => q.qus));
+//     const savedIndices = new Set();
+
+//     TotalQuestion.forEach((q, idx) => {
+//       if (savedTexts.has(q.qus)) {
+//         savedIndices.add(idx);
+//       }
+//     });
+
+//     setSavedQuestionIndices(savedIndices);
+//   };
+
+//   // Toggle save question
+//   const toggleSaveQuestion = (question, index) => {
+//     const subject = getLocalStorage("Subject");
+//     const subjectKey = subject?.toLowerCase() || "general studies";
+
+//     // Get current saved questions
+//     const allSaved = getLocalStorage("savedQuestionsBySubject") || {};
+//     const savedForSubject = allSaved[subjectKey] || [];
+
+//     // Check if question is already saved
+//     const existingIndex = savedForSubject.findIndex(
+//       (q) => q.qus === question.qus,
+//     );
+
+//     if (existingIndex >= 0) {
+//       // Remove question
+//       savedForSubject.splice(existingIndex, 1);
+//       allSaved[subjectKey] = savedForSubject;
+//       setLocalStorage("savedQuestionsBySubject", allSaved);
+
+//       // Update qusno
+//       const qusno = (getLocalStorage("qusno") || []).filter(
+//         (t) => t !== question.qus,
+//       );
+//       setLocalStorage("qusno", qusno);
+
+//       // Update state
+//       setSavedQuestionIndices((prev) => {
+//         const newSet = new Set(prev);
+//         newSet.delete(index);
+//         return newSet;
+//       });
+
+//       toast({
+//         title: "Question removed",
+//         description: "Question removed from saved questions",
+//         status: "info",
+//         duration: 2000,
+//         isClosable: true,
+//         position: "top",
+//       });
+//     } else {
+//       // Add question
+//       savedForSubject.push(question);
+//       allSaved[subjectKey] = savedForSubject;
+//       setLocalStorage("savedQuestionsBySubject", allSaved);
+
+//       // Update qusno
+//       const qusno = getLocalStorage("qusno") || [];
+//       if (!qusno.includes(question.qus)) {
+//         qusno.push(question.qus);
+//         setLocalStorage("qusno", qusno);
+//       }
+
+//       // Update state
+//       setSavedQuestionIndices((prev) => new Set(prev).add(index));
+
+//       toast({
+//         title: "Question saved!",
+//         description: "Question added to your saved questions",
+//         status: "success",
+//         duration: 2000,
+//         isClosable: true,
+//         position: "top",
+//       });
+//     }
+//   };
+
+//   // Doughnut chart data
+//   const doughnutData = {
+//     labels: ["Correct", "Incorrect", "Unattempted"],
+//     datasets: [
+//       {
+//         data: [
+//           correctqus.length,
+//           wrongAnsqus.length,
+//           TotalQuestion.length - (answeredQuestioned + markedAndAnswered),
+//         ],
+//         backgroundColor: ["#48BB78", "#F56565", "#CBD5E0"],
+//         borderWidth: 0,
+//         cutout: "75%",
+//       },
+//     ],
+//   };
+
+//   const doughnutOptions = {
+//     responsive: true,
+//     maintainAspectRatio: false,
+//     plugins: {
+//       legend: {
+//         display: false,
+//       },
+//       tooltip: {
+//         backgroundColor: "rgba(0,0,0,0.8)",
+//         padding: 12,
+//         borderRadius: 8,
+//       },
+//     },
+//   };
+
+//   // Performance metric card component
+//   const MetricCard = ({ icon, label, value, subtext, color, bgColor }) => (
+//     <Card
+//       bg="white"
+//       shadow="sm"
+//       borderRadius={{ base: "lg", md: "xl" }}
+//       overflow="hidden"
+//       transition="all 0.3s"
+//       _hover={{ shadow: "md", transform: "translateY(-4px)" }}
+//       border="1px"
+//       borderColor="gray.100"
+//       height="100%"
+//     >
+//       <CardBody p={{ base: 3, sm: 4, md: 5 }}>
+//         <Flex
+//           align="center"
+//           justify="space-between"
+//           mb={{ base: 2, md: 3 }}
+//           direction={{ base: "column", sm: "row" }}
+//           gap={2}
+//         >
+//           <Circle size={{ base: "36px", sm: "40px", md: "48px" }} bg={bgColor}>
+//             <Icon as={icon} boxSize={{ base: 3, sm: 4, md: 5 }} color={color} />
+//           </Circle>
+//           <Badge
+//             colorScheme={color.split(".")[0]}
+//             fontSize={{ base: "2xs", md: "xs" }}
+//             px={{ base: 2, md: 3 }}
+//             py={1}
+//             borderRadius="full"
+//           >
+//             {subtext}
+//           </Badge>
+//         </Flex>
+//         <Stat>
+//           <StatLabel
+//             fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//             color="gray.500"
+//             mb={1}
+//           >
+//             {label}
+//           </StatLabel>
+//           <StatNumber
+//             fontSize={{ base: "lg", sm: "xl", md: "2xl" }}
+//             fontWeight="bold"
+//             color="gray.700"
+//           >
+//             {value}
+//           </StatNumber>
+//         </Stat>
+//       </CardBody>
+//     </Card>
+//   );
+
+//   // Score breakdown item
+//   const ScoreItem = ({ icon, label, value, color }) => (
+//     <Flex align="center" py={{ base: 2, md: 3 }}>
+//       <Circle
+//         size={{ base: "32px", sm: "36px", md: "40px" }}
+//         bg={`${color}.50`}
+//         mr={{ base: 2, md: 3 }}
+//       >
+//         <Icon
+//           as={icon}
+//           color={`${color}.600`}
+//           boxSize={{ base: 3, sm: 4, md: 5 }}
+//         />
+//       </Circle>
+//       <Box flex="1">
+//         <Text
+//           fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//           color="gray.600"
+//           mb={1}
+//         >
+//           {label}
+//         </Text>
+//         <Text
+//           fontSize={{ base: "sm", sm: "md", md: "lg" }}
+//           fontWeight="semibold"
+//           color="gray.700"
+//         >
+//           {value}
+//         </Text>
+//       </Box>
+//     </Flex>
+//   );
+
+//   // Question Card Component with Bookmark button
+//   const QuestionCard = ({ question, index }) => {
+//     if (!question) return null;
+
+//     const userAnswer = allAnswers[index];
+//     const correctAnswerIndex = question.answer - 1;
+//     const correctAnswerText = question.options?.[correctAnswerIndex];
+//     const isCorrect = correctqus.includes(index);
+//     const isWrong = wrongAnsqus.includes(index);
+//     const isMarked =
+//       testData?.markedAndAnswer?.includes(index) ||
+//       testData?.markedNotAnswer?.includes(index);
+//     const isSaved = savedQuestionIndices.has(index);
+
+//     let statusColor = "gray";
+//     let statusText = "Unattempted";
+//     let statusIcon = FiCircle;
+
+//     if (isCorrect) {
+//       statusColor = "green";
+//       statusText = "Correct";
+//       statusIcon = FiCheckCircle;
+//     } else if (isWrong) {
+//       statusColor = "red";
+//       statusText = "Incorrect";
+//       statusIcon = FiXCircle;
+//     } else if (isMarked) {
+//       statusColor = "orange";
+//       statusText = "Marked";
+//       statusIcon = FiFlag;
+//     }
+
+//     return (
+//       <Card
+//         mb={{ base: 3, md: 4 }}
+//         bg="white"
+//         shadow="md"
+//         borderRadius={{ base: "md", md: "lg" }}
+//         border="2px"
+//         borderColor={isCorrect ? "green.200" : isWrong ? "red.200" : "gray.100"}
+//         width="100%"
+//       >
+//         <CardBody p={{ base: 3, sm: 4, md: 5 }}>
+//           {/* Question Header */}
+//           <Flex
+//             justify="space-between"
+//             align="flex-start"
+//             mb={{ base: 3, md: 4 }}
+//             gap={2}
+//             wrap="wrap"
+//           >
+//             <HStack spacing={{ base: 1.5, sm: 2, md: 3 }} wrap="wrap" flex="1">
+//               <Circle
+//                 size={{ base: "24px", sm: "28px", md: "32px" }}
+//                 bg="gray.100"
+//                 fontWeight="bold"
+//                 fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                 color="gray.700"
+//               >
+//                 {index + 1}
+//               </Circle>
+//               <Badge
+//                 colorScheme={statusColor}
+//                 px={{ base: 1.5, sm: 2, md: 3 }}
+//                 py={1}
+//                 borderRadius="full"
+//                 fontSize="2xs"
+//               >
+//                 <HStack spacing={1}>
+//                   <Icon as={statusIcon} boxSize={{ base: 2.5, md: 3 }} />
+//                   <Text>{statusText}</Text>
+//                 </HStack>
+//               </Badge>
+//               {isMarked && (
+//                 <Badge
+//                   colorScheme="orange"
+//                   px={{ base: 1.5, sm: 2, md: 3 }}
+//                   py={1}
+//                   borderRadius="full"
+//                   fontSize="2xs"
+//                 >
+//                   <HStack spacing={1}>
+//                     <Icon as={FiFlag} boxSize={{ base: 2.5, md: 3 }} />
+//                     <Text>Marked</Text>
+//                   </HStack>
+//                 </Badge>
+//               )}
+//             </HStack>
+
+//             {/* Bookmark Button */}
+//             <Tooltip
+//               label={isSaved ? "Remove from saved" : "Save question"}
+//               placement="top"
+//               hasArrow
+//             >
+//               <IconButton
+//                 icon={<FiBookmark />}
+//                 size={{ base: "sm", md: "md" }}
+//                 variant={isSaved ? "solid" : "outline"}
+//                 colorScheme={isSaved ? "purple" : "gray"}
+//                 aria-label={isSaved ? "Remove bookmark" : "Bookmark question"}
+//                 onClick={() => toggleSaveQuestion(question, index)}
+//                 _hover={{
+//                   transform: "scale(1.1)",
+//                   shadow: "md",
+//                 }}
+//                 transition="all 0.2s"
+//               />
+//             </Tooltip>
+//           </Flex>
+
+//           {/* Question Text */}
+//           <Text
+//             fontSize={{ base: "xs", sm: "sm", md: "md" }}
+//             fontWeight="semibold"
+//             color="gray.700"
+//             mb={{ base: 3, md: 4 }}
+//             lineHeight="tall"
+//           >
+//             {question.qus}
+//           </Text>
+
+//           {/* Options */}
+//           <VStack
+//             align="stretch"
+//             spacing={{ base: 2, md: 3 }}
+//             mb={{ base: 3, md: 4 }}
+//           >
+//             {question.options?.map((option, optIndex) => {
+//               const isUserAnswer = userAnswer === option;
+//               const isCorrectOption = optIndex === correctAnswerIndex;
+
+//               return (
+//                 <Box
+//                   key={optIndex}
+//                   p={{ base: 2, sm: 2.5, md: 3 }}
+//                   borderRadius="md"
+//                   border="2px"
+//                   borderColor={
+//                     isCorrectOption
+//                       ? "green.400"
+//                       : isUserAnswer && isWrong
+//                         ? "red.400"
+//                         : "gray.200"
+//                   }
+//                   bg={
+//                     isCorrectOption
+//                       ? "green.50"
+//                       : isUserAnswer && isWrong
+//                         ? "red.50"
+//                         : "transparent"
+//                   }
+//                 >
+//                   <Flex
+//                     justify="space-between"
+//                     align="center"
+//                     gap={2}
+//                     wrap="wrap"
+//                   >
+//                     <HStack spacing={{ base: 2, md: 3 }} flex="1" minW="0">
+//                       <Circle
+//                         size={{ base: "20px", sm: "22px", md: "24px" }}
+//                         bg={
+//                           isCorrectOption
+//                             ? "green.500"
+//                             : isUserAnswer && isWrong
+//                               ? "red.500"
+//                               : "gray.300"
+//                         }
+//                         color="white"
+//                         fontSize="2xs"
+//                         fontWeight="bold"
+//                         flexShrink={0}
+//                       >
+//                         {String.fromCharCode(65 + optIndex)}
+//                       </Circle>
+//                       <Text
+//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                         color="gray.700"
+//                         fontWeight={
+//                           isUserAnswer || isCorrectOption
+//                             ? "semibold"
+//                             : "normal"
+//                         }
+//                         wordBreak="break-word"
+//                       >
+//                         {option}
+//                       </Text>
+//                     </HStack>
+//                     {isCorrectOption && (
+//                       <Badge colorScheme="green" fontSize="2xs" flexShrink={0}>
+//                         Correct
+//                       </Badge>
+//                     )}
+//                     {isUserAnswer && isWrong && (
+//                       <Badge colorScheme="red" fontSize="2xs" flexShrink={0}>
+//                         Your Answer
+//                       </Badge>
+//                     )}
+//                   </Flex>
+//                 </Box>
+//               );
+//             })}
+//           </VStack>
+
+//           {/* Explanation */}
+//           {question.explanation && (
+//             <Box
+//               p={{ base: 2.5, sm: 3, md: 4 }}
+//               bg="blue.50"
+//               borderRadius="md"
+//               borderLeft="4px"
+//               borderColor="blue.400"
+//               mb={{ base: 3, md: 4 }}
+//             >
+//               <HStack spacing={2} mb={2}>
+//                 <Icon
+//                   as={FiAlertCircle}
+//                   color="blue.500"
+//                   boxSize={{ base: 3.5, sm: 4, md: 5 }}
+//                 />
+//                 <Text
+//                   fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                   fontWeight="bold"
+//                   color="blue.700"
+//                 >
+//                   Explanation
+//                 </Text>
+//               </HStack>
+//               <Text
+//                 fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                 color="blue.800"
+//                 lineHeight="tall"
+//               >
+//                 {question.explanation}
+//               </Text>
+//             </Box>
+//           )}
+
+//           {/* Answer Summary */}
+//           <Box pt={{ base: 3, md: 4 }} borderTop="1px" borderColor="gray.200">
+//             <Flex
+//               justify="space-between"
+//               align={{ base: "flex-start", sm: "center" }}
+//               gap={{ base: 2, md: 3 }}
+//               direction={{ base: "column", sm: "row" }}
+//             >
+//               <VStack align="start" spacing={1} flex="1">
+//                 <Text
+//                   fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                   color="gray.600"
+//                 >
+//                   Your Answer:{" "}
+//                   <Text
+//                     as="span"
+//                     fontWeight="bold"
+//                     color={
+//                       isCorrect ? "green.600" : isWrong ? "red.600" : "gray.500"
+//                     }
+//                   >
+//                     {userAnswer || "Not Attempted"}
+//                   </Text>
+//                 </Text>
+//                 <Text
+//                   fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                   color="gray.600"
+//                 >
+//                   Correct Answer:{" "}
+//                   <Text as="span" fontWeight="bold" color="green.600">
+//                     {correctAnswerText}
+//                   </Text>
+//                 </Text>
+//               </VStack>
+//               {isCorrect ? (
+//                 <Badge
+//                   colorScheme="green"
+//                   px={{ base: 2, md: 3 }}
+//                   py={1}
+//                   fontSize={{ base: "2xs", md: "xs" }}
+//                 >
+//                   +1 Point
+//                 </Badge>
+//               ) : userAnswer ? (
+//                 <Badge
+//                   colorScheme="red"
+//                   px={{ base: 2, md: 3 }}
+//                   py={1}
+//                   fontSize={{ base: "2xs", md: "xs" }}
+//                 >
+//                   0 Points
+//                 </Badge>
+//               ) : (
+//                 <Badge
+//                   colorScheme="gray"
+//                   px={{ base: 2, md: 3 }}
+//                   py={1}
+//                   fontSize={{ base: "2xs", md: "xs" }}
+//                 >
+//                   Not Attempted
+//                 </Badge>
+//               )}
+//             </Flex>
+//           </Box>
+//         </CardBody>
+//       </Card>
+//     );
+//   };
+
+//   // Render questions for each tab
+//   const renderQuestions = (questionIndices) => {
+//     if (!questionIndices || questionIndices.length === 0) {
+//       return (
+//         <Box textAlign="center" py={{ base: 6, md: 10 }}>
+//           <Icon
+//             as={FiAlertCircle}
+//             boxSize={{ base: 8, sm: 10, md: 12 }}
+//             color="gray.300"
+//             mb={4}
+//           />
+//           <Text color="gray.500" fontSize={{ base: "xs", sm: "sm", md: "md" }}>
+//             No questions in this category
+//           </Text>
+//         </Box>
+//       );
+//     }
+
+//     return questionIndices.map((qIndex) => {
+//       const question = TotalQuestion[qIndex];
+//       if (!question) return null;
+//       return <QuestionCard key={qIndex} question={question} index={qIndex} />;
+//     });
+//   };
+
+//   return (
+//     <Box
+//       minH="100vh"
+//       bgGradient="linear(to-br, blue.50, purple.50)"
+//       py={{ base: 3, sm: 4, md: 6, lg: 8 }}
+//       px={{ base: 2, sm: 3, md: 6, lg: 10 }}
+//     >
+//       <Container maxW="1400px" px={{ base: 2, sm: 3, md: 4 }}>
+//         {/* Header */}
+//         <Flex align="center" mb={{ base: 4, sm: 6, md: 8 }}>
+//           <Link to="/">
+//             <Icon
+//               as={FiArrowLeft}
+//               boxSize={{ base: 4, sm: 5, md: 6 }}
+//               color="purple.600"
+//               cursor="pointer"
+//               mr={{ base: 2, sm: 3, md: 4 }}
+//               _hover={{ transform: "translateX(-4px)" }}
+//               transition="all 0.2s"
+//             />
+//           </Link>
+
+//           <Box>
+//             <Heading
+//               fontSize={{ base: "lg", sm: "xl", md: "2xl", lg: "3xl" }}
+//               fontWeight="bold"
+//               color="gray.700"
+//               mb={1}
+//             >
+//               Test Results
+//             </Heading>
+
+//             <Text
+//               color="gray.500"
+//               fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//               display={{ base: "none", sm: "block" }}
+//             >
+//               Detailed performance analysis and insights
+//             </Text>
+//           </Box>
+
+//           <Box
+//             ml="auto"
+//             fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//             fontWeight="medium"
+//             bg="blue.600"
+//             color="white"
+//             px={{ base: 2, sm: 2.5, md: 3 }}
+//             py={{ base: 1, sm: 1.5, md: 2 }}
+//             borderRadius="md"
+//             whiteSpace="nowrap"
+//           >
+//             <Link to="/Review-Test">Review Test</Link>
+//           </Box>
+//         </Flex>
+
+//         {/* Main Content */}
+//         <VStack spacing={{ base: 4, md: 6 }} mb={{ base: 4, md: 6, lg: 8 }}>
+//           {/* Score Overview Card */}
+//           <Card
+//             bg="white"
+//             shadow="lg"
+//             borderRadius={{ base: "lg", md: "2xl" }}
+//             overflow="hidden"
+//             border="1px"
+//             borderColor="gray.100"
+//             width="100%"
+//           >
+//             <CardBody p={{ base: 3, sm: 4, md: 6 }}>
+//               {/* Score Circle */}
+//               <Box position="relative" mb={{ base: 3, sm: 4, md: 6 }}>
+//                 <Box
+//                   h={{ base: "180px", sm: "220px", md: "280px" }}
+//                   position="relative"
+//                 >
+//                   <Doughnut data={doughnutData} options={doughnutOptions} />
+//                   <Flex
+//                     position="absolute"
+//                     top="50%"
+//                     left="50%"
+//                     transform="translate(-50%, -50%)"
+//                     direction="column"
+//                     align="center"
+//                   >
+//                     <Text
+//                       fontSize={{ base: "2xl", sm: "3xl", md: "4xl" }}
+//                       fontWeight="bold"
+//                       color="purple.600"
+//                     >
+//                       {totalMark}
+//                     </Text>
+//                     <Text
+//                       fontSize={{ base: "sm", sm: "md", md: "lg" }}
+//                       color="gray.500"
+//                     >
+//                       / {TotalQuestion.length}
+//                     </Text>
+//                     <Text
+//                       fontSize={{ base: "2xs", md: "xs" }}
+//                       color="gray.400"
+//                       mt={1}
+//                     >
+//                       Score
+//                     </Text>
+//                   </Flex>
+//                 </Box>
+//               </Box>
+
+//               <Divider mb={{ base: 3, md: 4 }} />
+
+//               {/* Score Breakdown */}
+//               <Box>
+//                 <ScoreItem
+//                   icon={FiCheckCircle}
+//                   label="Correct Answers"
+//                   value={correctqus.length}
+//                   color="green"
+//                 />
+//                 <ScoreItem
+//                   icon={FiXCircle}
+//                   label="Incorrect Answers"
+//                   value={wrongAnsqus.length}
+//                   color="red"
+//                 />
+//                 <ScoreItem
+//                   icon={FiCircle}
+//                   label="Unattempted"
+//                   value={
+//                     TotalQuestion.length -
+//                     (answeredQuestioned + markedAndAnswered)
+//                   }
+//                   color="gray"
+//                 />
+//               </Box>
+//             </CardBody>
+//           </Card>
+
+//           {/* Performance Metrics */}
+//           <Grid
+//             templateColumns={{ base: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }}
+//             gap={{ base: 2, sm: 3, md: 4 }}
+//             width="100%"
+//           >
+//             <MetricCard
+//               icon={FiTarget}
+//               label="Accuracy"
+//               value={`${calculateAccuracy().toFixed(1)}%`}
+//               subtext="Performance"
+//               color="green.600"
+//               bgColor="green.50"
+//             />
+//             <MetricCard
+//               icon={FiCheckCircle}
+//               label="Completion"
+//               value={`${
+//                 TotalQuestion.length > 0
+//                   ? Math.round(
+//                       ((answeredQuestioned + markedAndAnswered) /
+//                         TotalQuestion.length) *
+//                         100,
+//                     )
+//                   : 0
+//               }%`}
+//               subtext="Attempted"
+//               color="orange.600"
+//               bgColor="orange.50"
+//             />
+//           </Grid>
+
+//           {/* Progress Bar */}
+//           <Card
+//             bg="white"
+//             shadow="sm"
+//             borderRadius={{ base: "lg", md: "xl" }}
+//             border="1px"
+//             borderColor="gray.100"
+//             width="100%"
+//           >
+//             <CardBody p={{ base: 3, sm: 4, md: 6 }}>
+//               <Flex
+//                 justify="space-between"
+//                 align="center"
+//                 mb={{ base: 2, md: 3 }}
+//               >
+//                 <Text
+//                   fontSize={{ base: "xs", sm: "sm", md: "md" }}
+//                   fontWeight="semibold"
+//                   color="gray.700"
+//                 >
+//                   Overall Performance
+//                 </Text>
+//                 <Text
+//                   fontSize={{ base: "md", sm: "lg", md: "xl" }}
+//                   fontWeight="bold"
+//                   color="purple.600"
+//                 >
+//                   {calculateAccuracy().toFixed(1)}%
+//                 </Text>
+//               </Flex>
+//               <Progress
+//                 value={calculateAccuracy()}
+//                 size={{ base: "sm", md: "lg" }}
+//                 borderRadius="full"
+//                 colorScheme="purple"
+//                 hasStripe
+//                 isAnimated
+//               />
+//               <Flex justify="space-between" mt={2}>
+//                 <Text fontSize="2xs" color="gray.500">
+//                   0%
+//                 </Text>
+//                 <Text fontSize="2xs" color="gray.500">
+//                   100%
+//                 </Text>
+//               </Flex>
+//             </CardBody>
+//           </Card>
+//         </VStack>
+
+//         {/* Tabs Section */}
+//         <Card
+//           bg="white"
+//           shadow="lg"
+//           borderRadius={{ base: "lg", md: "2xl" }}
+//           overflow="hidden"
+//           border="1px"
+//           borderColor="gray.100"
+//         >
+//           <CardBody p={0}>
+//             <Tabs colorScheme="purple" variant="soft-rounded">
+//               <Box
+//                 px={{ base: 2, sm: 3, md: 6 }}
+//                 pt={{ base: 3, sm: 4, md: 6 }}
+//               >
+//                 <Box
+//                   bg="gray.50"
+//                   p={1}
+//                   borderRadius="xl"
+//                   overflowX="auto"
+//                   css={{
+//                     "&::-webkit-scrollbar": {
+//                       height: "4px",
+//                     },
+//                     "&::-webkit-scrollbar-thumb": {
+//                       background: "#CBD5E0",
+//                       borderRadius: "10px",
+//                     },
+//                   }}
+//                 >
+//                   <TabList
+//                     border="none"
+//                     gap={{ base: 1, md: 2 }}
+//                     minWidth="max-content"
+//                   >
+//                     <Tab
+//                       fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                       fontWeight="medium"
+//                       px={{ base: 2, sm: 2.5, md: 3 }}
+//                       py={{ base: 1, sm: 1.5, md: 2 }}
+//                       _selected={{ bg: "purple.600", color: "white" }}
+//                       whiteSpace="nowrap"
+//                     >
+//                       Overview ({TotalQuestion.length})
+//                     </Tab>
+//                     <Tab
+//                       fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                       fontWeight="medium"
+//                       px={{ base: 2, sm: 2.5, md: 3 }}
+//                       py={{ base: 1, sm: 1.5, md: 2 }}
+//                       _selected={{ bg: "purple.600", color: "white" }}
+//                       whiteSpace="nowrap"
+//                     >
+//                       Correct ({correctqus.length})
+//                     </Tab>
+//                     <Tab
+//                       fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                       fontWeight="medium"
+//                       px={{ base: 2, sm: 2.5, md: 3 }}
+//                       py={{ base: 1, sm: 1.5, md: 2 }}
+//                       _selected={{ bg: "purple.600", color: "white" }}
+//                       whiteSpace="nowrap"
+//                     >
+//                       Incorrect ({wrongAnsqus.length})
+//                     </Tab>
+//                     <Tab
+//                       fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                       fontWeight="medium"
+//                       px={{ base: 2, sm: 2.5, md: 3 }}
+//                       py={{ base: 1, sm: 1.5, md: 2 }}
+//                       _selected={{ bg: "purple.600", color: "white" }}
+//                       whiteSpace="nowrap"
+//                     >
+//                       Marked ({marknotans + markedAndAnswered})
+//                     </Tab>
+//                     <Tab
+//                       fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                       fontWeight="medium"
+//                       px={{ base: 2, sm: 2.5, md: 3 }}
+//                       py={{ base: 1, sm: 1.5, md: 2 }}
+//                       _selected={{ bg: "purple.600", color: "white" }}
+//                       whiteSpace="nowrap"
+//                     >
+//                       Unattempted ({notans})
+//                     </Tab>
+//                   </TabList>
+//                 </Box>
+//               </Box>
+
+//               <TabPanels>
+//                 {/* Overview Tab - FIXED */}
+//                 <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
+//                   <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
+//                     <Box mb={{ base: 1, sm: 2, md: 4 }}>
+//                       <Heading
+//                         size={{ base: "xs", sm: "sm", md: "md" }}
+//                         mb={{ base: 1, md: 2 }}
+//                         color="gray.700"
+//                       >
+//                         All Questions ({TotalQuestion.length})
+//                       </Heading>
+//                       <Text
+//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                         color="gray.500"
+//                       >
+//                         Complete test review with answers and explanations.
+//                         Click the bookmark icon 📑 to save questions for later
+//                         practice.
+//                       </Text>
+//                     </Box>
+//                     {/* ✅ FIXED: Now using renderQuestions with all indices */}
+//                     {renderQuestions(
+//                       Array.from({ length: TotalQuestion.length }, (_, i) => i),
+//                     )}
+//                   </VStack>
+//                 </TabPanel>
+
+//                 {/* Correct Answers Tab */}
+//                 <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
+//                   <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
+//                     <Box mb={{ base: 1, sm: 2, md: 4 }}>
+//                       <Heading
+//                         size={{ base: "xs", sm: "sm", md: "md" }}
+//                         mb={{ base: 1, md: 2 }}
+//                         color="green.600"
+//                       >
+//                         Correct Answers ({correctqus.length})
+//                       </Heading>
+//                       <Text
+//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                         color="gray.500"
+//                       >
+//                         Questions you answered correctly
+//                       </Text>
+//                     </Box>
+//                     {renderQuestions(correctqus)}
+//                   </VStack>
+//                 </TabPanel>
+
+//                 {/* Incorrect Answers Tab */}
+//                 <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
+//                   <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
+//                     <Box mb={{ base: 1, sm: 2, md: 4 }}>
+//                       <Heading
+//                         size={{ base: "xs", sm: "sm", md: "md" }}
+//                         mb={{ base: 1, md: 2 }}
+//                         color="red.600"
+//                       >
+//                         Incorrect Answers ({wrongAnsqus.length})
+//                       </Heading>
+//                       <Text
+//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                         color="gray.500"
+//                       >
+//                         Review these questions to improve. 💡 Tip: Save them for
+//                         later practice!
+//                       </Text>
+//                     </Box>
+//                     {renderQuestions(wrongAnsqus)}
+//                   </VStack>
+//                 </TabPanel>
+
+//                 {/* Marked Questions Tab */}
+//                 <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
+//                   <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
+//                     <Box mb={{ base: 1, sm: 2, md: 4 }}>
+//                       <Heading
+//                         size={{ base: "xs", sm: "sm", md: "md" }}
+//                         mb={{ base: 1, md: 2 }}
+//                         color="orange.600"
+//                       >
+//                         Marked for Review ({marknotans + markedAndAnswered})
+//                       </Heading>
+//                       <Text
+//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                         color="gray.500"
+//                       >
+//                         Questions you marked during the test
+//                       </Text>
+//                     </Box>
+//                     {renderQuestions([
+//                       ...(testData?.markedNotAnswer || []),
+//                       ...(testData?.markedAndAnswer || []),
+//                     ])}
+//                   </VStack>
+//                 </TabPanel>
+
+//                 {/* Unattempted Questions Tab */}
+//                 <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
+//                   <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
+//                     <Box mb={{ base: 1, sm: 2, md: 4 }}>
+//                       <Heading
+//                         size={{ base: "xs", sm: "sm", md: "md" }}
+//                         mb={{ base: 1, md: 2 }}
+//                         color="gray.600"
+//                       >
+//                         Unattempted Questions ({notans})
+//                       </Heading>
+//                       <Text
+//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                         color="gray.500"
+//                       >
+//                         Questions you didn't attempt
+//                       </Text>
+//                     </Box>
+//                     {renderQuestions(testData?.notAnswer || [])}
+//                   </VStack>
+//                 </TabPanel>
+//               </TabPanels>
+//             </Tabs>
+//           </CardBody>
+//         </Card>
+//       </Container>
+//     </Box>
+//   );
+// };
+
+// export default ResultPage;
+
+// import {
+//   Box,
+//   Flex,
+//   Heading,
+//   Icon,
+//   Text,
+//   Badge,
+//   Progress,
+//   Container,
+//   Grid,
+//   Card,
+//   CardBody,
+//   Stat,
+//   StatLabel,
+//   StatNumber,
+//   Tabs,
+//   TabList,
+//   TabPanels,
+//   Tab,
+//   TabPanel,
+//   Divider,
+//   Circle,
+//   VStack,
+//   HStack,
+//   IconButton,
+//   useToast,
+//   Tooltip,
+// } from "@chakra-ui/react";
+// import {
+//   FiTarget,
+//   FiCheckCircle,
+//   FiXCircle,
+//   FiCircle,
+//   FiArrowLeft,
+//   FiFlag,
+//   FiAlertCircle,
+//   FiBookmark,
+// } from "react-icons/fi";
+// import { Doughnut } from "react-chartjs-2";
+// import {
+//   Chart as ChartJS,
+//   ArcElement,
+//   CategoryScale,
+//   LinearScale,
+//   PointElement,
+//   LineElement,
+//   Title,
+//   Tooltip as ChartTooltip,
+//   Legend,
+// } from "chart.js";
+// import { useEffect, useState } from "react";
+// import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
+// import { userTestFetchDataApi } from "../redux/userTestData/userTestData_ActionType";
+// import { Link } from "react-router-dom";
+
+// // Register Chart.js components
+// ChartJS.register(
+//   ArcElement,
+//   CategoryScale,
+//   LinearScale,
+//   PointElement,
+//   LineElement,
+//   Title,
+//   ChartTooltip,
+//   Legend,
+// );
+
+// const ResultPage = () => {
+//   const [totalMark, setTotalMark] = useState(0);
+//   const [TotalQuestion, SetTotalQuestion] = useState([]);
+//   const [marknotans, setmarknotans] = useState(0);
+//   const [notans, setnotans] = useState(0);
+//   const [answeredQuestioned, setansweredQuestioned] = useState(0);
+//   const [markedAndAnswered, setmarkedAndAnswered] = useState(0);
+//   const [wrongAnsqus, setwrongAnsqus] = useState([]);
+//   const [correctqus, setcorrectqus] = useState([]);
+//   const [rank, setrank] = useState(1);
+//   const [TotalStudent, setTotalStudent] = useState(0);
+//   const [percentile, setPercentile] = useState(0);
+//   const [testData, setTestData] = useState(null);
+//   const [allAnswers, setAllAnswers] = useState({});
+//   const [savedQuestionIndices, setSavedQuestionIndices] = useState(new Set());
+//   const toast = useToast();
+
+//   const calculateAccuracy = () => {
+//     if (TotalQuestion.length === 0) return 0;
+//     return (correctqus.length / TotalQuestion.length) * 100;
+//   };
+
+//   const calculatePercentile = async (score, allScores) => {
+//     const sub = getLocalStorage("Subject");
+//     const topic = getLocalStorage("category");
+//     const g = allScores?.filter(
+//       (e) => e.subject === sub && e.section === topic,
+//     );
+
+//     if (g !== undefined && g.length > 0) {
+//       setTotalStudent(g?.length);
+//       const sortedScores = g?.sort((a, b) => a.score - b.score);
+//       const belowYourScore = sortedScores.filter((s) => s.score < score).length;
+//       const percent = (belowYourScore / sortedScores.length) * 100;
+//       setPercentile(percent.toFixed(2));
+
+//       await userTestFetchDataApi();
+
+//       const alluser = getLocalStorage("AllUserTestData");
+//       const gp = alluser?.filter(
+//         (e) => e.subject === sub && e.section === topic,
+//       );
+//       if (gp && gp.length > 0) {
+//         setTotalStudent(gp.length);
+//         const sortedScoresrank = gp?.sort((a, b) => b.score - a.score);
+//         const strank =
+//           sortedScoresrank.filter((s) => s.score < score).length + 1;
+//         setLocalStorage("rank", strank);
+//         setrank(strank);
+//       }
+//     }
+//   };
+
+//   // Load all test data from localStorage
+//   useEffect(() => {
+//     // The data is saved as: setLocalStorage("test", [newTestData])
+//     // where newTestData has: { questions, correctQus, wrongansqus, score, allAnswer,
+//     //   answeredQuestion, notAnswer, markedAndAnswer, markedNotAnswer, ... }
+//     const savedTest = getLocalStorage("test");
+
+//     if (savedTest && savedTest[0]) {
+//       const data = savedTest[0];
+
+//       console.log("Loaded test data:", data); // Debug log
+
+//       // Set questions array (the actual question objects)
+//       SetTotalQuestion(data.questions || []);
+
+//       // Set score
+//       setTotalMark(data.score || 0);
+
+//       // Set correct/wrong question indices
+//       setcorrectqus(data.correctQus || []);
+//       setwrongAnsqus(data.wrongansqus || []);
+
+//       // Set answer tracking arrays
+//       setansweredQuestioned((data.answeredQuestion || []).length);
+//       setmarkedAndAnswered((data.markedAndAnswer || []).length);
+//       setmarknotans((data.markedNotAnswer || []).length);
+//       setnotans((data.notAnswer || []).length);
+
+//       // Set all answers map
+//       setAllAnswers(data.allAnswer || {});
+
+//       // Store the full testData for tab rendering
+//       setTestData(data);
+
+//       // Calculate percentile
+//       const scores = getLocalStorage("AllUserTestData");
+//       if (scores) {
+//         calculatePercentile(data.score || 0, scores);
+//       }
+//     } else {
+//       console.warn("No test data found in localStorage under key 'test'");
+//     }
+//   }, []);
+
+//   // Load existing saved questions when TotalQuestion changes
+//   useEffect(() => {
+//     if (TotalQuestion.length > 0) {
+//       loadSavedQuestions();
+//     }
+//   }, [TotalQuestion]);
+
+//   // Load existing saved questions to show which are already bookmarked
+//   const loadSavedQuestions = () => {
+//     const subject = getLocalStorage("Subject");
+//     const subjectKey = subject?.toLowerCase() || "general studies";
+//     const allSaved = getLocalStorage("savedQuestionsBySubject") || {};
+//     const savedForSubject = allSaved[subjectKey] || [];
+
+//     const savedTexts = new Set(savedForSubject.map((q) => q.qus));
+//     const savedIndices = new Set();
+
+//     TotalQuestion.forEach((q, idx) => {
+//       if (savedTexts.has(q.qus)) {
+//         savedIndices.add(idx);
+//       }
+//     });
+
+//     setSavedQuestionIndices(savedIndices);
+//   };
+
+//   // Toggle save question
+//   const toggleSaveQuestion = (question, index) => {
+//     const subject = getLocalStorage("Subject");
+//     const subjectKey = subject?.toLowerCase() || "general studies";
+
+//     const allSaved = getLocalStorage("savedQuestionsBySubject") || {};
+//     const savedForSubject = allSaved[subjectKey] || [];
+
+//     const existingIndex = savedForSubject.findIndex(
+//       (q) => q.qus === question.qus,
+//     );
+
+//     if (existingIndex >= 0) {
+//       savedForSubject.splice(existingIndex, 1);
+//       allSaved[subjectKey] = savedForSubject;
+//       setLocalStorage("savedQuestionsBySubject", allSaved);
+
+//       const qusno = (getLocalStorage("qusno") || []).filter(
+//         (t) => t !== question.qus,
+//       );
+//       setLocalStorage("qusno", qusno);
+
+//       setSavedQuestionIndices((prev) => {
+//         const newSet = new Set(prev);
+//         newSet.delete(index);
+//         return newSet;
+//       });
+
+//       toast({
+//         title: "Question removed",
+//         description: "Question removed from saved questions",
+//         status: "info",
+//         duration: 2000,
+//         isClosable: true,
+//         position: "top",
+//       });
+//     } else {
+//       savedForSubject.push(question);
+//       allSaved[subjectKey] = savedForSubject;
+//       setLocalStorage("savedQuestionsBySubject", allSaved);
+
+//       const qusno = getLocalStorage("qusno") || [];
+//       if (!qusno.includes(question.qus)) {
+//         qusno.push(question.qus);
+//         setLocalStorage("qusno", qusno);
+//       }
+
+//       setSavedQuestionIndices((prev) => new Set(prev).add(index));
+
+//       toast({
+//         title: "Question saved!",
+//         description: "Question added to your saved questions",
+//         status: "success",
+//         duration: 2000,
+//         isClosable: true,
+//         position: "top",
+//       });
+//     }
+//   };
+
+//   // Calculate unattempted count properly
+//   const unattemptedCount =
+//     TotalQuestion.length > 0
+//       ? TotalQuestion.length -
+//         (testData?.answeredQuestion?.length || 0) -
+//         (testData?.markedAndAnswer?.length || 0)
+//       : 0;
+
+//   // Doughnut chart data
+//   const doughnutData = {
+//     labels: ["Correct", "Incorrect", "Unattempted"],
+//     datasets: [
+//       {
+//         data: [
+//           correctqus.length,
+//           wrongAnsqus.length,
+//           Math.max(0, unattemptedCount),
+//         ],
+//         backgroundColor: ["#48BB78", "#F56565", "#CBD5E0"],
+//         borderWidth: 0,
+//         cutout: "75%",
+//       },
+//     ],
+//   };
+
+//   const doughnutOptions = {
+//     responsive: true,
+//     maintainAspectRatio: false,
+//     plugins: {
+//       legend: {
+//         display: false,
+//       },
+//       tooltip: {
+//         backgroundColor: "rgba(0,0,0,0.8)",
+//         padding: 12,
+//         borderRadius: 8,
+//       },
+//     },
+//   };
+
+//   // Performance metric card component
+//   const MetricCard = ({ icon, label, value, subtext, color, bgColor }) => (
+//     <Card
+//       bg="white"
+//       shadow="sm"
+//       borderRadius={{ base: "lg", md: "xl" }}
+//       overflow="hidden"
+//       transition="all 0.3s"
+//       _hover={{ shadow: "md", transform: "translateY(-4px)" }}
+//       border="1px"
+//       borderColor="gray.100"
+//       height="100%"
+//     >
+//       <CardBody p={{ base: 3, sm: 4, md: 5 }}>
+//         <Flex
+//           align="center"
+//           justify="space-between"
+//           mb={{ base: 2, md: 3 }}
+//           direction={{ base: "column", sm: "row" }}
+//           gap={2}
+//         >
+//           <Circle size={{ base: "36px", sm: "40px", md: "48px" }} bg={bgColor}>
+//             <Icon as={icon} boxSize={{ base: 3, sm: 4, md: 5 }} color={color} />
+//           </Circle>
+//           <Badge
+//             colorScheme={color.split(".")[0]}
+//             fontSize={{ base: "2xs", md: "xs" }}
+//             px={{ base: 2, md: 3 }}
+//             py={1}
+//             borderRadius="full"
+//           >
+//             {subtext}
+//           </Badge>
+//         </Flex>
+//         <Stat>
+//           <StatLabel
+//             fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//             color="gray.500"
+//             mb={1}
+//           >
+//             {label}
+//           </StatLabel>
+//           <StatNumber
+//             fontSize={{ base: "lg", sm: "xl", md: "2xl" }}
+//             fontWeight="bold"
+//             color="gray.700"
+//           >
+//             {value}
+//           </StatNumber>
+//         </Stat>
+//       </CardBody>
+//     </Card>
+//   );
+
+//   // Score breakdown item
+//   const ScoreItem = ({ icon, label, value, color }) => (
+//     <Flex align="center" py={{ base: 2, md: 3 }}>
+//       <Circle
+//         size={{ base: "32px", sm: "36px", md: "40px" }}
+//         bg={`${color}.50`}
+//         mr={{ base: 2, md: 3 }}
+//       >
+//         <Icon
+//           as={icon}
+//           color={`${color}.600`}
+//           boxSize={{ base: 3, sm: 4, md: 5 }}
+//         />
+//       </Circle>
+//       <Box flex="1">
+//         <Text
+//           fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//           color="gray.600"
+//           mb={1}
+//         >
+//           {label}
+//         </Text>
+//         <Text
+//           fontSize={{ base: "sm", sm: "md", md: "lg" }}
+//           fontWeight="semibold"
+//           color="gray.700"
+//         >
+//           {value}
+//         </Text>
+//       </Box>
+//     </Flex>
+//   );
+
+//   // Question Card Component with Bookmark button
+//   const QuestionCard = ({ question, index }) => {
+//     if (!question) return null;
+
+//     // allAnswers keys are strings (from JSON), so use String(index)
+//     const userAnswer = allAnswers[index] || allAnswers[String(index)];
+//     const correctAnswerIndex = question.answer - 1; // answer is 1-based
+//     const correctAnswerText = question.options?.[correctAnswerIndex];
+
+//     // Check status using the index arrays from testData
+//     const isCorrect = correctqus.includes(index);
+//     const isWrong = wrongAnsqus.includes(index);
+//     const isMarkedAndAnswered = testData?.markedAndAnswer?.includes(index);
+//     const isMarkedNotAnswered = testData?.markedNotAnswer?.includes(index);
+//     const isMarked = isMarkedAndAnswered || isMarkedNotAnswered;
+//     const isSaved = savedQuestionIndices.has(index);
+
+//     let statusColor = "gray";
+//     let statusText = "Unattempted";
+//     let statusIcon = FiCircle;
+
+//     if (isCorrect) {
+//       statusColor = "green";
+//       statusText = "Correct";
+//       statusIcon = FiCheckCircle;
+//     } else if (isWrong) {
+//       statusColor = "red";
+//       statusText = "Incorrect";
+//       statusIcon = FiXCircle;
+//     } else if (isMarked) {
+//       statusColor = "orange";
+//       statusText = "Marked";
+//       statusIcon = FiFlag;
+//     }
+
+//     return (
+//       <Card
+//         mb={{ base: 3, md: 4 }}
+//         bg="white"
+//         shadow="md"
+//         borderRadius={{ base: "md", md: "lg" }}
+//         border="2px"
+//         borderColor={isCorrect ? "green.200" : isWrong ? "red.200" : "gray.100"}
+//         width="100%"
+//       >
+//         <CardBody p={{ base: 3, sm: 4, md: 5 }}>
+//           {/* Question Header */}
+//           <Flex
+//             justify="space-between"
+//             align="flex-start"
+//             mb={{ base: 3, md: 4 }}
+//             gap={2}
+//             wrap="wrap"
+//           >
+//             <HStack spacing={{ base: 1.5, sm: 2, md: 3 }} wrap="wrap" flex="1">
+//               <Circle
+//                 size={{ base: "24px", sm: "28px", md: "32px" }}
+//                 bg="gray.100"
+//                 fontWeight="bold"
+//                 fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                 color="gray.700"
+//               >
+//                 {index + 1}
+//               </Circle>
+//               <Badge
+//                 colorScheme={statusColor}
+//                 px={{ base: 1.5, sm: 2, md: 3 }}
+//                 py={1}
+//                 borderRadius="full"
+//                 fontSize="2xs"
+//               >
+//                 <HStack spacing={1}>
+//                   <Icon as={statusIcon} boxSize={{ base: 2.5, md: 3 }} />
+//                   <Text>{statusText}</Text>
+//                 </HStack>
+//               </Badge>
+//               {isMarked && (
+//                 <Badge
+//                   colorScheme="orange"
+//                   px={{ base: 1.5, sm: 2, md: 3 }}
+//                   py={1}
+//                   borderRadius="full"
+//                   fontSize="2xs"
+//                 >
+//                   <HStack spacing={1}>
+//                     <Icon as={FiFlag} boxSize={{ base: 2.5, md: 3 }} />
+//                     <Text>Marked</Text>
+//                   </HStack>
+//                 </Badge>
+//               )}
+//             </HStack>
+
+//             {/* Bookmark Button */}
+//             <Tooltip
+//               label={isSaved ? "Remove from saved" : "Save question"}
+//               placement="top"
+//               hasArrow
+//             >
+//               <IconButton
+//                 icon={<FiBookmark />}
+//                 size={{ base: "sm", md: "md" }}
+//                 variant={isSaved ? "solid" : "outline"}
+//                 colorScheme={isSaved ? "purple" : "gray"}
+//                 aria-label={isSaved ? "Remove bookmark" : "Bookmark question"}
+//                 onClick={() => toggleSaveQuestion(question, index)}
+//                 _hover={{
+//                   transform: "scale(1.1)",
+//                   shadow: "md",
+//                 }}
+//                 transition="all 0.2s"
+//               />
+//             </Tooltip>
+//           </Flex>
+
+//           {/* Question Text */}
+//           <Text
+//             fontSize={{ base: "xs", sm: "sm", md: "md" }}
+//             fontWeight="semibold"
+//             color="gray.700"
+//             mb={{ base: 3, md: 4 }}
+//             lineHeight="tall"
+//           >
+//             {question.qus}
+//           </Text>
+
+//           {/* Options */}
+//           <VStack
+//             align="stretch"
+//             spacing={{ base: 2, md: 3 }}
+//             mb={{ base: 3, md: 4 }}
+//           >
+//             {question.options?.map((option, optIndex) => {
+//               const isUserAnswer = userAnswer === option;
+//               const isCorrectOption = optIndex === correctAnswerIndex;
+
+//               return (
+//                 <Box
+//                   key={optIndex}
+//                   p={{ base: 2, sm: 2.5, md: 3 }}
+//                   borderRadius="md"
+//                   border="2px"
+//                   borderColor={
+//                     isCorrectOption
+//                       ? "green.400"
+//                       : isUserAnswer && !isCorrect
+//                         ? "red.400"
+//                         : "gray.200"
+//                   }
+//                   bg={
+//                     isCorrectOption
+//                       ? "green.50"
+//                       : isUserAnswer && !isCorrect
+//                         ? "red.50"
+//                         : "transparent"
+//                   }
+//                 >
+//                   <Flex
+//                     justify="space-between"
+//                     align="center"
+//                     gap={2}
+//                     wrap="wrap"
+//                   >
+//                     <HStack spacing={{ base: 2, md: 3 }} flex="1" minW="0">
+//                       <Circle
+//                         size={{ base: "20px", sm: "22px", md: "24px" }}
+//                         bg={
+//                           isCorrectOption
+//                             ? "green.500"
+//                             : isUserAnswer && !isCorrect
+//                               ? "red.500"
+//                               : "gray.300"
+//                         }
+//                         color="white"
+//                         fontSize="2xs"
+//                         fontWeight="bold"
+//                         flexShrink={0}
+//                       >
+//                         {String.fromCharCode(65 + optIndex)}
+//                       </Circle>
+//                       <Text
+//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                         color="gray.700"
+//                         fontWeight={
+//                           isUserAnswer || isCorrectOption
+//                             ? "semibold"
+//                             : "normal"
+//                         }
+//                         wordBreak="break-word"
+//                       >
+//                         {option}
+//                       </Text>
+//                     </HStack>
+//                     {isCorrectOption && (
+//                       <Badge colorScheme="green" fontSize="2xs" flexShrink={0}>
+//                         Correct
+//                       </Badge>
+//                     )}
+//                     {isUserAnswer && !isCorrect && (
+//                       <Badge colorScheme="red" fontSize="2xs" flexShrink={0}>
+//                         Your Answer
+//                       </Badge>
+//                     )}
+//                     {isUserAnswer && isCorrect && (
+//                       <Badge colorScheme="green" fontSize="2xs" flexShrink={0}>
+//                         Your Answer ✓
+//                       </Badge>
+//                     )}
+//                   </Flex>
+//                 </Box>
+//               );
+//             })}
+//           </VStack>
+
+//           {/* Explanation */}
+//           {question.explanation && (
+//             <Box
+//               p={{ base: 2.5, sm: 3, md: 4 }}
+//               bg="blue.50"
+//               borderRadius="md"
+//               borderLeft="4px"
+//               borderColor="blue.400"
+//               mb={{ base: 3, md: 4 }}
+//             >
+//               <HStack spacing={2} mb={2}>
+//                 <Icon
+//                   as={FiAlertCircle}
+//                   color="blue.500"
+//                   boxSize={{ base: 3.5, sm: 4, md: 5 }}
+//                 />
+//                 <Text
+//                   fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                   fontWeight="bold"
+//                   color="blue.700"
+//                 >
+//                   Explanation
+//                 </Text>
+//               </HStack>
+//               <Text
+//                 fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                 color="blue.800"
+//                 lineHeight="tall"
+//               >
+//                 {question.explanation}
+//               </Text>
+//             </Box>
+//           )}
+
+//           {/* Answer Summary */}
+//           <Box pt={{ base: 3, md: 4 }} borderTop="1px" borderColor="gray.200">
+//             <Flex
+//               justify="space-between"
+//               align={{ base: "flex-start", sm: "center" }}
+//               gap={{ base: 2, md: 3 }}
+//               direction={{ base: "column", sm: "row" }}
+//             >
+//               <VStack align="start" spacing={1} flex="1">
+//                 <Text
+//                   fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                   color="gray.600"
+//                 >
+//                   Your Answer:{" "}
+//                   <Text
+//                     as="span"
+//                     fontWeight="bold"
+//                     color={
+//                       isCorrect ? "green.600" : isWrong ? "red.600" : "gray.500"
+//                     }
+//                   >
+//                     {userAnswer || "Not Attempted"}
+//                   </Text>
+//                 </Text>
+//                 <Text
+//                   fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                   color="gray.600"
+//                 >
+//                   Correct Answer:{" "}
+//                   <Text as="span" fontWeight="bold" color="green.600">
+//                     {correctAnswerText}
+//                   </Text>
+//                 </Text>
+//               </VStack>
+//               {isCorrect ? (
+//                 <Badge
+//                   colorScheme="green"
+//                   px={{ base: 2, md: 3 }}
+//                   py={1}
+//                   fontSize={{ base: "2xs", md: "xs" }}
+//                 >
+//                   +1 Point
+//                 </Badge>
+//               ) : userAnswer ? (
+//                 <Badge
+//                   colorScheme="red"
+//                   px={{ base: 2, md: 3 }}
+//                   py={1}
+//                   fontSize={{ base: "2xs", md: "xs" }}
+//                 >
+//                   0 Points
+//                 </Badge>
+//               ) : (
+//                 <Badge
+//                   colorScheme="gray"
+//                   px={{ base: 2, md: 3 }}
+//                   py={1}
+//                   fontSize={{ base: "2xs", md: "xs" }}
+//                 >
+//                   Not Attempted
+//                 </Badge>
+//               )}
+//             </Flex>
+//           </Box>
+//         </CardBody>
+//       </Card>
+//     );
+//   };
+
+//   // Render questions for a given array of question indices
+//   const renderQuestions = (questionIndices) => {
+//     if (!questionIndices || questionIndices.length === 0) {
+//       return (
+//         <Box textAlign="center" py={{ base: 6, md: 10 }}>
+//           <Icon
+//             as={FiAlertCircle}
+//             boxSize={{ base: 8, sm: 10, md: 12 }}
+//             color="gray.300"
+//             mb={4}
+//           />
+//           <Text color="gray.500" fontSize={{ base: "xs", sm: "sm", md: "md" }}>
+//             No questions in this category
+//           </Text>
+//         </Box>
+//       );
+//     }
+
+//     return questionIndices.map((qIndex) => {
+//       const question = TotalQuestion[qIndex];
+//       if (!question) return null;
+//       return <QuestionCard key={qIndex} question={question} index={qIndex} />;
+//     });
+//   };
+
+//   // All indices for overview tab
+//   const allIndices = Array.from({ length: TotalQuestion.length }, (_, i) => i);
+
+//   // Marked indices (combined)
+//   const markedIndices = [
+//     ...(testData?.markedNotAnswer || []),
+//     ...(testData?.markedAndAnswer || []),
+//   ];
+
+//   // Unattempted indices
+//   const unattemptedIndices = testData?.notAnswer || [];
+
+//   return (
+//     <Box
+//       minH="100vh"
+//       bgGradient="linear(to-br, blue.50, purple.50)"
+//       py={{ base: 3, sm: 4, md: 6, lg: 8 }}
+//       px={{ base: 2, sm: 3, md: 6, lg: 10 }}
+//     >
+//       <Container maxW="1400px" px={{ base: 2, sm: 3, md: 4 }}>
+//         {/* Header */}
+//         <Flex align="center" mb={{ base: 4, sm: 6, md: 8 }}>
+//           <Link to="/">
+//             <Icon
+//               as={FiArrowLeft}
+//               boxSize={{ base: 4, sm: 5, md: 6 }}
+//               color="purple.600"
+//               cursor="pointer"
+//               mr={{ base: 2, sm: 3, md: 4 }}
+//               _hover={{ transform: "translateX(-4px)" }}
+//               transition="all 0.2s"
+//             />
+//           </Link>
+
+//           <Box>
+//             <Heading
+//               fontSize={{ base: "lg", sm: "xl", md: "2xl", lg: "3xl" }}
+//               fontWeight="bold"
+//               color="gray.700"
+//               mb={1}
+//             >
+//               Test Results
+//             </Heading>
+
+//             <Text
+//               color="gray.500"
+//               fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//               display={{ base: "none", sm: "block" }}
+//             >
+//               Detailed performance analysis and insights
+//             </Text>
+//           </Box>
+
+//           <Box
+//             ml="auto"
+//             fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//             fontWeight="medium"
+//             bg="blue.600"
+//             color="white"
+//             px={{ base: 2, sm: 2.5, md: 3 }}
+//             py={{ base: 1, sm: 1.5, md: 2 }}
+//             borderRadius="md"
+//             whiteSpace="nowrap"
+//           >
+//             <Link to="/Review-Test">Review Test</Link>
+//           </Box>
+//         </Flex>
+
+//         {/* Main Content */}
+//         <VStack spacing={{ base: 4, md: 6 }} mb={{ base: 4, md: 6, lg: 8 }}>
+//           {/* Score Overview Card */}
+//           <Card
+//             bg="white"
+//             shadow="lg"
+//             borderRadius={{ base: "lg", md: "2xl" }}
+//             overflow="hidden"
+//             border="1px"
+//             borderColor="gray.100"
+//             width="100%"
+//           >
+//             <CardBody p={{ base: 3, sm: 4, md: 6 }}>
+//               {/* Score Circle */}
+//               <Box position="relative" mb={{ base: 3, sm: 4, md: 6 }}>
+//                 <Box
+//                   h={{ base: "180px", sm: "220px", md: "280px" }}
+//                   position="relative"
+//                 >
+//                   <Doughnut data={doughnutData} options={doughnutOptions} />
+//                   <Flex
+//                     position="absolute"
+//                     top="50%"
+//                     left="50%"
+//                     transform="translate(-50%, -50%)"
+//                     direction="column"
+//                     align="center"
+//                   >
+//                     <Text
+//                       fontSize={{ base: "2xl", sm: "3xl", md: "4xl" }}
+//                       fontWeight="bold"
+//                       color="purple.600"
+//                     >
+//                       {totalMark}
+//                     </Text>
+//                     <Text
+//                       fontSize={{ base: "sm", sm: "md", md: "lg" }}
+//                       color="gray.500"
+//                     >
+//                       / {TotalQuestion.length}
+//                     </Text>
+//                     <Text
+//                       fontSize={{ base: "2xs", md: "xs" }}
+//                       color="gray.400"
+//                       mt={1}
+//                     >
+//                       Score
+//                     </Text>
+//                   </Flex>
+//                 </Box>
+//               </Box>
+
+//               <Divider mb={{ base: 3, md: 4 }} />
+
+//               {/* Score Breakdown */}
+//               <Box>
+//                 <ScoreItem
+//                   icon={FiCheckCircle}
+//                   label="Correct Answers"
+//                   value={correctqus.length}
+//                   color="green"
+//                 />
+//                 <ScoreItem
+//                   icon={FiXCircle}
+//                   label="Incorrect Answers"
+//                   value={wrongAnsqus.length}
+//                   color="red"
+//                 />
+//                 <ScoreItem
+//                   icon={FiCircle}
+//                   label="Unattempted"
+//                   value={unattemptedCount}
+//                   color="gray"
+//                 />
+//               </Box>
+//             </CardBody>
+//           </Card>
+
+//           {/* Performance Metrics */}
+//           <Grid
+//             templateColumns={{ base: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }}
+//             gap={{ base: 2, sm: 3, md: 4 }}
+//             width="100%"
+//           >
+//             <MetricCard
+//               icon={FiTarget}
+//               label="Accuracy"
+//               value={`${calculateAccuracy().toFixed(1)}%`}
+//               subtext="Performance"
+//               color="green.600"
+//               bgColor="green.50"
+//             />
+//             <MetricCard
+//               icon={FiCheckCircle}
+//               label="Completion"
+//               value={`${
+//                 TotalQuestion.length > 0
+//                   ? Math.round(
+//                       ((answeredQuestioned + markedAndAnswered) /
+//                         TotalQuestion.length) *
+//                         100,
+//                     )
+//                   : 0
+//               }%`}
+//               subtext="Attempted"
+//               color="orange.600"
+//               bgColor="orange.50"
+//             />
+//           </Grid>
+
+//           {/* Progress Bar */}
+//           <Card
+//             bg="white"
+//             shadow="sm"
+//             borderRadius={{ base: "lg", md: "xl" }}
+//             border="1px"
+//             borderColor="gray.100"
+//             width="100%"
+//           >
+//             <CardBody p={{ base: 3, sm: 4, md: 6 }}>
+//               <Flex
+//                 justify="space-between"
+//                 align="center"
+//                 mb={{ base: 2, md: 3 }}
+//               >
+//                 <Text
+//                   fontSize={{ base: "xs", sm: "sm", md: "md" }}
+//                   fontWeight="semibold"
+//                   color="gray.700"
+//                 >
+//                   Overall Performance
+//                 </Text>
+//                 <Text
+//                   fontSize={{ base: "md", sm: "lg", md: "xl" }}
+//                   fontWeight="bold"
+//                   color="purple.600"
+//                 >
+//                   {calculateAccuracy().toFixed(1)}%
+//                 </Text>
+//               </Flex>
+//               <Progress
+//                 value={calculateAccuracy()}
+//                 size={{ base: "sm", md: "lg" }}
+//                 borderRadius="full"
+//                 colorScheme="purple"
+//                 hasStripe
+//                 isAnimated
+//               />
+//               <Flex justify="space-between" mt={2}>
+//                 <Text fontSize="2xs" color="gray.500">
+//                   0%
+//                 </Text>
+//                 <Text fontSize="2xs" color="gray.500">
+//                   100%
+//                 </Text>
+//               </Flex>
+//             </CardBody>
+//           </Card>
+//         </VStack>
+
+//         {/* Tabs Section */}
+//         <Card
+//           bg="white"
+//           shadow="lg"
+//           borderRadius={{ base: "lg", md: "2xl" }}
+//           overflow="hidden"
+//           border="1px"
+//           borderColor="gray.100"
+//         >
+//           <CardBody p={0}>
+//             <Tabs colorScheme="purple" variant="soft-rounded">
+//               <Box
+//                 px={{ base: 2, sm: 3, md: 6 }}
+//                 pt={{ base: 3, sm: 4, md: 6 }}
+//               >
+//                 <Box
+//                   bg="gray.50"
+//                   p={1}
+//                   borderRadius="xl"
+//                   overflowX="auto"
+//                   css={{
+//                     "&::-webkit-scrollbar": {
+//                       height: "4px",
+//                     },
+//                     "&::-webkit-scrollbar-thumb": {
+//                       background: "#CBD5E0",
+//                       borderRadius: "10px",
+//                     },
+//                   }}
+//                 >
+//                   <TabList
+//                     border="none"
+//                     gap={{ base: 1, md: 2 }}
+//                     minWidth="max-content"
+//                   >
+//                     <Tab
+//                       fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                       fontWeight="medium"
+//                       px={{ base: 2, sm: 2.5, md: 3 }}
+//                       py={{ base: 1, sm: 1.5, md: 2 }}
+//                       _selected={{ bg: "purple.600", color: "white" }}
+//                       whiteSpace="nowrap"
+//                     >
+//                       Overview ({TotalQuestion.length})
+//                     </Tab>
+//                     <Tab
+//                       fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                       fontWeight="medium"
+//                       px={{ base: 2, sm: 2.5, md: 3 }}
+//                       py={{ base: 1, sm: 1.5, md: 2 }}
+//                       _selected={{ bg: "purple.600", color: "white" }}
+//                       whiteSpace="nowrap"
+//                     >
+//                       Correct ({correctqus.length})
+//                     </Tab>
+//                     <Tab
+//                       fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                       fontWeight="medium"
+//                       px={{ base: 2, sm: 2.5, md: 3 }}
+//                       py={{ base: 1, sm: 1.5, md: 2 }}
+//                       _selected={{ bg: "purple.600", color: "white" }}
+//                       whiteSpace="nowrap"
+//                     >
+//                       Incorrect ({wrongAnsqus.length})
+//                     </Tab>
+//                     <Tab
+//                       fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                       fontWeight="medium"
+//                       px={{ base: 2, sm: 2.5, md: 3 }}
+//                       py={{ base: 1, sm: 1.5, md: 2 }}
+//                       _selected={{ bg: "purple.600", color: "white" }}
+//                       whiteSpace="nowrap"
+//                     >
+//                       Marked ({marknotans + markedAndAnswered})
+//                     </Tab>
+//                     <Tab
+//                       fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                       fontWeight="medium"
+//                       px={{ base: 2, sm: 2.5, md: 3 }}
+//                       py={{ base: 1, sm: 1.5, md: 2 }}
+//                       _selected={{ bg: "purple.600", color: "white" }}
+//                       whiteSpace="nowrap"
+//                     >
+//                       Unattempted ({notans})
+//                     </Tab>
+//                   </TabList>
+//                 </Box>
+//               </Box>
+
+//               <TabPanels>
+//                 {/* Overview Tab - All Questions */}
+//                 <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
+//                   <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
+//                     <Box mb={{ base: 1, sm: 2, md: 4 }}>
+//                       <Heading
+//                         size={{ base: "xs", sm: "sm", md: "md" }}
+//                         mb={{ base: 1, md: 2 }}
+//                         color="gray.700"
+//                       >
+//                         All Questions ({TotalQuestion.length})
+//                       </Heading>
+//                       <Text
+//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                         color="gray.500"
+//                       >
+//                         Complete test review with answers and explanations.
+//                         Click the bookmark icon 📑 to save questions for later
+//                         practice.
+//                       </Text>
+//                     </Box>
+//                     {renderQuestions(allIndices)}
+//                   </VStack>
+//                 </TabPanel>
+
+//                 {/* Correct Answers Tab */}
+//                 <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
+//                   <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
+//                     <Box mb={{ base: 1, sm: 2, md: 4 }}>
+//                       <Heading
+//                         size={{ base: "xs", sm: "sm", md: "md" }}
+//                         mb={{ base: 1, md: 2 }}
+//                         color="green.600"
+//                       >
+//                         Correct Answers ({correctqus.length})
+//                       </Heading>
+//                       <Text
+//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                         color="gray.500"
+//                       >
+//                         Questions you answered correctly
+//                       </Text>
+//                     </Box>
+//                     {renderQuestions(correctqus)}
+//                   </VStack>
+//                 </TabPanel>
+
+//                 {/* Incorrect Answers Tab */}
+//                 <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
+//                   <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
+//                     <Box mb={{ base: 1, sm: 2, md: 4 }}>
+//                       <Heading
+//                         size={{ base: "xs", sm: "sm", md: "md" }}
+//                         mb={{ base: 1, md: 2 }}
+//                         color="red.600"
+//                       >
+//                         Incorrect Answers ({wrongAnsqus.length})
+//                       </Heading>
+//                       <Text
+//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                         color="gray.500"
+//                       >
+//                         Review these questions to improve. 💡 Tip: Save them for
+//                         later practice!
+//                       </Text>
+//                     </Box>
+//                     {renderQuestions(wrongAnsqus)}
+//                   </VStack>
+//                 </TabPanel>
+
+//                 {/* Marked Questions Tab */}
+//                 <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
+//                   <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
+//                     <Box mb={{ base: 1, sm: 2, md: 4 }}>
+//                       <Heading
+//                         size={{ base: "xs", sm: "sm", md: "md" }}
+//                         mb={{ base: 1, md: 2 }}
+//                         color="orange.600"
+//                       >
+//                         Marked for Review ({marknotans + markedAndAnswered})
+//                       </Heading>
+//                       <Text
+//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                         color="gray.500"
+//                       >
+//                         Questions you marked during the test
+//                       </Text>
+//                     </Box>
+//                     {renderQuestions(markedIndices)}
+//                   </VStack>
+//                 </TabPanel>
+
+//                 {/* Unattempted Questions Tab */}
+//                 <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
+//                   <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
+//                     <Box mb={{ base: 1, sm: 2, md: 4 }}>
+//                       <Heading
+//                         size={{ base: "xs", sm: "sm", md: "md" }}
+//                         mb={{ base: 1, md: 2 }}
+//                         color="gray.600"
+//                       >
+//                         Unattempted Questions ({notans})
+//                       </Heading>
+//                       <Text
+//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+//                         color="gray.500"
+//                       >
+//                         Questions you didn't attempt
+//                       </Text>
+//                     </Box>
+//                     {renderQuestions(unattemptedIndices)}
+//                   </VStack>
+//                 </TabPanel>
+//               </TabPanels>
+//             </Tabs>
+//           </CardBody>
+//         </Card>
+//       </Container>
+//     </Box>
+//   );
+// };
+
+// export default ResultPage;
+
 import {
   Box,
   Flex,
@@ -53,7 +2348,6 @@ import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
 import { userTestFetchDataApi } from "../redux/userTestData/userTestData_ActionType";
 import { Link } from "react-router-dom";
 
-// Register Chart.js components
 ChartJS.register(
   ArcElement,
   CategoryScale,
@@ -68,170 +2362,102 @@ ChartJS.register(
 const ResultPage = () => {
   const [totalMark, setTotalMark] = useState(0);
   const [TotalQuestion, SetTotalQuestion] = useState([]);
-  const [marknotans, setmarknotans] = useState(0);
-  const [notans, setnotans] = useState(0);
-  const [answeredQuestioned, setansweredQuestioned] = useState(0);
-  const [markedAndAnswered, setmarkedAndAnswered] = useState(0);
-  const [wrongAns, setwrongAns] = useState(0);
-  const [wrongAnsqus, setwrongAnsqus] = useState([]);
-  const [correctqus, setcorrectqus] = useState([]);
-  const [rank, setrank] = useState(1);
-  const [TotalStudent, setTotalStudent] = useState(0);
-  const [percentile, setPercentile] = useState(0);
-  const [testData, setTestData] = useState(null);
   const [allAnswers, setAllAnswers] = useState({});
   const [savedQuestionIndices, setSavedQuestionIndices] = useState(new Set());
+  const [testData, setTestData] = useState(null);
   const toast = useToast();
 
-  const calculateAccuracy = () => {
-    return totalMark > 0 && TotalQuestion.length > 0
-      ? (totalMark / TotalQuestion.length) * 100
-      : 0;
-  };
+  // ─── All 5 index arrays from your data ──────────────────────────────────────
+  const [answeredQuestion, setAnsweredQuestion] = useState([]); // answered (correct or wrong)
+  const [correctQus, setCorrectQus] = useState([]); // correct answers
+  const [wrongAnsQus, setWrongAnsQus] = useState([]); // wrong answers
+  const [markedAndAnswer, setMarkedAndAnswer] = useState([]); // marked + answered
+  const [markedNotAnswer, setMarkedNotAnswer] = useState([]); // marked but NOT answered
+  const [notAnswer, setNotAnswer] = useState([]); // not attempted at all
 
-  const calculatePercentile = async (score, allScores) => {
-    const sub = getLocalStorage("Subject");
-    const topic = getLocalStorage("category");
-    const g = await allScores?.filter(
-      (e) => e.subject === sub && e.section === topic,
-    );
-
-    if (g !== undefined && g.length > 0) {
-      setTotalStudent(g?.length);
-      const sortedScores = g?.sort((a, b) => a.score - b.score);
-      const belowYourScore = sortedScores.filter((s) => s.score < score).length;
-      const percent = (belowYourScore / sortedScores.length) * 100;
-      setPercentile(percent.toFixed(2));
-
-      await userTestFetchDataApi();
-
-      const alluser = getLocalStorage("AllUserTestData");
-      const gp = await alluser?.filter(
-        (e) => e.subject === sub && e.section === topic,
-      );
-      if (gp && gp.length > 0) {
-        setTotalStudent(gp.length);
-        const sortedScoresrank = gp?.sort((a, b) => b.score - a.score);
-        const strank =
-          sortedScoresrank.filter((s) => s.score < score).length + 1;
-        setLocalStorage("rank", strank);
-        setrank(strank);
-      }
-    }
-  };
-
-  const handleCalculate = () => {
-    const yourScore = getLocalStorage("Total");
-    const scores = getLocalStorage("AllUserTestData");
-    calculatePercentile(yourScore, scores);
-  };
-
-  // Load saved questions on mount
+  // ─── Load everything from localStorage("test") ──────────────────────────────
   useEffect(() => {
-    setTotalMark(getLocalStorage("Total") || 0);
-    SetTotalQuestion(getLocalStorage("Testdata") || []);
-    const s = getLocalStorage("test");
-    if (s && s[0]) {
-      setTestData(s[0]);
-      setmarknotans(s[0].markedNotAnswer?.length || 0);
-      setnotans(s[0].notAnswer?.length || 0);
-      setmarkedAndAnswered(s[0].markedAndAnswer?.length || 0);
-      setansweredQuestioned(s[0].answeredQuestion?.length || 0);
-      setwrongAns(s[0].wrongans || 0);
-      setwrongAnsqus(s[0].wrongansqus || []);
-      setcorrectqus(s[0].correctQus || []);
-      setAllAnswers(s[0].allAnswer || {});
+    const savedTest = getLocalStorage("test");
+    if (!savedTest || !savedTest[0]) {
+      console.warn("No test data found in localStorage key 'test'");
+      return;
     }
-    handleCalculate();
+
+    const data = savedTest[0];
+    console.log("✅ Loaded test data:", data);
+
+    SetTotalQuestion(data.questions || []);
+    setTotalMark(data.score || 0);
+    setAllAnswers(data.allAnswer || {});
+    setTestData(data);
+
+    setAnsweredQuestion(data.answeredQuestion || []);
+    setCorrectQus(data.correctQus || []);
+    setWrongAnsQus(data.wrongansqus || []); // note: API key is wrongansqus
+    setMarkedAndAnswer(data.markedAndAnswer || []);
+    setMarkedNotAnswer(data.markedNotAnswer || []);
+    setNotAnswer(data.notAnswer || []);
   }, []);
 
-  // Load existing saved questions when TotalQuestion changes
+  // Load bookmarks after questions populate
   useEffect(() => {
-    if (TotalQuestion.length > 0) {
-      loadSavedQuestions();
-    }
+    if (TotalQuestion.length > 0) loadSavedQuestions();
   }, [TotalQuestion]);
 
-  // Load existing saved questions to show which are already bookmarked
   const loadSavedQuestions = () => {
     const subject = getLocalStorage("Subject");
     const subjectKey = subject?.toLowerCase() || "general studies";
     const allSaved = getLocalStorage("savedQuestionsBySubject") || {};
     const savedForSubject = allSaved[subjectKey] || [];
-
-    // Create a set of question texts to check if already saved
     const savedTexts = new Set(savedForSubject.map((q) => q.qus));
     const savedIndices = new Set();
-
     TotalQuestion.forEach((q, idx) => {
-      if (savedTexts.has(q.qus)) {
-        savedIndices.add(idx);
-      }
+      if (savedTexts.has(q.qus)) savedIndices.add(idx);
     });
-
     setSavedQuestionIndices(savedIndices);
   };
 
-  // Toggle save question
   const toggleSaveQuestion = (question, index) => {
     const subject = getLocalStorage("Subject");
     const subjectKey = subject?.toLowerCase() || "general studies";
-
-    // Get current saved questions
     const allSaved = getLocalStorage("savedQuestionsBySubject") || {};
     const savedForSubject = allSaved[subjectKey] || [];
-
-    // Check if question is already saved
     const existingIndex = savedForSubject.findIndex(
       (q) => q.qus === question.qus,
     );
 
     if (existingIndex >= 0) {
-      // Remove question
       savedForSubject.splice(existingIndex, 1);
       allSaved[subjectKey] = savedForSubject;
       setLocalStorage("savedQuestionsBySubject", allSaved);
-
-      // Update qusno
       const qusno = (getLocalStorage("qusno") || []).filter(
         (t) => t !== question.qus,
       );
       setLocalStorage("qusno", qusno);
-
-      // Update state
       setSavedQuestionIndices((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(index);
-        return newSet;
+        const s = new Set(prev);
+        s.delete(index);
+        return s;
       });
-
       toast({
         title: "Question removed",
-        description: "Question removed from saved questions",
         status: "info",
         duration: 2000,
         isClosable: true,
         position: "top",
       });
     } else {
-      // Add question
       savedForSubject.push(question);
       allSaved[subjectKey] = savedForSubject;
       setLocalStorage("savedQuestionsBySubject", allSaved);
-
-      // Update qusno
       const qusno = getLocalStorage("qusno") || [];
       if (!qusno.includes(question.qus)) {
         qusno.push(question.qus);
         setLocalStorage("qusno", qusno);
       }
-
-      // Update state
       setSavedQuestionIndices((prev) => new Set(prev).add(index));
-
       toast({
         title: "Question saved!",
-        description: "Question added to your saved questions",
         status: "success",
         duration: 2000,
         isClosable: true,
@@ -240,30 +2466,96 @@ const ResultPage = () => {
     }
   };
 
-  // Doughnut chart data
+  // ─── Derived counts ──────────────────────────────────────────────────────────
+  const totalQ = TotalQuestion.length;
+  const correctCount = correctQus.length;
+  const wrongCount = wrongAnsQus.length;
+  const answeredCount = answeredQuestion.length;
+  const markedAndAnswerCount = markedAndAnswer.length;
+  const markedNotAnswerCount = markedNotAnswer.length;
+  const markedTotal = markedAndAnswerCount + markedNotAnswerCount;
+  const notAnswerCount = notAnswer.length;
+
+  const accuracy = totalQ > 0 ? (correctCount / totalQ) * 100 : 0;
+  const completion =
+    totalQ > 0
+      ? Math.round(((answeredCount + markedAndAnswerCount) / totalQ) * 100)
+      : 0;
+
+  // ─── Per-question status ─────────────────────────────────────────────────────
+  // Priority: correct → incorrect → markedAndAnswer → markedNotAnswer → notAnswer → notVisited
+  const getStatus = (index) => {
+    if (correctQus.includes(index)) return "correct";
+    if (wrongAnsQus.includes(index)) return "incorrect";
+    if (markedAndAnswer.includes(index)) return "markedAnswered";
+    if (markedNotAnswer.includes(index)) return "markedNotAnswered";
+    if (notAnswer.includes(index)) return "notAnswered";
+    if (answeredQuestion.includes(index)) return "answered";
+    return "notVisited";
+  };
+
+  const STATUS_CFG = {
+    correct: {
+      color: "green",
+      text: "Correct",
+      icon: FiCheckCircle,
+      border: "green.200",
+    },
+    incorrect: {
+      color: "red",
+      text: "Incorrect",
+      icon: FiXCircle,
+      border: "red.200",
+    },
+    markedAnswered: {
+      color: "purple",
+      text: "Marked & Answered",
+      icon: FiFlag,
+      border: "purple.200",
+    },
+    markedNotAnswered: {
+      color: "orange",
+      text: "Marked (No Answer)",
+      icon: FiFlag,
+      border: "orange.200",
+    },
+    notAnswered: {
+      color: "gray",
+      text: "Not Attempted",
+      icon: FiCircle,
+      border: "gray.100",
+    },
+    answered: {
+      color: "blue",
+      text: "Answered",
+      icon: FiCheckCircle,
+      border: "blue.200",
+    },
+    notVisited: {
+      color: "gray",
+      text: "Not Visited",
+      icon: FiCircle,
+      border: "gray.100",
+    },
+  };
+
+  // ─── Chart ───────────────────────────────────────────────────────────────────
   const doughnutData = {
-    labels: ["Correct", "Incorrect", "Unattempted"],
+    labels: ["Correct", "Incorrect", "Not Attempted"],
     datasets: [
       {
-        data: [
-          correctqus.length,
-          wrongAnsqus.length,
-          TotalQuestion.length - (answeredQuestioned + markedAndAnswered),
-        ],
+        data: [correctCount, wrongCount, notAnswerCount],
         backgroundColor: ["#48BB78", "#F56565", "#CBD5E0"],
         borderWidth: 0,
         cutout: "75%",
       },
     ],
   };
-
   const doughnutOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        display: false,
-      },
+      legend: { display: false },
       tooltip: {
         backgroundColor: "rgba(0,0,0,0.8)",
         padding: 12,
@@ -272,7 +2564,313 @@ const ResultPage = () => {
     },
   };
 
-  // Performance metric card component
+  // ─── Question Card ────────────────────────────────────────────────────────────
+  const QuestionCard = ({ question, index }) => {
+    if (!question) return null;
+
+    const userAnswer = allAnswers[index] ?? allAnswers[String(index)];
+    const correctIdx = question.answer - 1; // 1-based → 0-based
+    const correctAnswerText = question.options?.[correctIdx];
+    const status = getStatus(index);
+    const cfg = STATUS_CFG[status] || STATUS_CFG.notVisited;
+    const isSaved = savedQuestionIndices.has(index);
+
+    return (
+      <Card
+        mb={{ base: 3, md: 4 }}
+        bg="white"
+        shadow="md"
+        borderRadius={{ base: "md", md: "lg" }}
+        border="2px"
+        borderColor={cfg.border}
+        width="100%"
+      >
+        <CardBody p={{ base: 3, sm: 4, md: 5 }}>
+          {/* Header: number + status badge + bookmark */}
+          <Flex
+            justify="space-between"
+            align="flex-start"
+            mb={{ base: 3, md: 4 }}
+            gap={2}
+            wrap="wrap"
+          >
+            <HStack spacing={{ base: 1.5, sm: 2, md: 3 }} wrap="wrap" flex="1">
+              <Circle
+                size={{ base: "24px", sm: "28px", md: "32px" }}
+                bg="gray.100"
+                fontWeight="bold"
+                fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+                color="gray.700"
+              >
+                {index + 1}
+              </Circle>
+              <Badge
+                colorScheme={cfg.color}
+                px={{ base: 1.5, sm: 2, md: 3 }}
+                py={1}
+                borderRadius="full"
+                fontSize="2xs"
+              >
+                <HStack spacing={1}>
+                  <Icon as={cfg.icon} boxSize={{ base: 2.5, md: 3 }} />
+                  <Text>{cfg.text}</Text>
+                </HStack>
+              </Badge>
+            </HStack>
+            <Tooltip
+              label={isSaved ? "Remove from saved" : "Save question"}
+              placement="top"
+              hasArrow
+            >
+              <IconButton
+                icon={<FiBookmark />}
+                size={{ base: "sm", md: "md" }}
+                variant={isSaved ? "solid" : "outline"}
+                colorScheme={isSaved ? "purple" : "gray"}
+                aria-label={isSaved ? "Remove bookmark" : "Bookmark question"}
+                onClick={() => toggleSaveQuestion(question, index)}
+                _hover={{ transform: "scale(1.1)", shadow: "md" }}
+                transition="all 0.2s"
+              />
+            </Tooltip>
+          </Flex>
+
+          {/* Question text */}
+          <Text
+            fontSize={{ base: "xs", sm: "sm", md: "md" }}
+            fontWeight="semibold"
+            color="gray.700"
+            mb={{ base: 3, md: 4 }}
+            lineHeight="tall"
+          >
+            {question.qus}
+          </Text>
+
+          {/* Options */}
+          <VStack
+            align="stretch"
+            spacing={{ base: 2, md: 3 }}
+            mb={{ base: 3, md: 4 }}
+          >
+            {question.options?.map((option, optIndex) => {
+              const isUserAnswer = userAnswer === option;
+              const isCorrectOption = optIndex === correctIdx;
+              const isWrongPick = isUserAnswer && status === "incorrect";
+
+              let borderColor = "gray.200";
+              let bgColor = "transparent";
+              let circleBg = "gray.300";
+
+              if (isCorrectOption) {
+                borderColor = "green.400";
+                bgColor = "green.50";
+                circleBg = "green.500";
+              } else if (isWrongPick) {
+                borderColor = "red.400";
+                bgColor = "red.50";
+                circleBg = "red.500";
+              }
+
+              return (
+                <Box
+                  key={optIndex}
+                  p={{ base: 2, sm: 2.5, md: 3 }}
+                  borderRadius="md"
+                  border="2px"
+                  borderColor={borderColor}
+                  bg={bgColor}
+                >
+                  <Flex
+                    justify="space-between"
+                    align="center"
+                    gap={2}
+                    wrap="wrap"
+                  >
+                    <HStack spacing={{ base: 2, md: 3 }} flex="1" minW="0">
+                      <Circle
+                        size={{ base: "20px", sm: "22px", md: "24px" }}
+                        bg={circleBg}
+                        color="white"
+                        fontSize="2xs"
+                        fontWeight="bold"
+                        flexShrink={0}
+                      >
+                        {String.fromCharCode(65 + optIndex)}
+                      </Circle>
+                      <Text
+                        fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+                        color="gray.700"
+                        fontWeight={
+                          isUserAnswer || isCorrectOption
+                            ? "semibold"
+                            : "normal"
+                        }
+                        wordBreak="break-word"
+                      >
+                        {option}
+                      </Text>
+                    </HStack>
+                    <HStack spacing={1} flexShrink={0}>
+                      {isCorrectOption && (
+                        <Badge colorScheme="green" fontSize="2xs">
+                          Correct Answer
+                        </Badge>
+                      )}
+                      {isUserAnswer && status === "correct" && (
+                        <Badge colorScheme="green" fontSize="2xs">
+                          Your Answer ✓
+                        </Badge>
+                      )}
+                      {isWrongPick && (
+                        <Badge colorScheme="red" fontSize="2xs">
+                          Your Answer ✗
+                        </Badge>
+                      )}
+                      {isUserAnswer && status === "markedAnswered" && (
+                        <Badge colorScheme="purple" fontSize="2xs">
+                          Your Answer
+                        </Badge>
+                      )}
+                    </HStack>
+                  </Flex>
+                </Box>
+              );
+            })}
+          </VStack>
+
+          {/* Explanation */}
+          {question.explanation && (
+            <Box
+              p={{ base: 2.5, sm: 3, md: 4 }}
+              bg="blue.50"
+              borderRadius="md"
+              borderLeft="4px"
+              borderColor="blue.400"
+              mb={{ base: 3, md: 4 }}
+            >
+              <HStack spacing={2} mb={2}>
+                <Icon
+                  as={FiAlertCircle}
+                  color="blue.500"
+                  boxSize={{ base: 3.5, sm: 4, md: 5 }}
+                />
+                <Text
+                  fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+                  fontWeight="bold"
+                  color="blue.700"
+                >
+                  Explanation
+                </Text>
+              </HStack>
+              <Text
+                fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+                color="blue.800"
+                lineHeight="tall"
+              >
+                {question.explanation}
+              </Text>
+            </Box>
+          )}
+
+          {/* Answer summary footer */}
+          <Box pt={{ base: 3, md: 4 }} borderTop="1px" borderColor="gray.200">
+            <Flex
+              justify="space-between"
+              align={{ base: "flex-start", sm: "center" }}
+              gap={{ base: 2, md: 3 }}
+              direction={{ base: "column", sm: "row" }}
+            >
+              <VStack align="start" spacing={1} flex="1">
+                <Text
+                  fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+                  color="gray.600"
+                >
+                  Your Answer:{" "}
+                  <Text
+                    as="span"
+                    fontWeight="bold"
+                    color={
+                      status === "correct"
+                        ? "green.600"
+                        : status === "incorrect"
+                          ? "red.600"
+                          : "gray.500"
+                    }
+                  >
+                    {userAnswer || "Not Attempted"}
+                  </Text>
+                </Text>
+                <Text
+                  fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+                  color="gray.600"
+                >
+                  Correct Answer:{" "}
+                  <Text as="span" fontWeight="bold" color="green.600">
+                    {correctAnswerText}
+                  </Text>
+                </Text>
+              </VStack>
+              {status === "correct" && (
+                <Badge colorScheme="green" px={3} py={1} fontSize="2xs">
+                  +1 Point
+                </Badge>
+              )}
+              {status === "incorrect" && (
+                <Badge colorScheme="red" px={3} py={1} fontSize="2xs">
+                  0 Points
+                </Badge>
+              )}
+              {status === "markedAnswered" && (
+                <Badge colorScheme="purple" px={3} py={1} fontSize="2xs">
+                  Marked
+                </Badge>
+              )}
+              {status === "markedNotAnswered" && (
+                <Badge colorScheme="orange" px={3} py={1} fontSize="2xs">
+                  Marked
+                </Badge>
+              )}
+              {(status === "notAnswered" || status === "notVisited") && (
+                <Badge colorScheme="gray" px={3} py={1} fontSize="2xs">
+                  Not Attempted
+                </Badge>
+              )}
+            </Flex>
+          </Box>
+        </CardBody>
+      </Card>
+    );
+  };
+
+  // ─── Render helper ─────────────────────────────────────────────────────────────
+  const renderQuestions = (indices) => {
+    if (!indices || indices.length === 0) {
+      return (
+        <Box textAlign="center" py={{ base: 6, md: 10 }}>
+          <Icon
+            as={FiAlertCircle}
+            boxSize={{ base: 8, sm: 10, md: 12 }}
+            color="gray.300"
+            mb={4}
+          />
+          <Text color="gray.500" fontSize={{ base: "xs", sm: "sm", md: "md" }}>
+            No questions in this category
+          </Text>
+        </Box>
+      );
+    }
+    return indices.map((qIndex) => {
+      const q = TotalQuestion[qIndex];
+      if (!q) return null;
+      return <QuestionCard key={qIndex} question={q} index={qIndex} />;
+    });
+  };
+
+  // ─── Index sets per tab ────────────────────────────────────────────────────────
+  const allIndices = Array.from({ length: totalQ }, (_, i) => i);
+  const markedAllIndices = [...markedNotAnswer, ...markedAndAnswer];
+
+  // ─── Small reusable components ────────────────────────────────────────────────
   const MetricCard = ({ icon, label, value, subtext, color, bgColor }) => (
     <Card
       bg="white"
@@ -326,7 +2924,6 @@ const ResultPage = () => {
     </Card>
   );
 
-  // Score breakdown item
   const ScoreItem = ({ icon, label, value, color }) => (
     <Flex align="center" py={{ base: 2, md: 3 }}>
       <Circle
@@ -359,339 +2956,53 @@ const ResultPage = () => {
     </Flex>
   );
 
-  // Question Card Component with Bookmark button
-  const QuestionCard = ({ question, index }) => {
-    if (!question) return null;
+  // ─── Tabs config ──────────────────────────────────────────────────────────────
+  const TABS = [
+    {
+      label: "All Questions",
+      count: totalQ,
+      indices: allIndices,
+      headingColor: "gray.700",
+      desc: "Every question with its status, your answer, and the correct answer.",
+    },
+    {
+      label: "Answered",
+      count: answeredCount,
+      indices: answeredQuestion,
+      headingColor: "blue.600",
+      desc: "All questions you submitted an answer for (correct + incorrect).",
+    },
+    {
+      label: "Correct",
+      count: correctCount,
+      indices: correctQus,
+      headingColor: "green.600",
+      desc: "Questions you answered correctly. 🎉",
+    },
+    {
+      label: "Incorrect",
+      count: wrongCount,
+      indices: wrongAnsQus,
+      headingColor: "red.600",
+      desc: "Review these to improve. 💡 Bookmark them for later practice!",
+    },
+    {
+      label: "Marked",
+      count: markedTotal,
+      indices: markedAllIndices,
+      headingColor: "orange.600",
+      desc: null,
+    },
+    {
+      label: "Not Attempted",
+      count: notAnswerCount,
+      indices: notAnswer,
+      headingColor: "gray.600",
+      desc: "Questions you skipped entirely.",
+    },
+  ];
 
-    const userAnswer = allAnswers[index];
-    const correctAnswerIndex = question.answer - 1;
-    const correctAnswerText = question.options?.[correctAnswerIndex];
-    const isCorrect = correctqus.includes(index);
-    const isWrong = wrongAnsqus.includes(index);
-    const isMarked =
-      testData?.markedAndAnswer?.includes(index) ||
-      testData?.markedNotAnswer?.includes(index);
-    const isSaved = savedQuestionIndices.has(index);
-
-    let statusColor = "gray";
-    let statusText = "Unattempted";
-    let statusIcon = FiCircle;
-
-    if (isCorrect) {
-      statusColor = "green";
-      statusText = "Correct";
-      statusIcon = FiCheckCircle;
-    } else if (isWrong) {
-      statusColor = "red";
-      statusText = "Incorrect";
-      statusIcon = FiXCircle;
-    } else if (isMarked) {
-      statusColor = "orange";
-      statusText = "Marked";
-      statusIcon = FiFlag;
-    }
-
-    return (
-      <Card
-        mb={{ base: 3, md: 4 }}
-        bg="white"
-        shadow="md"
-        borderRadius={{ base: "md", md: "lg" }}
-        border="2px"
-        borderColor={isCorrect ? "green.200" : isWrong ? "red.200" : "gray.100"}
-        width="100%"
-      >
-        <CardBody p={{ base: 3, sm: 4, md: 5 }}>
-          {/* Question Header */}
-          <Flex
-            justify="space-between"
-            align="flex-start"
-            mb={{ base: 3, md: 4 }}
-            gap={2}
-            wrap="wrap"
-          >
-            <HStack spacing={{ base: 1.5, sm: 2, md: 3 }} wrap="wrap" flex="1">
-              <Circle
-                size={{ base: "24px", sm: "28px", md: "32px" }}
-                bg="gray.100"
-                fontWeight="bold"
-                fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                color="gray.700"
-              >
-                {index + 1}
-              </Circle>
-              <Badge
-                colorScheme={statusColor}
-                px={{ base: 1.5, sm: 2, md: 3 }}
-                py={1}
-                borderRadius="full"
-                fontSize="2xs"
-              >
-                <HStack spacing={1}>
-                  <Icon as={statusIcon} boxSize={{ base: 2.5, md: 3 }} />
-                  <Text>{statusText}</Text>
-                </HStack>
-              </Badge>
-              {isMarked && (
-                <Badge
-                  colorScheme="orange"
-                  px={{ base: 1.5, sm: 2, md: 3 }}
-                  py={1}
-                  borderRadius="full"
-                  fontSize="2xs"
-                >
-                  <HStack spacing={1}>
-                    <Icon as={FiFlag} boxSize={{ base: 2.5, md: 3 }} />
-                    <Text>Marked</Text>
-                  </HStack>
-                </Badge>
-              )}
-            </HStack>
-
-            {/* Bookmark Button */}
-            <Tooltip
-              label={isSaved ? "Remove from saved" : "Save question"}
-              placement="top"
-              hasArrow
-            >
-              <IconButton
-                icon={<FiBookmark />}
-                size={{ base: "sm", md: "md" }}
-                variant={isSaved ? "solid" : "outline"}
-                colorScheme={isSaved ? "purple" : "gray"}
-                aria-label={isSaved ? "Remove bookmark" : "Bookmark question"}
-                onClick={() => toggleSaveQuestion(question, index)}
-                _hover={{
-                  transform: "scale(1.1)",
-                  shadow: "md",
-                }}
-                transition="all 0.2s"
-              />
-            </Tooltip>
-          </Flex>
-
-          {/* Question Text */}
-          <Text
-            fontSize={{ base: "xs", sm: "sm", md: "md" }}
-            fontWeight="semibold"
-            color="gray.700"
-            mb={{ base: 3, md: 4 }}
-            lineHeight="tall"
-          >
-            {question.qus}
-          </Text>
-
-          {/* Options */}
-          <VStack
-            align="stretch"
-            spacing={{ base: 2, md: 3 }}
-            mb={{ base: 3, md: 4 }}
-          >
-            {question.options?.map((option, optIndex) => {
-              const isUserAnswer = userAnswer === option;
-              const isCorrectOption = optIndex === correctAnswerIndex;
-
-              return (
-                <Box
-                  key={optIndex}
-                  p={{ base: 2, sm: 2.5, md: 3 }}
-                  borderRadius="md"
-                  border="2px"
-                  borderColor={
-                    isCorrectOption
-                      ? "green.400"
-                      : isUserAnswer && isWrong
-                        ? "red.400"
-                        : "gray.200"
-                  }
-                  bg={
-                    isCorrectOption
-                      ? "green.50"
-                      : isUserAnswer && isWrong
-                        ? "red.50"
-                        : "transparent"
-                  }
-                >
-                  <Flex
-                    justify="space-between"
-                    align="center"
-                    gap={2}
-                    wrap="wrap"
-                  >
-                    <HStack spacing={{ base: 2, md: 3 }} flex="1" minW="0">
-                      <Circle
-                        size={{ base: "20px", sm: "22px", md: "24px" }}
-                        bg={
-                          isCorrectOption
-                            ? "green.500"
-                            : isUserAnswer && isWrong
-                              ? "red.500"
-                              : "gray.300"
-                        }
-                        color="white"
-                        fontSize="2xs"
-                        fontWeight="bold"
-                        flexShrink={0}
-                      >
-                        {String.fromCharCode(65 + optIndex)}
-                      </Circle>
-                      <Text
-                        fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                        color="gray.700"
-                        fontWeight={
-                          isUserAnswer || isCorrectOption
-                            ? "semibold"
-                            : "normal"
-                        }
-                        wordBreak="break-word"
-                      >
-                        {option}
-                      </Text>
-                    </HStack>
-                    {isCorrectOption && (
-                      <Badge colorScheme="green" fontSize="2xs" flexShrink={0}>
-                        Correct
-                      </Badge>
-                    )}
-                    {isUserAnswer && isWrong && (
-                      <Badge colorScheme="red" fontSize="2xs" flexShrink={0}>
-                        Your Answer
-                      </Badge>
-                    )}
-                  </Flex>
-                </Box>
-              );
-            })}
-          </VStack>
-
-          {/* Explanation */}
-          {question.explanation && (
-            <Box
-              p={{ base: 2.5, sm: 3, md: 4 }}
-              bg="blue.50"
-              borderRadius="md"
-              borderLeft="4px"
-              borderColor="blue.400"
-              mb={{ base: 3, md: 4 }}
-            >
-              <HStack spacing={2} mb={2}>
-                <Icon
-                  as={FiAlertCircle}
-                  color="blue.500"
-                  boxSize={{ base: 3.5, sm: 4, md: 5 }}
-                />
-                <Text
-                  fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                  fontWeight="bold"
-                  color="blue.700"
-                >
-                  Explanation
-                </Text>
-              </HStack>
-              <Text
-                fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                color="blue.800"
-                lineHeight="tall"
-              >
-                {question.explanation}
-              </Text>
-            </Box>
-          )}
-
-          {/* Answer Summary */}
-          <Box pt={{ base: 3, md: 4 }} borderTop="1px" borderColor="gray.200">
-            <Flex
-              justify="space-between"
-              align={{ base: "flex-start", sm: "center" }}
-              gap={{ base: 2, md: 3 }}
-              direction={{ base: "column", sm: "row" }}
-            >
-              <VStack align="start" spacing={1} flex="1">
-                <Text
-                  fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                  color="gray.600"
-                >
-                  Your Answer:{" "}
-                  <Text
-                    as="span"
-                    fontWeight="bold"
-                    color={
-                      isCorrect ? "green.600" : isWrong ? "red.600" : "gray.500"
-                    }
-                  >
-                    {userAnswer || "Not Attempted"}
-                  </Text>
-                </Text>
-                <Text
-                  fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                  color="gray.600"
-                >
-                  Correct Answer:{" "}
-                  <Text as="span" fontWeight="bold" color="green.600">
-                    {correctAnswerText}
-                  </Text>
-                </Text>
-              </VStack>
-              {isCorrect ? (
-                <Badge
-                  colorScheme="green"
-                  px={{ base: 2, md: 3 }}
-                  py={1}
-                  fontSize={{ base: "2xs", md: "xs" }}
-                >
-                  +1 Point
-                </Badge>
-              ) : userAnswer ? (
-                <Badge
-                  colorScheme="red"
-                  px={{ base: 2, md: 3 }}
-                  py={1}
-                  fontSize={{ base: "2xs", md: "xs" }}
-                >
-                  0 Points
-                </Badge>
-              ) : (
-                <Badge
-                  colorScheme="gray"
-                  px={{ base: 2, md: 3 }}
-                  py={1}
-                  fontSize={{ base: "2xs", md: "xs" }}
-                >
-                  Not Attempted
-                </Badge>
-              )}
-            </Flex>
-          </Box>
-        </CardBody>
-      </Card>
-    );
-  };
-
-  // Render questions for each tab
-  const renderQuestions = (questionIndices) => {
-    if (!questionIndices || questionIndices.length === 0) {
-      return (
-        <Box textAlign="center" py={{ base: 6, md: 10 }}>
-          <Icon
-            as={FiAlertCircle}
-            boxSize={{ base: 8, sm: 10, md: 12 }}
-            color="gray.300"
-            mb={4}
-          />
-          <Text color="gray.500" fontSize={{ base: "xs", sm: "sm", md: "md" }}>
-            No questions in this category
-          </Text>
-        </Box>
-      );
-    }
-
-    return questionIndices.map((qIndex) => {
-      const question = TotalQuestion[qIndex];
-      if (!question) return null;
-      return <QuestionCard key={qIndex} question={question} index={qIndex} />;
-    });
-  };
-
+  // ─── Render ───────────────────────────────────────────────────────────────────
   return (
     <Box
       minH="100vh"
@@ -713,7 +3024,6 @@ const ResultPage = () => {
               transition="all 0.2s"
             />
           </Link>
-
           <Box>
             <Heading
               fontSize={{ base: "lg", sm: "xl", md: "2xl", lg: "3xl" }}
@@ -723,7 +3033,6 @@ const ResultPage = () => {
             >
               Test Results
             </Heading>
-
             <Text
               color="gray.500"
               fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
@@ -732,7 +3041,6 @@ const ResultPage = () => {
               Detailed performance analysis and insights
             </Text>
           </Box>
-
           <Box
             ml="auto"
             fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
@@ -748,9 +3056,9 @@ const ResultPage = () => {
           </Box>
         </Flex>
 
-        {/* Main Content */}
+        {/* Stats section */}
         <VStack spacing={{ base: 4, md: 6 }} mb={{ base: 4, md: 6, lg: 8 }}>
-          {/* Score Overview Card */}
+          {/* Doughnut card */}
           <Card
             bg="white"
             shadow="lg"
@@ -761,75 +3069,88 @@ const ResultPage = () => {
             width="100%"
           >
             <CardBody p={{ base: 3, sm: 4, md: 6 }}>
-              {/* Score Circle */}
-              <Box position="relative" mb={{ base: 3, sm: 4, md: 6 }}>
-                <Box
-                  h={{ base: "180px", sm: "220px", md: "280px" }}
-                  position="relative"
+              <Box
+                h={{ base: "180px", sm: "220px", md: "280px" }}
+                position="relative"
+                mb={{ base: 3, sm: 4, md: 6 }}
+              >
+                <Doughnut data={doughnutData} options={doughnutOptions} />
+                <Flex
+                  position="absolute"
+                  top="50%"
+                  left="50%"
+                  transform="translate(-50%, -50%)"
+                  direction="column"
+                  align="center"
                 >
-                  <Doughnut data={doughnutData} options={doughnutOptions} />
-                  <Flex
-                    position="absolute"
-                    top="50%"
-                    left="50%"
-                    transform="translate(-50%, -50%)"
-                    direction="column"
-                    align="center"
+                  <Text
+                    fontSize={{ base: "2xl", sm: "3xl", md: "4xl" }}
+                    fontWeight="bold"
+                    color="purple.600"
                   >
-                    <Text
-                      fontSize={{ base: "2xl", sm: "3xl", md: "4xl" }}
-                      fontWeight="bold"
-                      color="purple.600"
-                    >
-                      {totalMark}
-                    </Text>
-                    <Text
-                      fontSize={{ base: "sm", sm: "md", md: "lg" }}
-                      color="gray.500"
-                    >
-                      / {TotalQuestion.length}
-                    </Text>
-                    <Text
-                      fontSize={{ base: "2xs", md: "xs" }}
-                      color="gray.400"
-                      mt={1}
-                    >
-                      Score
-                    </Text>
-                  </Flex>
-                </Box>
+                    {totalMark}
+                  </Text>
+                  <Text
+                    fontSize={{ base: "sm", sm: "md", md: "lg" }}
+                    color="gray.500"
+                  >
+                    / {totalQ}
+                  </Text>
+                  <Text
+                    fontSize={{ base: "2xs", md: "xs" }}
+                    color="gray.400"
+                    mt={1}
+                  >
+                    Score
+                  </Text>
+                </Flex>
               </Box>
 
               <Divider mb={{ base: 3, md: 4 }} />
 
-              {/* Score Breakdown */}
+              {/* Score breakdown — all 5 arrays shown */}
               <Box>
                 <ScoreItem
                   icon={FiCheckCircle}
                   label="Correct Answers"
-                  value={correctqus.length}
+                  value={correctCount}
                   color="green"
                 />
                 <ScoreItem
                   icon={FiXCircle}
                   label="Incorrect Answers"
-                  value={wrongAnsqus.length}
+                  value={wrongCount}
                   color="red"
                 />
                 <ScoreItem
+                  icon={FiCheckCircle}
+                  label="Answered (total)"
+                  value={answeredCount}
+                  color="blue"
+                />
+                <ScoreItem
+                  icon={FiFlag}
+                  label="Marked & Answered"
+                  value={markedAndAnswerCount}
+                  color="purple"
+                />
+                <ScoreItem
+                  icon={FiFlag}
+                  label="Marked (No Answer)"
+                  value={markedNotAnswerCount}
+                  color="orange"
+                />
+                <ScoreItem
                   icon={FiCircle}
-                  label="Unattempted"
-                  value={
-                    TotalQuestion.length -
-                    (answeredQuestioned + markedAndAnswered)
-                  }
+                  label="Not Attempted"
+                  value={notAnswerCount}
                   color="gray"
                 />
               </Box>
             </CardBody>
           </Card>
 
-          {/* Performance Metrics */}
+          {/* Metric cards */}
           <Grid
             templateColumns={{ base: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }}
             gap={{ base: 2, sm: 3, md: 4 }}
@@ -838,7 +3159,7 @@ const ResultPage = () => {
             <MetricCard
               icon={FiTarget}
               label="Accuracy"
-              value={`${calculateAccuracy().toFixed(1)}%`}
+              value={`${accuracy.toFixed(1)}%`}
               subtext="Performance"
               color="green.600"
               bgColor="green.50"
@@ -846,22 +3167,30 @@ const ResultPage = () => {
             <MetricCard
               icon={FiCheckCircle}
               label="Completion"
-              value={`${
-                TotalQuestion.length > 0
-                  ? Math.round(
-                      ((answeredQuestioned + markedAndAnswered) /
-                        TotalQuestion.length) *
-                        100,
-                    )
-                  : 0
-              }%`}
+              value={`${completion}%`}
               subtext="Attempted"
               color="orange.600"
               bgColor="orange.50"
             />
+            <MetricCard
+              icon={FiFlag}
+              label="Marked"
+              value={markedTotal}
+              subtext="For Review"
+              color="purple.600"
+              bgColor="purple.50"
+            />
+            <MetricCard
+              icon={FiCircle}
+              label="Not Attempted"
+              value={notAnswerCount}
+              subtext="Skipped"
+              color="gray.600"
+              bgColor="gray.50"
+            />
           </Grid>
 
-          {/* Progress Bar */}
+          {/* Progress bar */}
           <Card
             bg="white"
             shadow="sm"
@@ -888,11 +3217,11 @@ const ResultPage = () => {
                   fontWeight="bold"
                   color="purple.600"
                 >
-                  {calculateAccuracy().toFixed(1)}%
+                  {accuracy.toFixed(1)}%
                 </Text>
               </Flex>
               <Progress
-                value={calculateAccuracy()}
+                value={accuracy}
                 size={{ base: "sm", md: "lg" }}
                 borderRadius="full"
                 colorScheme="purple"
@@ -911,7 +3240,7 @@ const ResultPage = () => {
           </Card>
         </VStack>
 
-        {/* Tabs Section */}
+        {/* Tabs */}
         <Card
           bg="white"
           shadow="lg"
@@ -932,9 +3261,7 @@ const ResultPage = () => {
                   borderRadius="xl"
                   overflowX="auto"
                   css={{
-                    "&::-webkit-scrollbar": {
-                      height: "4px",
-                    },
+                    "&::-webkit-scrollbar": { height: "4px" },
                     "&::-webkit-scrollbar-thumb": {
                       background: "#CBD5E0",
                       borderRadius: "10px",
@@ -946,182 +3273,73 @@ const ResultPage = () => {
                     gap={{ base: 1, md: 2 }}
                     minWidth="max-content"
                   >
-                    <Tab
-                      fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                      fontWeight="medium"
-                      px={{ base: 2, sm: 2.5, md: 3 }}
-                      py={{ base: 1, sm: 1.5, md: 2 }}
-                      _selected={{ bg: "purple.600", color: "white" }}
-                      whiteSpace="nowrap"
-                    >
-                      Overview ({TotalQuestion.length})
-                    </Tab>
-                    <Tab
-                      fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                      fontWeight="medium"
-                      px={{ base: 2, sm: 2.5, md: 3 }}
-                      py={{ base: 1, sm: 1.5, md: 2 }}
-                      _selected={{ bg: "purple.600", color: "white" }}
-                      whiteSpace="nowrap"
-                    >
-                      Correct ({correctqus.length})
-                    </Tab>
-                    <Tab
-                      fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                      fontWeight="medium"
-                      px={{ base: 2, sm: 2.5, md: 3 }}
-                      py={{ base: 1, sm: 1.5, md: 2 }}
-                      _selected={{ bg: "purple.600", color: "white" }}
-                      whiteSpace="nowrap"
-                    >
-                      Incorrect ({wrongAnsqus.length})
-                    </Tab>
-                    <Tab
-                      fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                      fontWeight="medium"
-                      px={{ base: 2, sm: 2.5, md: 3 }}
-                      py={{ base: 1, sm: 1.5, md: 2 }}
-                      _selected={{ bg: "purple.600", color: "white" }}
-                      whiteSpace="nowrap"
-                    >
-                      Marked ({marknotans + markedAndAnswered})
-                    </Tab>
-                    <Tab
-                      fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                      fontWeight="medium"
-                      px={{ base: 2, sm: 2.5, md: 3 }}
-                      py={{ base: 1, sm: 1.5, md: 2 }}
-                      _selected={{ bg: "purple.600", color: "white" }}
-                      whiteSpace="nowrap"
-                    >
-                      Unattempted ({notans})
-                    </Tab>
+                    {TABS.map(({ label, count }) => (
+                      <Tab
+                        key={label}
+                        fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+                        fontWeight="medium"
+                        px={{ base: 2, sm: 2.5, md: 3 }}
+                        py={{ base: 1, sm: 1.5, md: 2 }}
+                        _selected={{ bg: "purple.600", color: "white" }}
+                        whiteSpace="nowrap"
+                      >
+                        {label} ({count})
+                      </Tab>
+                    ))}
                   </TabList>
                 </Box>
               </Box>
 
               <TabPanels>
-                {/* Overview Tab */}
-                <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
-                  <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
-                    <Box mb={{ base: 1, sm: 2, md: 4 }}>
-                      <Heading
-                        size={{ base: "xs", sm: "sm", md: "md" }}
-                        mb={{ base: 1, md: 2 }}
-                        color="gray.700"
-                      >
-                        All Questions ({TotalQuestion.length})
-                      </Heading>
-                      <Text
-                        fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                        color="gray.500"
-                      >
-                        Complete test review with answers and explanations.
-                        Click the bookmark icon 📑 to save questions for later
-                        practice.
-                      </Text>
-                    </Box>
-                    {TotalQuestion.map((question, index) => (
-                      <QuestionCard
-                        key={index}
-                        question={question}
-                        index={index}
-                      />
-                    ))}
-                  </VStack>
-                </TabPanel>
+                {TABS.map(({ label, count, indices, headingColor, desc }) => (
+                  <TabPanel key={label} p={{ base: 2, sm: 3, md: 6 }}>
+                    <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
+                      <Box mb={{ base: 1, sm: 2, md: 4 }}>
+                        <Heading
+                          size={{ base: "xs", sm: "sm", md: "md" }}
+                          mb={{ base: 1, md: 2 }}
+                          color={headingColor}
+                        >
+                          {label} ({count})
+                        </Heading>
 
-                {/* Correct Answers Tab */}
-                <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
-                  <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
-                    <Box mb={{ base: 1, sm: 2, md: 4 }}>
-                      <Heading
-                        size={{ base: "xs", sm: "sm", md: "md" }}
-                        mb={{ base: 1, md: 2 }}
-                        color="green.600"
-                      >
-                        Correct Answers ({correctqus.length})
-                      </Heading>
-                      <Text
-                        fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                        color="gray.500"
-                      >
-                        Questions you answered correctly
-                      </Text>
-                    </Box>
-                    {renderQuestions(correctqus)}
-                  </VStack>
-                </TabPanel>
+                        {/* Extra sub-badges for Marked tab */}
+                        {label === "Marked" && (
+                          <HStack spacing={3} mb={2} wrap="wrap">
+                            <Badge
+                              colorScheme="purple"
+                              fontSize="xs"
+                              px={2}
+                              py={1}
+                              borderRadius="full"
+                            >
+                              Marked + Answered: {markedAndAnswerCount}
+                            </Badge>
+                            <Badge
+                              colorScheme="orange"
+                              fontSize="xs"
+                              px={2}
+                              py={1}
+                              borderRadius="full"
+                            >
+                              Marked (No Answer): {markedNotAnswerCount}
+                            </Badge>
+                          </HStack>
+                        )}
 
-                {/* Incorrect Answers Tab */}
-                <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
-                  <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
-                    <Box mb={{ base: 1, sm: 2, md: 4 }}>
-                      <Heading
-                        size={{ base: "xs", sm: "sm", md: "md" }}
-                        mb={{ base: 1, md: 2 }}
-                        color="red.600"
-                      >
-                        Incorrect Answers ({wrongAnsqus.length})
-                      </Heading>
-                      <Text
-                        fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                        color="gray.500"
-                      >
-                        Review these questions to improve. 💡 Tip: Save them for
-                        later practice!
-                      </Text>
-                    </Box>
-                    {renderQuestions(wrongAnsqus)}
-                  </VStack>
-                </TabPanel>
-
-                {/* Marked Questions Tab */}
-                <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
-                  <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
-                    <Box mb={{ base: 1, sm: 2, md: 4 }}>
-                      <Heading
-                        size={{ base: "xs", sm: "sm", md: "md" }}
-                        mb={{ base: 1, md: 2 }}
-                        color="orange.600"
-                      >
-                        Marked for Review ({marknotans + markedAndAnswered})
-                      </Heading>
-                      <Text
-                        fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                        color="gray.500"
-                      >
-                        Questions you marked during the test
-                      </Text>
-                    </Box>
-                    {renderQuestions([
-                      ...(testData?.markedNotAnswer || []),
-                      ...(testData?.markedAndAnswer || []),
-                    ])}
-                  </VStack>
-                </TabPanel>
-
-                {/* Unattempted Questions Tab */}
-                <TabPanel p={{ base: 2, sm: 3, md: 6 }}>
-                  <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
-                    <Box mb={{ base: 1, sm: 2, md: 4 }}>
-                      <Heading
-                        size={{ base: "xs", sm: "sm", md: "md" }}
-                        mb={{ base: 1, md: 2 }}
-                        color="gray.600"
-                      >
-                        Unattempted Questions ({notans})
-                      </Heading>
-                      <Text
-                        fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                        color="gray.500"
-                      >
-                        Questions you didn't attempt
-                      </Text>
-                    </Box>
-                    {renderQuestions(testData?.notAnswer || [])}
-                  </VStack>
-                </TabPanel>
+                        {desc && (
+                          <Text
+                            fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
+                            color="gray.500"
+                          >
+                            {desc}
+                          </Text>
+                        )}
+                      </Box>
+                      {renderQuestions(indices)}
+                    </VStack>
+                  </TabPanel>
+                ))}
               </TabPanels>
             </Tabs>
           </CardBody>
