@@ -624,6 +624,7 @@ import { setLocalStorage } from "../helpers/localStorage";
 import { useRef, useState, useEffect } from "react";
 import AdBanner from "./AdBanner";
 import FloatingVideoAd from "./FloatingVideoAd";
+import AdsterraBanner from "./AdsterraBanner";
 
 const Home = ({ setchoosesub }) => {
   const navigate = useNavigate();
@@ -1217,13 +1218,7 @@ const Home = ({ setchoosesub }) => {
 
       {/* BANNER AD - Before Footer */}
       <Box w={{ base: "95%", md: "90%", lg: "85%" }} maxW="1200px" mx="auto">
-        <AdBanner
-          type="horizontal"
-          height={{ base: "100px", md: "120px" }}
-          mt={{ base: 8, md: 10, lg: 12 }}
-          mb={{ base: 4, md: 6 }}
-          label="Sponsored"
-        />
+       <AdsterraBanner/>
       </Box>
 
       {/* Floating Video Ad - Bottom Right */}
