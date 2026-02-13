@@ -95,30 +95,30 @@ const Main = () => {
 
     // Method 1: Detect DevTools by window size
     const detectDevTools = () => {
-      const threshold = 160;
-      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-      const heightThreshold =
-        window.outerHeight - window.innerHeight > threshold;
+      // const threshold = 160;
+      // const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      // const heightThreshold =
+      //   window.outerHeight - window.innerHeight > threshold;
 
-      if (widthThreshold || heightThreshold) {
-        if (!devtoolsOpen) {
-          devtoolsOpen = true;
-          handleDevToolsOpen();
-        }
-      } else {
-        devtoolsOpen = false;
-      }
+      // if (widthThreshold || heightThreshold) {
+      //   if (!devtoolsOpen) {
+      //     devtoolsOpen = true;
+      //     handleDevToolsOpen();
+      //   }
+      // } else {
+      //   devtoolsOpen = false;
+      // }
     };
 
     // Method 2: Detect using debugger statement
     const detectWithDebugger = () => {
-      const before = new Date().getTime();
-      debugger;
-      const after = new Date().getTime();
+      // const before = new Date().getTime();
+      // debugger;
+      // const after = new Date().getTime();
 
-      if (after - before > 100) {
-        handleDevToolsOpen();
-      }
+      // if (after - before > 100) {
+      //   handleDevToolsOpen();
+      // }
     };
 
     // Method 3: Detect for Firebug
@@ -144,8 +144,8 @@ const Main = () => {
 
     // Disable right-click
     const disableRightClick = (e) => {
-      e.preventDefault();
-      return false;
+      // e.preventDefault();
+      // return false;
     };
 
     // Disable keyboard shortcuts
@@ -220,7 +220,7 @@ const Main = () => {
     return () => {
       clearInterval(detectionInterval);
       clearInterval(debuggerInterval);
-      document.removeEventListener("contextmenu", disableRightClick);
+      // document.removeEventListener("contextmenu", disableRightClick);
       document.removeEventListener("keydown", disableShortcuts);
       document.removeEventListener("selectstart", disableSelection);
       document.removeEventListener("copy", disableCopy);

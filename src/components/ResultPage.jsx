@@ -4162,7 +4162,7 @@ const ResultPage = () => {
 
               <Divider mb={{ base: 3, md: 4 }} />
 
-              <Box>
+              <Box display="flex" flexDirection="row" gap={"10"} justifyContent={"center"}>
                 <ScoreItem
                   icon={FiCheckCircle}
                   label="Correct Answers"

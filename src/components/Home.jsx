@@ -991,6 +991,43 @@ const Home = ({ setchoosesub }) => {
           }}
           gap={{ base: 4, md: 5, lg: 6 }}
         >
+          {/* Vocabulary */}
+          <Box
+            _hover={{
+              transform: "translateY(-8px)",
+              boxShadow: "0 12px 24px rgba(44, 100, 255, 0.3)",
+            }}
+            transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+            bg="linear-gradient(135deg, #2c64ff 0%, #2658e6 100%)"
+            color="white"
+            borderRadius={{ base: "12px", md: "16px" }}
+            boxShadow="0 4px 12px rgba(0, 0, 0, 0.1)"
+            p={{ base: 4, md: 5, lg: 6 }}
+            h={{ base: "140px", md: "150px", lg: "160px" }}
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            cursor="pointer"
+            onClick={() => setsub("vocabulary")}
+          >
+            <Box
+              bg="rgba(255, 255, 255, 0.2)"
+              borderRadius="full"
+              p={{ base: 2.5, md: 3 }}
+              mb={{ base: 2, md: 3 }}
+            >
+              <FaBook size={32} color="white" />
+            </Box>
+            <Text
+              fontSize={{ base: "14px", md: "15px" }}
+              fontWeight="600"
+              letterSpacing="0.3px"
+            >
+              Vocabulary
+            </Text>
+          </Box>
+
           {/* English */}
           <Box
             _hover={{
@@ -1028,14 +1065,14 @@ const Home = ({ setchoosesub }) => {
             </Text>
           </Box>
 
-          {/* Maths */}
+          {/* General Studies */}
           <Box
             _hover={{
               transform: "translateY(-8px)",
-              boxShadow: "0 12px 24px rgba(65, 216, 213, 0.3)",
+              boxShadow: "0 12px 24px rgba(255, 120, 44, 0.3)",
             }}
             transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-            bg="linear-gradient(135deg, #41d8d5 0%, #39c2bf 100%)"
+            bg="linear-gradient(135deg, #ff782c 0%, #e66a28 100%)"
             color="white"
             borderRadius={{ base: "12px", md: "16px" }}
             boxShadow="0 4px 12px rgba(0, 0, 0, 0.1)"
@@ -1046,7 +1083,7 @@ const Home = ({ setchoosesub }) => {
             alignItems="center"
             justifyContent="center"
             cursor="pointer"
-            onClick={() => setsub("math")}
+            onClick={() => setsub("gs")}
           >
             <Box
               bg="rgba(255, 255, 255, 0.2)"
@@ -1054,14 +1091,14 @@ const Home = ({ setchoosesub }) => {
               p={{ base: 2.5, md: 3 }}
               mb={{ base: 2, md: 3 }}
             >
-              <FaCalculator size={32} color="white" />
+              <FaGlobe size={32} color="white" />
             </Box>
             <Text
               fontSize={{ base: "14px", md: "15px" }}
               fontWeight="600"
               letterSpacing="0.3px"
             >
-              Maths
+              General Studies
             </Text>
           </Box>
 
@@ -1102,14 +1139,14 @@ const Home = ({ setchoosesub }) => {
             </Text>
           </Box>
 
-          {/* Vocabulary */}
+          {/* Maths */}
           <Box
             _hover={{
               transform: "translateY(-8px)",
-              boxShadow: "0 12px 24px rgba(44, 100, 255, 0.3)",
+              boxShadow: "0 12px 24px rgba(65, 216, 213, 0.3)",
             }}
             transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-            bg="linear-gradient(135deg, #2c64ff 0%, #2658e6 100%)"
+            bg="linear-gradient(135deg, #41d8d5 0%, #39c2bf 100%)"
             color="white"
             borderRadius={{ base: "12px", md: "16px" }}
             boxShadow="0 4px 12px rgba(0, 0, 0, 0.1)"
@@ -1120,7 +1157,7 @@ const Home = ({ setchoosesub }) => {
             alignItems="center"
             justifyContent="center"
             cursor="pointer"
-            onClick={() => setsub("vocabulary")}
+            onClick={() => setsub("math")}
           >
             <Box
               bg="rgba(255, 255, 255, 0.2)"
@@ -1128,51 +1165,14 @@ const Home = ({ setchoosesub }) => {
               p={{ base: 2.5, md: 3 }}
               mb={{ base: 2, md: 3 }}
             >
-              <FaBook size={32} color="white" />
+              <FaCalculator size={32} color="white" />
             </Box>
             <Text
               fontSize={{ base: "14px", md: "15px" }}
               fontWeight="600"
               letterSpacing="0.3px"
             >
-              Vocabulary
-            </Text>
-          </Box>
-
-          {/* General Studies */}
-          <Box
-            _hover={{
-              transform: "translateY(-8px)",
-              boxShadow: "0 12px 24px rgba(255, 120, 44, 0.3)",
-            }}
-            transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-            bg="linear-gradient(135deg, #ff782c 0%, #e66a28 100%)"
-            color="white"
-            borderRadius={{ base: "12px", md: "16px" }}
-            boxShadow="0 4px 12px rgba(0, 0, 0, 0.1)"
-            p={{ base: 4, md: 5, lg: 6 }}
-            h={{ base: "140px", md: "150px", lg: "160px" }}
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-            cursor="pointer"
-            onClick={() => setsub("gs")}
-          >
-            <Box
-              bg="rgba(255, 255, 255, 0.2)"
-              borderRadius="full"
-              p={{ base: 2.5, md: 3 }}
-              mb={{ base: 2, md: 3 }}
-            >
-              <FaGlobe size={32} color="white" />
-            </Box>
-            <Text
-              fontSize={{ base: "14px", md: "15px" }}
-              fontWeight="600"
-              letterSpacing="0.3px"
-            >
-              General Studies
+              Maths
             </Text>
           </Box>
 
@@ -1218,7 +1218,7 @@ const Home = ({ setchoosesub }) => {
 
       {/* BANNER AD - Before Footer */}
       <Box w={{ base: "95%", md: "90%", lg: "85%" }} maxW="1200px" mx="auto">
-       <AdsterraBanner/>
+        <AdsterraBanner />
       </Box>
 
       {/* Floating Video Ad - Bottom Right */}
