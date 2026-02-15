@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import TakeTest from "./TakeTest";
 // import Router, { Route } from 'router'
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import SubmitTest from "./SubmitTest";
 import Signin from "./Signin";
 import Signup from "./Signup";
@@ -25,8 +25,10 @@ import ReportAdminPage from "./ReportAdminPage";
 import SavedPage from "./SavedData";
 import Home from "./Home";
 import ScrollToTop from "../helpers/ScrollToTop";
+import ProtectedRoute from "../helpers/ProtectedRoute";
 
 const Main = () => {
+   const location = useLocation();
   const [mark, setMark] = useState(0);
   // const [TotalQuestion, SetTotalQuestion] = useState(0);
   const [quest, setQuestions] = useState([]);
@@ -46,7 +48,7 @@ const Main = () => {
     if (isFull) {
       setIsFullScreen(true);
       document.documentElement.requestFullscreen();
-      //  setIsFullScreen(true);
+       setIsFullScreen(true);
     } else {
       setIsFullScreen(false);
       document.exitFullscreen();
@@ -95,30 +97,30 @@ const Main = () => {
 
     // Method 1: Detect DevTools by window size
     const detectDevTools = () => {
-      // const threshold = 160;
-      // const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-      // const heightThreshold =
-      //   window.outerHeight - window.innerHeight > threshold;
+      const threshold = 160;
+      const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+      const heightThreshold =
+        window.outerHeight - window.innerHeight > threshold;
 
-      // if (widthThreshold || heightThreshold) {
-      //   if (!devtoolsOpen) {
-      //     devtoolsOpen = true;
-      //     handleDevToolsOpen();
-      //   }
-      // } else {
-      //   devtoolsOpen = false;
-      // }
+      if (widthThreshold || heightThreshold) {
+        if (!devtoolsOpen) {
+          devtoolsOpen = true;
+          handleDevToolsOpen();
+        }
+      } else {
+        devtoolsOpen = false;
+      }
     };
 
     // Method 2: Detect using debugger statement
     const detectWithDebugger = () => {
-      // const before = new Date().getTime();
-      // debugger;
-      // const after = new Date().getTime();
+      const before = new Date().getTime();
+      debugger;
+      const after = new Date().getTime();
 
-      // if (after - before > 100) {
-      //   handleDevToolsOpen();
-      // }
+      if (after - before > 100) {
+        handleDevToolsOpen();
+      }
     };
 
     // Method 3: Detect for Firebug
@@ -128,7 +130,7 @@ const Main = () => {
         window.Firebug.chrome &&
         window.Firebug.chrome.isInitialized
       ) {
-        // handleDevToolsOpen();
+        handleDevToolsOpen();
       }
     };
 
@@ -138,14 +140,14 @@ const Main = () => {
       const heightDiff = window.outerHeight - window.innerHeight;
 
       if (widthDiff > 200 || heightDiff > 200) {
-        // handleDevToolsOpen();
+        handleDevToolsOpen();
       }
     };
 
     // Disable right-click
     const disableRightClick = (e) => {
-      // e.preventDefault();
-      // return false;
+      e.preventDefault();
+      return false;
     };
 
     // Disable keyboard shortcuts
@@ -220,7 +222,7 @@ const Main = () => {
     return () => {
       clearInterval(detectionInterval);
       clearInterval(debuggerInterval);
-      // document.removeEventListener("contextmenu", disableRightClick);
+      document.removeEventListener("contextmenu", disableRightClick);
       document.removeEventListener("keydown", disableShortcuts);
       document.removeEventListener("selectstart", disableSelection);
       document.removeEventListener("copy", disableCopy);
@@ -258,7 +260,13 @@ const Main = () => {
   // console.log("qqqq", questionLoading, "sss", questionSuccess,"dddd",questionData);
   return (
     <>
-      {isFullScreen === true ? null : <Navbar />}
+      {isFullScreen === true ||
+      location.pathname == "/auth/signin" ||
+      location.pathname == "/auth/signup" ||
+      location.pathname == "/auth/forgotPassword" ||
+      location.pathname == "/test" ? null : (
+        <Navbar />
+      )}
       {/* <Sidebar/> */}
       <ScrollToTop />
       <Routes>
@@ -292,36 +300,89 @@ const Main = () => {
         <Route
           path="/test"
           element={
-            <TakeTest
-              handleFullScreen={handleFullScreen}
-              // setIsFullScreen={}
-              // chooseSub={chooseSub}
-              quest={quest}
-            />
+            // <ProtectedRoute>
+              <TakeTest
+                handleFullScreen={handleFullScreen}
+                // setIsFullScreen={}
+                // chooseSub={chooseSub}
+                quest={quest}
+              />
+            // </ProtectedRoute>
           }
         />
-        <Route path="/test-result" element={<ResultPage />} />
-        <Route path="/Review-Test" element={<ReviewTest />} />
+        <Route
+          path="/test-result"
+          element={
+            // <ProtectedRoute>
+              <ResultPage />
+            // </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/Review-Test"
+          element={
+            <ProtectedRoute>
+              <ReviewTest />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/questionList"
           element={
-            <MathQuestionlist
-              currentSub={currentSub}
-              chooseSub={chooseSub}
-              category={questionCategory}
-              handleFullScreen={handleFullScreen}
-              setQuestions={setQuestions}
-              settestTitle={settestTitle}
-            />
+            // <ProtectedRoute>
+              
+              <MathQuestionlist
+                currentSub={currentSub}
+                chooseSub={chooseSub}
+                category={questionCategory}
+                handleFullScreen={handleFullScreen}
+                setQuestions={setQuestions}
+                settestTitle={settestTitle}
+              />
+            // </ProtectedRoute>
           }
         />
         <Route path="/GiveFeedback" element={<Feedback />} />
-        <Route path="/Analysis" element={<Analysis />} />
-        <Route path="/Saved-Question" element={<SaveQuestion />} />
-        <Route path="/ReportAdmin" element={<ReportAdminPage />} />
-        <Route path="/savedData" element={<SavedPage />} />
+        <Route
+          path="/Analysis"
+          element={
+            <ProtectedRoute>
+              <Analysis />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/Saved-Question"
+          element={
+            <ProtectedRoute>
+              <SaveQuestion />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ReportAdmin"
+          element={
+            <ProtectedRoute>
+              <ReportAdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/savedData"
+          element={
+            <ProtectedRoute>
+              <SavedPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
-      {isFullScreen === true ? null : <Footer />}
+      {isFullScreen === true ||
+      location.pathname == "/auth/signin" ||
+      location.pathname == "/auth/signup" ||
+      location.pathname == "/auth/forgotPassword" ||
+      location.pathname == "/test" ? null : (
+        <Footer />
+      )}
     </>
 
     // <>
