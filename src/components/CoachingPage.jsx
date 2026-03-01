@@ -1490,7 +1490,7 @@ function CoachingDetail({ coaching, onDeleted }) {
                 >
                   Create Test
                 </Button>
-                <Button
+                {/* <Button
                   leftIcon={<FaTrash />}
                   onClick={openDel}
                   bg="transparent"
@@ -1509,7 +1509,7 @@ function CoachingDetail({ coaching, onDeleted }) {
                   transition="all .2s"
                 >
                   Remove My Coaching
-                </Button>
+                </Button> */}
               </Flex>
             </Box>
           )}
