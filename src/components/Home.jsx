@@ -1,8 +1,3 @@
-
-
-
-
-
 // // src/components/Home.jsx
 // import { Box, Flex, Text, Spinner } from "@chakra-ui/react";
 // import {
@@ -27,7 +22,7 @@
 // `;
 
 // /* ── Animated counter ───────────────────────────────────────────────────── */
-// const useCounter = (target, duration = 2200, active = false) => {
+// const UseCounter = (target, duration = 2200, active = false) => {
 //   const [val, setVal] = useState(0);
 //   useEffect(() => {
 //     if (!active) return;
@@ -114,10 +109,10 @@
 //     return () => obs.disconnect();
 //   }, [loading]);
 
-//   const n1 = useCounter(50000, 2200, statsOn);
-//   const n2 = useCounter(1200,  2000, statsOn);
-//   const n3 = useCounter(98,    1800, statsOn);
-//   const n4 = useCounter(500,   2000, statsOn);
+//   const n1 = UseCounter(50000, 2200, statsOn);
+//   const n2 = UseCounter(1200,  2000, statsOn);
+//   const n3 = UseCounter(98,    1800, statsOn);
+//   const n4 = UseCounter(500,   2000, statsOn);
 
 //   const setsub = (s) => { setSubject(s); navigate("/questionList"); };
 //   const scrollToSubjects = () => subjectsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -671,29 +666,36 @@
 
 // export default Home;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 // src/components/Home.jsx
 import { Box, Flex, Text, Spinner } from "@chakra-ui/react";
 import {
-  FaYoutube, FaTelegram, FaInstagram, FaWhatsapp,
-  FaBook, FaCalculator, FaBrain, FaGlobe,
-  FaBookmark, FaFacebook, FaChalkboardTeacher,
-  FaTrophy, FaUsers, FaClipboardList, FaStar,
-  FaCheckCircle, FaArrowRight, FaBolt, FaShieldAlt,
-  FaMedal, FaClock, FaPlay, FaFire, FaGraduationCap,
-  FaChartLine, FaLightbulb, FaAward,
+  FaYoutube,
+  FaTelegram,
+  FaInstagram,
+  FaWhatsapp,
+  FaBook,
+  FaCalculator,
+  FaBrain,
+  FaGlobe,
+  FaBookmark,
+  FaFacebook,
+  FaChalkboardTeacher,
+  FaTrophy,
+  FaUsers,
+  FaClipboardList,
+  FaStar,
+  FaCheckCircle,
+  FaArrowRight,
+  FaBolt,
+  FaShieldAlt,
+  FaMedal,
+  FaClock,
+  FaPlay,
+  FaFire,
+  FaGraduationCap,
+  FaChartLine,
+  FaLightbulb,
+  FaAward,
 } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import Slideshow from "./Slideshow";
@@ -707,7 +709,7 @@ const FONT_LINK = `
 `;
 
 /* ── Animated counter ───────────────────────────────────────────────────── */
-const useCounter = (target, duration = 2200, active = false) => {
+const UseCounter = (target, duration = 2200, active = false) => {
   const [val, setVal] = useState(0);
   useEffect(() => {
     if (!active) return;
@@ -727,21 +729,35 @@ const useCounter = (target, duration = 2200, active = false) => {
 /* ── Pill label ─────────────────────────────────────────────────────────── */
 const Pill = ({ children, color = "#2563eb" }) => (
   <Box
-    display="inline-flex" alignItems="center"
-    bg={`${color}14`} color={color}
-    px={4} py={1} borderRadius="full"
-    fontSize="12px" fontWeight="700"
-    letterSpacing="1.5px" textTransform="uppercase"
-    border={`1px solid ${color}28`} mb={5}
+    display="inline-flex"
+    alignItems="center"
+    bg={`${color}14`}
+    color={color}
+    px={4}
+    py={1}
+    borderRadius="full"
+    fontSize="12px"
+    fontWeight="700"
+    letterSpacing="1.5px"
+    textTransform="uppercase"
+    border={`1px solid ${color}28`}
+    mb={5}
   >
     {children}
   </Box>
 );
 
 /* ── Section wrapper ────────────────────────────────────────────────────── */
-const Section = ({ children, bg = "white", py = { base: 16, md: 24 }, ...rest }) => (
+const Section = ({
+  children,
+  bg = "white",
+  py = { base: 16, md: 24 },
+  ...rest
+}) => (
   <Box bg={bg} py={py} px={{ base: 4, md: 8 }} {...rest}>
-    <Box maxW="1160px" mx="auto">{children}</Box>
+    <Box maxW="1160px" mx="auto">
+      {children}
+    </Box>
   </Box>
 );
 
@@ -752,17 +768,25 @@ const SectionTitle = ({ pill, title, italic, sub, center = true }) => (
     <Text
       fontFamily="'Instrument Serif', serif"
       fontSize={{ base: "32px", md: "46px", lg: "54px" }}
-      fontWeight="400" color="#0f172a" lineHeight="1.15" mb={3}
+      fontWeight="400"
+      color="#0f172a"
+      lineHeight="1.15"
+      mb={3}
     >
       {title}{" "}
       {italic && (
-        <Text as="span" fontStyle="italic" color="#2563eb">{italic}</Text>
+        <Text as="span" fontStyle="italic" color="#2563eb">
+          {italic}
+        </Text>
       )}
     </Text>
     {sub && (
       <Text
-        fontSize={{ base: "15px", md: "17px" }} color="#64748b"
-        maxW="560px" mx={center ? "auto" : "0"} lineHeight="1.8"
+        fontSize={{ base: "15px", md: "17px" }}
+        color="#64748b"
+        maxW="560px"
+        mx={center ? "auto" : "0"}
+        lineHeight="1.8"
         fontFamily="'Plus Jakarta Sans', sans-serif"
       >
         {sub}
@@ -775,11 +799,11 @@ const SectionTitle = ({ pill, title, italic, sub, center = true }) => (
    MAIN COMPONENT
 ═══════════════════════════════════════════════════════════════════════════ */
 const Home = ({ setchoosesub }) => {
-  const navigate      = useNavigate();
-  const subjectsRef   = useRef(null);
-  const statsRef      = useRef(null);
-  const [loading, setLoading]         = useState(true);
-  const [statsOn, setStatsOn]         = useState(false);
+  const navigate = useNavigate();
+  const subjectsRef = useRef(null);
+  const statsRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [statsOn, setStatsOn] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 900);
@@ -788,42 +812,74 @@ const Home = ({ setchoosesub }) => {
 
   useEffect(() => {
     if (!statsRef.current) return;
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setStatsOn(true); }, { threshold: 0.25 });
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) setStatsOn(true);
+      },
+      { threshold: 0.25 },
+    );
     obs.observe(statsRef.current);
     return () => obs.disconnect();
   }, [loading]);
 
-  const n1 = useCounter(50000, 2200, statsOn);
-  const n2 = useCounter(1200,  2000, statsOn);
-  const n3 = useCounter(98,    1800, statsOn);
-  const n4 = useCounter(500,   2000, statsOn);
+  const n1 = UseCounter(50000, 2200, statsOn);
+  const n2 = UseCounter(1200, 2000, statsOn);
+  const n3 = UseCounter(98, 1800, statsOn);
+  const n4 = UseCounter(500, 2000, statsOn);
 
-  const setsub = (subject) => { 
+  const setsub = (subject) => {
     console.log("✅ Subject selected:", subject);
-    setchoosesub(subject); 
-    navigate("/questionList"); 
+    setchoosesub(subject);
+    navigate("/questionList");
   };
-  
-  const scrollToSubjects = () => subjectsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  const scrollToSubjects = () =>
+    subjectsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   /* ── Loading screen ─────────────────────────────────────────────────── */
   if (loading) {
     return (
-      <Box minH="100vh" display="flex" alignItems="center" justifyContent="center"
-        bg="linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%)">
+      <Box
+        minH="100vh"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        bg="linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%)"
+      >
         <style>{FONT_LINK}</style>
         <Flex direction="column" align="center" gap={5}>
           <Box position="relative">
-            <Spinner thickness="3px" speed="0.8s" emptyColor="rgba(255,255,255,0.1)"
-              color="#3b82f6" size="xl" w="72px" h="72px" />
-            <Box position="absolute" top="50%" left="50%" transform="translate(-50%,-50%)">
+            <Spinner
+              thickness="3px"
+              speed="0.8s"
+              emptyColor="rgba(255,255,255,0.1)"
+              color="#3b82f6"
+              size="xl"
+              w="72px"
+              h="72px"
+            />
+            <Box
+              position="absolute"
+              top="50%"
+              left="50%"
+              transform="translate(-50%,-50%)"
+            >
               <FaGraduationCap size={28} color="#60a5fa" />
             </Box>
           </Box>
-          <Text fontFamily="'Instrument Serif',serif" fontSize="28px" color="white" letterSpacing="0.3px">
+          <Text
+            fontFamily="'Instrument Serif',serif"
+            fontSize="28px"
+            color="white"
+            letterSpacing="0.3px"
+          >
             Revision Karlo
           </Text>
-          <Text fontFamily="'Plus Jakarta Sans',sans-serif" fontSize="13px" color="#94a3b8">
+          <Text
+            fontFamily="'Plus Jakarta Sans',sans-serif"
+            fontSize="13px"
+            color="#94a3b8"
+          >
             Loading your prep platform...
           </Text>
         </Flex>
@@ -833,41 +889,171 @@ const Home = ({ setchoosesub }) => {
 
   /* ── Subject cards data ─────────────────────────────────────────────── */
   const subjects = [
-    { label: "Vocabulary",      key: "vocabulary", icon: <FaBook />,       accent: "#2563eb", bg: "linear-gradient(135deg,#1d4ed8,#2563eb)" },
-    { label: "English",         key: "english",    icon: <FaBook />,       accent: "#0891b2", bg: "linear-gradient(135deg,#0e7490,#0891b2)" },
-    { label: "General Studies", key: "gs",         icon: <FaGlobe />,      accent: "#ea580c", bg: "linear-gradient(135deg,#c2410c,#ea580c)" },
-    { label: "Reasoning",       key: "reasoning",  icon: <FaBrain />,      accent: "#16a34a", bg: "linear-gradient(135deg,#15803d,#16a34a)" },
-    { label: "Maths",           key: "math",       icon: <FaCalculator />, accent: "#0d9488", bg: "linear-gradient(135deg,#0f766e,#0d9488)" },
+    {
+      label: "Vocabulary",
+      key: "vocabulary",
+      icon: <FaBook />,
+      accent: "#2563eb",
+      bg: "linear-gradient(135deg,#1d4ed8,#2563eb)",
+    },
+    {
+      label: "English",
+      key: "english",
+      icon: <FaBook />,
+      accent: "#0891b2",
+      bg: "linear-gradient(135deg,#0e7490,#0891b2)",
+    },
+    {
+      label: "General Studies",
+      key: "gs",
+      icon: <FaGlobe />,
+      accent: "#ea580c",
+      bg: "linear-gradient(135deg,#c2410c,#ea580c)",
+    },
+    {
+      label: "Reasoning",
+      key: "reasoning",
+      icon: <FaBrain />,
+      accent: "#16a34a",
+      bg: "linear-gradient(135deg,#15803d,#16a34a)",
+    },
+    {
+      label: "Maths",
+      key: "math",
+      icon: <FaCalculator />,
+      accent: "#0d9488",
+      bg: "linear-gradient(135deg,#0f766e,#0d9488)",
+    },
   ];
 
   const socials = [
-    { icon: <FaYoutube size={22} />,   label: "YouTube",   sub: "Video Lectures",  bg: "#FF0000", glow: "rgba(255,0,0,0.25)" },
-    { icon: <FaTelegram size={22} />,  label: "Telegram",  sub: "Daily Updates",   bg: "#0088cc", glow: "rgba(0,136,204,0.25)" },
-    { icon: <FaInstagram size={22} />, label: "Instagram", sub: "Tips & Tricks",   bg: "#E4405F", glow: "rgba(228,64,95,0.25)" },
-    { icon: <FaFacebook size={22} />,  label: "Facebook",  sub: "Study Community", bg: "#1877F2", glow: "rgba(24,119,242,0.25)" },
-    { icon: <FaWhatsapp size={22} />,  label: "WhatsApp",  sub: "Direct Support",  bg: "#25D366", glow: "rgba(37,211,102,0.25)",
-      onClick: () => window.open("https://api.whatsapp.com/send?phone=919696306817&text=Hi!%20want%20help.", "_blank") },
+    {
+      icon: <FaYoutube size={22} />,
+      label: "YouTube",
+      sub: "Video Lectures",
+      bg: "#FF0000",
+      glow: "rgba(255,0,0,0.25)",
+    },
+    {
+      icon: <FaTelegram size={22} />,
+      label: "Telegram",
+      sub: "Daily Updates",
+      bg: "#0088cc",
+      glow: "rgba(0,136,204,0.25)",
+    },
+    {
+      icon: <FaInstagram size={22} />,
+      label: "Instagram",
+      sub: "Tips & Tricks",
+      bg: "#E4405F",
+      glow: "rgba(228,64,95,0.25)",
+    },
+    {
+      icon: <FaFacebook size={22} />,
+      label: "Facebook",
+      sub: "Study Community",
+      bg: "#1877F2",
+      glow: "rgba(24,119,242,0.25)",
+    },
+    {
+      icon: <FaWhatsapp size={22} />,
+      label: "WhatsApp",
+      sub: "Direct Support",
+      bg: "#25D366",
+      glow: "rgba(37,211,102,0.25)",
+      onClick: () =>
+        window.open(
+          "https://api.whatsapp.com/send?phone=919696306817&text=Hi!%20want%20help.",
+          "_blank",
+        ),
+    },
   ];
 
   const features = [
-    { icon: <FaBolt />,            title: "100% Free Forever",         desc: "No subscription. No hidden charges. Every question, every test — completely free.", color: "#f59e0b" },
-    { icon: <FaClipboardList />,   title: "1200+ Expert Questions",     desc: "Curated by experienced teachers following the latest exam patterns and syllabus.", color: "#2563eb" },
-    { icon: <FaClock />,           title: "Real Exam Environment",      desc: "Timed tests with auto-submit, instant scoring, and detailed performance reports.", color: "#10b981" },
-    { icon: <FaChartLine />,       title: "Track Your Progress",        desc: "Subject-wise analytics, rank tracking, and personalized improvement suggestions.", color: "#8b5cf6" },
-    { icon: <FaShieldAlt />,       title: "Anti-Cheat System",          desc: "Secure testing environment — copy disabled, shortcut blocked, results verified.", color: "#ef4444" },
-    { icon: <FaChalkboardTeacher />, title: "Coaching Integration",     desc: "Coaching centers can host private mock tests for their own batches on our platform.", color: "#06b6d4" },
+    {
+      icon: <FaBolt />,
+      title: "100% Free Forever",
+      desc: "No subscription. No hidden charges. Every question, every test — completely free.",
+      color: "#f59e0b",
+    },
+    {
+      icon: <FaClipboardList />,
+      title: "1200+ Expert Questions",
+      desc: "Curated by experienced teachers following the latest exam patterns and syllabus.",
+      color: "#2563eb",
+    },
+    {
+      icon: <FaClock />,
+      title: "Real Exam Environment",
+      desc: "Timed tests with auto-submit, instant scoring, and detailed performance reports.",
+      color: "#10b981",
+    },
+    {
+      icon: <FaChartLine />,
+      title: "Track Your Progress",
+      desc: "Subject-wise analytics, rank tracking, and personalized improvement suggestions.",
+      color: "#8b5cf6",
+    },
+    {
+      icon: <FaShieldAlt />,
+      title: "Anti-Cheat System",
+      desc: "Secure testing environment — copy disabled, shortcut blocked, results verified.",
+      color: "#ef4444",
+    },
+    {
+      icon: <FaChalkboardTeacher />,
+      title: "Coaching Integration",
+      desc: "Coaching centers can host private mock tests for their own batches on our platform.",
+      color: "#06b6d4",
+    },
   ];
 
   const steps = [
-    { n: "01", icon: <FaUsers size={22} />,       title: "Create Free Account",   desc: "Sign up in 30 seconds with your email. No credit card needed.",   color: "#2563eb" },
-    { n: "02", icon: <FaLightbulb size={22} />,   title: "Choose Your Exam",      desc: "Pick SSC, UPSC, Banking or any other exam and start practicing.", color: "#f59e0b" },
-    { n: "03", icon: <FaTrophy size={22} />,       title: "Practice & Rank Up",    desc: "Take timed tests, see detailed solutions, climb the leaderboard.", color: "#10b981" },
+    {
+      n: "01",
+      icon: <FaUsers size={22} />,
+      title: "Create Free Account",
+      desc: "Sign up in 30 seconds with your email. No credit card needed.",
+      color: "#2563eb",
+    },
+    {
+      n: "02",
+      icon: <FaLightbulb size={22} />,
+      title: "Choose Your Exam",
+      desc: "Pick SSC, UPSC, Banking or any other exam and start practicing.",
+      color: "#f59e0b",
+    },
+    {
+      n: "03",
+      icon: <FaTrophy size={22} />,
+      title: "Practice & Rank Up",
+      desc: "Take timed tests, see detailed solutions, climb the leaderboard.",
+      color: "#10b981",
+    },
   ];
 
   const testimonials = [
-    { name: "Rahul Sharma",  tag: "SSC CGL 2024 ✓",    color: "#2563eb", init: "RS", text: "Revision Karlo ke daily mock tests ne meri speed aur accuracy dono doubly improve ki. English section mein sabse zyada help mili." },
-    { name: "Priya Verma",   tag: "UPSC Prelims 2024 ✓", color: "#10b981", init: "PV", text: "GS section itna comprehensive hai. Explanation ke saath answers milte hain — concepts ek baar mein clear ho jaate hain." },
-    { name: "Amit Kumar",    tag: "Bank PO Selected ✓",  color: "#f59e0b", init: "AK", text: "Maths ke tiered difficulty levels — easy se hard — ne mujhe systematically improve karne mein bohot help ki." },
+    {
+      name: "Rahul Sharma",
+      tag: "SSC CGL 2024 ✓",
+      color: "#2563eb",
+      init: "RS",
+      text: "Revision Karlo ke daily mock tests ne meri speed aur accuracy dono doubly improve ki. English section mein sabse zyada help mili.",
+    },
+    {
+      name: "Priya Verma",
+      tag: "UPSC Prelims 2024 ✓",
+      color: "#10b981",
+      init: "PV",
+      text: "GS section itna comprehensive hai. Explanation ke saath answers milte hain — concepts ek baar mein clear ho jaate hain.",
+    },
+    {
+      name: "Amit Kumar",
+      tag: "Bank PO Selected ✓",
+      color: "#f59e0b",
+      init: "AK",
+      text: "Maths ke tiered difficulty levels — easy se hard — ne mujhe systematically improve karne mein bohot help ki.",
+    },
   ];
 
   /* ───────────────────────────────────────────────────────── */
@@ -892,11 +1078,30 @@ const Home = ({ setchoosesub }) => {
           TRUST BAR
       ══════════════════════════════════════ */}
       <Box bg="#0f172a" py={4} px={{ base: 4, md: 8 }} overflow="hidden">
-        <Flex maxW="1160px" mx="auto" justify="center" align="center" gap={{ base: 6, md: 12 }} flexWrap="wrap">
-          {["50,000+ Students Registered", "Free Forever • No Credit Card", "Trusted by Top Coaching Centers", "1200+ Exam-Ready Questions"].map((t) => (
+        <Flex
+          maxW="1160px"
+          mx="auto"
+          justify="center"
+          align="center"
+          gap={{ base: 6, md: 12 }}
+          flexWrap="wrap"
+        >
+          {[
+            "50,000+ Students Registered",
+            "Free Forever • No Credit Card",
+            "Trusted by Top Coaching Centers",
+            "1200+ Exam-Ready Questions",
+          ].map((t) => (
             <Flex key={t} align="center" gap={2}>
               <FaCheckCircle size={13} color="#22c55e" />
-              <Text fontSize={{ base: "12px", md: "13px" }} color="#cbd5e1" fontWeight="600" whiteSpace="nowrap">{t}</Text>
+              <Text
+                fontSize={{ base: "12px", md: "13px" }}
+                color="#cbd5e1"
+                fontWeight="600"
+                whiteSpace="nowrap"
+              >
+                {t}
+              </Text>
             </Flex>
           ))}
         </Flex>
@@ -905,8 +1110,14 @@ const Home = ({ setchoosesub }) => {
       {/* ══════════════════════════════════════
           STATS
       ══════════════════════════════════════ */}
-      <Box ref={statsRef} bg="white" py={{ base: 12, md: 16 }} px={{ base: 4, md: 8 }}
-        borderTop="1px solid #e2e8f0" borderBottom="1px solid #e2e8f0">
+      <Box
+        ref={statsRef}
+        bg="white"
+        py={{ base: 12, md: 16 }}
+        px={{ base: 4, md: 8 }}
+        borderTop="1px solid #e2e8f0"
+        borderBottom="1px solid #e2e8f0"
+      >
         <Box maxW="1160px" mx="auto">
           <Box
             display="grid"
@@ -914,34 +1125,72 @@ const Home = ({ setchoosesub }) => {
             gap={{ base: 8, md: 0 }}
           >
             {[
-              { icon: <FaUsers />,         val: n1.toLocaleString() + "+", label: "Students Registered", note: "Across India",   color: "#2563eb" },
-              { icon: <FaClipboardList />, val: n2.toLocaleString() + "+", label: "Questions Available", note: "Expert Curated", color: "#16a34a" },
-              { icon: <FaStar />,          val: n3 + "%",                   label: "Satisfaction Rate",  note: "Student Rated",  color: "#f59e0b" },
-              { icon: <FaFire />,          val: n4 + "+",                   label: "Mock Tests Taken",   note: "This Month",     color: "#ef4444" },
+              {
+                icon: <FaUsers />,
+                val: n1.toLocaleString() + "+",
+                label: "Students Registered",
+                note: "Across India",
+                color: "#2563eb",
+              },
+              {
+                icon: <FaClipboardList />,
+                val: n2.toLocaleString() + "+",
+                label: "Questions Available",
+                note: "Expert Curated",
+                color: "#16a34a",
+              },
+              {
+                icon: <FaStar />,
+                val: n3 + "%",
+                label: "Satisfaction Rate",
+                note: "Student Rated",
+                color: "#f59e0b",
+              },
+              {
+                icon: <FaFire />,
+                val: n4 + "+",
+                label: "Mock Tests Taken",
+                note: "This Month",
+                color: "#ef4444",
+              },
             ].map(({ icon, val, label, note, color }, i) => (
               <Box
                 key={label}
                 textAlign="center"
-                px={{ base: 4, md: 8 }} py={{ base: 2, md: 4 }}
+                px={{ base: 4, md: 8 }}
+                py={{ base: 2, md: 4 }}
                 borderRight={{ md: i < 3 ? "1px solid #e2e8f0" : "none" }}
               >
                 <Flex justify="center" mb={4}>
                   <Flex
-                    w="54px" h="54px" bg={`${color}12`}
-                    borderRadius="16px" align="center" justify="center"
-                    color={color} fontSize="22px"
+                    w="54px"
+                    h="54px"
+                    bg={`${color}12`}
+                    borderRadius="16px"
+                    align="center"
+                    justify="center"
+                    color={color}
+                    fontSize="22px"
                   >
                     {icon}
                   </Flex>
                 </Flex>
                 <Text
-                  fontSize={{ base: "34px", md: "42px" }} fontWeight="800"
-                  color="#0f172a" lineHeight="1" mb={2} letterSpacing="-1px"
+                  fontSize={{ base: "34px", md: "42px" }}
+                  fontWeight="800"
+                  color="#0f172a"
+                  lineHeight="1"
+                  mb={2}
+                  letterSpacing="-1px"
                 >
                   {val}
                 </Text>
-                <Text fontSize="14px" fontWeight="700" color="#334155" mb={1}>{label}</Text>
-                <Text fontSize="12px" color="#94a3b8" fontWeight="500">{note}</Text>
+                <Text fontSize="14px" fontWeight="700" color="#334155" mb={1}>
+                  {label}
+                </Text>
+                <Text fontSize="12px" color="#94a3b8" fontWeight="500">
+                  {note}
+                </Text>
               </Box>
             ))}
           </Box>
@@ -961,7 +1210,11 @@ const Home = ({ setchoosesub }) => {
 
         <Box
           display="grid"
-          gridTemplateColumns={{ base: "repeat(2,1fr)", md: "repeat(3,1fr)", lg: "repeat(4,1fr)" }}
+          gridTemplateColumns={{
+            base: "repeat(2,1fr)",
+            md: "repeat(3,1fr)",
+            lg: "repeat(4,1fr)",
+          }}
           gap={{ base: 4, md: 5 }}
         >
           {subjects.map(({ label, key, icon, accent, bg }, idx) => (
@@ -981,17 +1234,42 @@ const Home = ({ setchoosesub }) => {
                 borderColor: accent,
               }}
               transition="all 0.28s cubic-bezier(0.34,1.56,0.64,1)"
-              position="relative" overflow="hidden"
+              position="relative"
+              overflow="hidden"
             >
-              <Box position="absolute" top={0} left={0} right={0} h="3px" bg={bg} borderRadius="20px 20px 0 0" />
+              <Box
+                position="absolute"
+                top={0}
+                left={0}
+                right={0}
+                h="3px"
+                bg={bg}
+                borderRadius="20px 20px 0 0"
+              />
               <Flex
-                w="52px" h="52px" bg={`${accent}12`} borderRadius="16px"
-                align="center" justify="center" color={accent} fontSize="22px" mb={4}
+                w="52px"
+                h="52px"
+                bg={`${accent}12`}
+                borderRadius="16px"
+                align="center"
+                justify="center"
+                color={accent}
+                fontSize="22px"
+                mb={4}
               >
                 {icon}
               </Flex>
-              <Text fontSize="15px" fontWeight="700" color="#0f172a" mb={1}>{label}</Text>
-              <Flex align="center" gap={1} color={accent} fontSize="13px" fontWeight="600" className="subject-arrow">
+              <Text fontSize="15px" fontWeight="700" color="#0f172a" mb={1}>
+                {label}
+              </Text>
+              <Flex
+                align="center"
+                gap={1}
+                color={accent}
+                fontSize="13px"
+                fontWeight="600"
+                className="subject-arrow"
+              >
                 <Text>Practice Now</Text>
                 <FaArrowRight size={10} />
               </Flex>
@@ -1002,18 +1280,53 @@ const Home = ({ setchoosesub }) => {
           <Link to="/Saved-question">
             <Box
               className="subject-card"
-              bg="white" borderRadius="20px" border="1.5px solid #e2e8f0" p={6}
+              bg="white"
+              borderRadius="20px"
+              border="1.5px solid #e2e8f0"
+              p={6}
               cursor="pointer"
-              _hover={{ transform: "translateY(-6px)", boxShadow: "0 20px 40px rgba(92,76,227,0.18)", borderColor: "#7c3aed" }}
+              _hover={{
+                transform: "translateY(-6px)",
+                boxShadow: "0 20px 40px rgba(92,76,227,0.18)",
+                borderColor: "#7c3aed",
+              }}
               transition="all 0.28s cubic-bezier(0.34,1.56,0.64,1)"
-              position="relative" overflow="hidden"
+              position="relative"
+              overflow="hidden"
             >
-              <Box position="absolute" top={0} left={0} right={0} h="3px" bg="linear-gradient(90deg,#7c3aed,#5244cc)" borderRadius="20px 20px 0 0" />
-              <Flex w="52px" h="52px" bg="#7c3aed12" borderRadius="16px" align="center" justify="center" color="#7c3aed" fontSize="22px" mb={4}>
+              <Box
+                position="absolute"
+                top={0}
+                left={0}
+                right={0}
+                h="3px"
+                bg="linear-gradient(90deg,#7c3aed,#5244cc)"
+                borderRadius="20px 20px 0 0"
+              />
+              <Flex
+                w="52px"
+                h="52px"
+                bg="#7c3aed12"
+                borderRadius="16px"
+                align="center"
+                justify="center"
+                color="#7c3aed"
+                fontSize="22px"
+                mb={4}
+              >
                 <FaBookmark />
               </Flex>
-              <Text fontSize="15px" fontWeight="700" color="#0f172a" mb={1}>Saved Questions</Text>
-              <Flex align="center" gap={1} color="#7c3aed" fontSize="13px" fontWeight="600" className="subject-arrow">
+              <Text fontSize="15px" fontWeight="700" color="#0f172a" mb={1}>
+                Saved Questions
+              </Text>
+              <Flex
+                align="center"
+                gap={1}
+                color="#7c3aed"
+                fontSize="13px"
+                fontWeight="600"
+                className="subject-arrow"
+              >
                 <Text>View All</Text>
                 <FaArrowRight size={10} />
               </Flex>
@@ -1033,46 +1346,80 @@ const Home = ({ setchoosesub }) => {
           sub="Teen simple steps mein competitive exam preparation start karo — koi confusion nahi."
         />
 
-        <Box display="grid" gridTemplateColumns={{ base: "1fr", md: "repeat(3,1fr)" }} gap={6}>
+        <Box
+          display="grid"
+          gridTemplateColumns={{ base: "1fr", md: "repeat(3,1fr)" }}
+          gap={6}
+        >
           {steps.map(({ n, icon, title, desc, color }, i) => (
             <Box
               key={n}
               bg="rgba(255,255,255,0.04)"
               border="1px solid rgba(255,255,255,0.08)"
-              borderRadius="24px" p={8}
-              position="relative" overflow="hidden"
-              _hover={{ bg: "rgba(255,255,255,0.07)", borderColor: `${color}60` }}
+              borderRadius="24px"
+              p={8}
+              position="relative"
+              overflow="hidden"
+              _hover={{
+                bg: "rgba(255,255,255,0.07)",
+                borderColor: `${color}60`,
+              }}
               transition="all 0.3s"
             >
               <Text
-                position="absolute" bottom="-10px" right="16px"
+                position="absolute"
+                bottom="-10px"
+                right="16px"
                 fontFamily="'Instrument Serif',serif"
-                fontSize="100px" fontWeight="400"
-                color="rgba(255,255,255,0.04)" lineHeight="1"
+                fontSize="100px"
+                fontWeight="400"
+                color="rgba(255,255,255,0.04)"
+                lineHeight="1"
                 userSelect="none"
               >
                 {n}
               </Text>
 
               <Flex
-                w="56px" h="56px" bg={`${color}20`} borderRadius="18px"
-                align="center" justify="center" color={color} mb={5}
+                w="56px"
+                h="56px"
+                bg={`${color}20`}
+                borderRadius="18px"
+                align="center"
+                justify="center"
+                color={color}
+                mb={5}
               >
                 {icon}
               </Flex>
 
               <Box
                 display="inline-block"
-                bg={`${color}20`} color={color}
-                px={3} py={0.5} borderRadius="full"
-                fontSize="11px" fontWeight="800" letterSpacing="1px"
+                bg={`${color}20`}
+                color={color}
+                px={3}
+                py={0.5}
+                borderRadius="full"
+                fontSize="11px"
+                fontWeight="800"
+                letterSpacing="1px"
                 mb={3}
               >
                 STEP {n}
               </Box>
 
-              <Text fontSize="18px" fontWeight="800" color="white" mb={3} lineHeight="1.3">{title}</Text>
-              <Text fontSize="14px" color="#94a3b8" lineHeight="1.8">{desc}</Text>
+              <Text
+                fontSize="18px"
+                fontWeight="800"
+                color="white"
+                mb={3}
+                lineHeight="1.3"
+              >
+                {title}
+              </Text>
+              <Text fontSize="14px" color="#94a3b8" lineHeight="1.8">
+                {desc}
+              </Text>
             </Box>
           ))}
         </Box>
@@ -1082,18 +1429,31 @@ const Home = ({ setchoosesub }) => {
           WHY US
       ══════════════════════════════════════ */}
       <Section bg="white">
-        <Box display="grid" gridTemplateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={{ base: 14, lg: 20 }} alignItems="center">
+        <Box
+          display="grid"
+          gridTemplateColumns={{ base: "1fr", lg: "1fr 1fr" }}
+          gap={{ base: 14, lg: 20 }}
+          alignItems="center"
+        >
           <Box>
             <Pill color="#2563eb">Why Revision Karlo?</Pill>
             <Text
               fontFamily="'Instrument Serif',serif"
               fontSize={{ base: "34px", md: "48px" }}
-              color="#0f172a" lineHeight="1.15" mb={5}
+              color="#0f172a"
+              lineHeight="1.15"
+              mb={5}
             >
-              India's Most <Text as="span" fontStyle="italic" color="#2563eb">Accessible</Text> Exam Prep Platform
+              India's Most{" "}
+              <Text as="span" fontStyle="italic" color="#2563eb">
+                Accessible
+              </Text>{" "}
+              Exam Prep Platform
             </Text>
             <Text fontSize="16px" color="#64748b" lineHeight="1.9" mb={8}>
-              Lakhs of students waste money on expensive coaching and subscription apps. Revision Karlo gives you the same quality practice — completely free, always.
+              Lakhs of students waste money on expensive coaching and
+              subscription apps. Revision Karlo gives you the same quality
+              practice — completely free, always.
             </Text>
             <Flex direction="column" gap={4}>
               {[
@@ -1105,37 +1465,71 @@ const Home = ({ setchoosesub }) => {
               ].map((point) => (
                 <Flex key={point} align="flex-start" gap={3}>
                   <Box mt={1} flexShrink={0}>
-                    <Flex w="20px" h="20px" bg="#dcfce7" borderRadius="full" align="center" justify="center">
+                    <Flex
+                      w="20px"
+                      h="20px"
+                      bg="#dcfce7"
+                      borderRadius="full"
+                      align="center"
+                      justify="center"
+                    >
                       <FaCheckCircle size={11} color="#16a34a" />
                     </Flex>
                   </Box>
-                  <Text fontSize="15px" color="#334155" fontWeight="500" lineHeight="1.6">{point}</Text>
+                  <Text
+                    fontSize="15px"
+                    color="#334155"
+                    fontWeight="500"
+                    lineHeight="1.6"
+                  >
+                    {point}
+                  </Text>
                 </Flex>
               ))}
             </Flex>
           </Box>
 
-          <Box
-            display="grid"
-            gridTemplateColumns="repeat(2,1fr)"
-            gap={4}
-          >
+          <Box display="grid" gridTemplateColumns="repeat(2,1fr)" gap={4}>
             {features.map(({ icon, title, desc, color }) => (
               <Box
                 key={title}
-                bg="#f8fafc" borderRadius="20px" p={5}
+                bg="#f8fafc"
+                borderRadius="20px"
+                p={5}
                 border="1px solid #e2e8f0"
-                _hover={{ bg: "white", boxShadow: "0 8px 30px rgba(0,0,0,0.08)", transform: "translateY(-3px)", borderColor: color }}
+                _hover={{
+                  bg: "white",
+                  boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
+                  transform: "translateY(-3px)",
+                  borderColor: color,
+                }}
                 transition="all 0.25s"
               >
                 <Flex
-                  w="44px" h="44px" bg={`${color}12`} borderRadius="12px"
-                  align="center" justify="center" color={color} fontSize="18px" mb={4}
+                  w="44px"
+                  h="44px"
+                  bg={`${color}12`}
+                  borderRadius="12px"
+                  align="center"
+                  justify="center"
+                  color={color}
+                  fontSize="18px"
+                  mb={4}
                 >
                   {icon}
                 </Flex>
-                <Text fontSize="14px" fontWeight="800" color="#0f172a" mb={2} lineHeight="1.3">{title}</Text>
-                <Text fontSize="12px" color="#94a3b8" lineHeight="1.7">{desc}</Text>
+                <Text
+                  fontSize="14px"
+                  fontWeight="800"
+                  color="#0f172a"
+                  mb={2}
+                  lineHeight="1.3"
+                >
+                  {title}
+                </Text>
+                <Text fontSize="12px" color="#94a3b8" lineHeight="1.7">
+                  {desc}
+                </Text>
               </Box>
             ))}
           </Box>
@@ -1152,30 +1546,51 @@ const Home = ({ setchoosesub }) => {
           italic="Crack Kar Chuke Hain"
           sub="Real students. Real results. Unhi ki baat jo yahan se padh ke exam pass kar chuke hain."
         />
-        <Box display="grid" gridTemplateColumns={{ base: "1fr", md: "repeat(3,1fr)" }} gap={6}>
+        <Box
+          display="grid"
+          gridTemplateColumns={{ base: "1fr", md: "repeat(3,1fr)" }}
+          gap={6}
+        >
           {testimonials.map(({ name, tag, color, init, text }) => (
             <Box
               key={name}
-              bg="white" borderRadius="24px" p={7}
+              bg="white"
+              borderRadius="24px"
+              p={7}
               border="1px solid #e2e8f0"
               boxShadow="0 2px 12px rgba(0,0,0,0.04)"
-              _hover={{ boxShadow: "0 16px 40px rgba(0,0,0,0.1)", transform: "translateY(-4px)" }}
+              _hover={{
+                boxShadow: "0 16px 40px rgba(0,0,0,0.1)",
+                transform: "translateY(-4px)",
+              }}
               transition="all 0.3s"
               position="relative"
             >
               <Text
-                position="absolute" top={4} right={6}
+                position="absolute"
+                top={4}
+                right={6}
                 fontFamily="'Instrument Serif',serif"
-                fontSize="80px" color={`${color}15`} lineHeight="1"
+                fontSize="80px"
+                color={`${color}15`}
+                lineHeight="1"
               >
                 "
               </Text>
 
               <Flex mb={4} gap={1}>
-                {[1,2,3,4,5].map((s) => <FaStar key={s} size={13} color="#f59e0b" />)}
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <FaStar key={s} size={13} color="#f59e0b" />
+                ))}
               </Flex>
 
-              <Text fontSize="14px" color="#475569" lineHeight="1.9" mb={6} fontStyle="italic">
+              <Text
+                fontSize="14px"
+                color="#475569"
+                lineHeight="1.9"
+                mb={6}
+                fontStyle="italic"
+              >
                 "{text}"
               </Text>
 
@@ -1183,15 +1598,26 @@ const Home = ({ setchoosesub }) => {
 
               <Flex align="center" gap={3}>
                 <Flex
-                  w="44px" h="44px" borderRadius="full" flexShrink={0}
-                  bg={color} align="center" justify="center"
-                  fontSize="13px" fontWeight="800" color="white"
+                  w="44px"
+                  h="44px"
+                  borderRadius="full"
+                  flexShrink={0}
+                  bg={color}
+                  align="center"
+                  justify="center"
+                  fontSize="13px"
+                  fontWeight="800"
+                  color="white"
                 >
                   {init}
                 </Flex>
                 <Box>
-                  <Text fontSize="14px" fontWeight="800" color="#0f172a">{name}</Text>
-                  <Text fontSize="12px" color="#16a34a" fontWeight="700">{tag}</Text>
+                  <Text fontSize="14px" fontWeight="800" color="#0f172a">
+                    {name}
+                  </Text>
+                  <Text fontSize="12px" color="#16a34a" fontWeight="700">
+                    {tag}
+                  </Text>
                 </Box>
               </Flex>
             </Box>
@@ -1204,51 +1630,111 @@ const Home = ({ setchoosesub }) => {
       ══════════════════════════════════════ */}
       <Box
         bg="linear-gradient(135deg,#1e3a5f 0%,#0f172a 100%)"
-        py={{ base: 16, md: 24 }} px={{ base: 4, md: 8 }}
-        position="relative" overflow="hidden"
+        py={{ base: 16, md: 24 }}
+        px={{ base: 4, md: 8 }}
+        position="relative"
+        overflow="hidden"
       >
-        <Box position="absolute" top="-80px" right="-80px" w="320px" h="320px" borderRadius="full"
-          bg="rgba(59,130,246,0.06)" />
-        <Box position="absolute" bottom="-60px" left="-60px" w="240px" h="240px" borderRadius="full"
-          bg="rgba(16,185,129,0.06)" />
+        <Box
+          position="absolute"
+          top="-80px"
+          right="-80px"
+          w="320px"
+          h="320px"
+          borderRadius="full"
+          bg="rgba(59,130,246,0.06)"
+        />
+        <Box
+          position="absolute"
+          bottom="-60px"
+          left="-60px"
+          w="240px"
+          h="240px"
+          borderRadius="full"
+          bg="rgba(16,185,129,0.06)"
+        />
 
         <Box maxW="680px" mx="auto" textAlign="center" position="relative">
-          <Box display="inline-block" bg="rgba(59,130,246,0.15)" color="#60a5fa"
-            px={4} py={1} borderRadius="full" fontSize="12px" fontWeight="700"
-            letterSpacing="1.5px" textTransform="uppercase" mb={6} border="1px solid rgba(59,130,246,0.25)">
+          <Box
+            display="inline-block"
+            bg="rgba(59,130,246,0.15)"
+            color="#60a5fa"
+            px={4}
+            py={1}
+            borderRadius="full"
+            fontSize="12px"
+            fontWeight="700"
+            letterSpacing="1.5px"
+            textTransform="uppercase"
+            mb={6}
+            border="1px solid rgba(59,130,246,0.25)"
+          >
             Get Started Today
           </Box>
           <Text
             fontFamily="'Instrument Serif',serif"
             fontSize={{ base: "34px", md: "52px" }}
-            color="white" lineHeight="1.15" mb={5}
+            color="white"
+            lineHeight="1.15"
+            mb={5}
           >
             Aaj Se Hi Apni{" "}
-            <Text as="span" fontStyle="italic" color="#60a5fa">Preparation</Text>{" "}
+            <Text as="span" fontStyle="italic" color="#60a5fa">
+              Preparation
+            </Text>{" "}
             Shuru Karo
           </Text>
-          <Text fontSize={{ base: "15px", md: "17px" }} color="#94a3b8" mb={10} lineHeight="1.8">
-            50,000+ students pehle se yahan hain. Free join karo aur apna exam crack karo.
+          <Text
+            fontSize={{ base: "15px", md: "17px" }}
+            color="#94a3b8"
+            mb={10}
+            lineHeight="1.8"
+          >
+            50,000+ students pehle se yahan hain. Free join karo aur apna exam
+            crack karo.
           </Text>
 
           <Flex justify="center" gap={4} flexWrap="wrap" mb={10}>
             <Box
-              as={Link} to="/auth/signup"
-              display="inline-flex" alignItems="center" gap={2}
-              bg="#2563eb" color="white"
-              px={8} py={4} borderRadius="14px" fontWeight="700" fontSize="15px"
-              _hover={{ bg: "#1d4ed8", transform: "translateY(-2px)", boxShadow: "0 12px 28px rgba(37,99,235,0.4)" }}
+              as={Link}
+              to="/auth/signup"
+              display="inline-flex"
+              alignItems="center"
+              gap={2}
+              bg="#2563eb"
+              color="white"
+              px={8}
+              py={4}
+              borderRadius="14px"
+              fontWeight="700"
+              fontSize="15px"
+              _hover={{
+                bg: "#1d4ed8",
+                transform: "translateY(-2px)",
+                boxShadow: "0 12px 28px rgba(37,99,235,0.4)",
+              }}
               transition="all 0.2s"
             >
               Free Mein Register Karo <FaArrowRight size={13} />
             </Box>
             <Box
-              as={Link} to="/questionList"
-              display="inline-flex" alignItems="center" gap={2}
-              bg="rgba(255,255,255,0.08)" color="white"
-              px={8} py={4} borderRadius="14px" fontWeight="600" fontSize="15px"
+              as={Link}
+              to="/questionList"
+              display="inline-flex"
+              alignItems="center"
+              gap={2}
+              bg="rgba(255,255,255,0.08)"
+              color="white"
+              px={8}
+              py={4}
+              borderRadius="14px"
+              fontWeight="600"
+              fontSize="15px"
               border="1px solid rgba(255,255,255,0.15)"
-              _hover={{ bg: "rgba(255,255,255,0.14)", transform: "translateY(-2px)" }}
+              _hover={{
+                bg: "rgba(255,255,255,0.14)",
+                transform: "translateY(-2px)",
+              }}
               transition="all 0.2s"
             >
               <FaPlay size={12} /> Pehle Try Karo
@@ -1259,7 +1745,9 @@ const Home = ({ setchoosesub }) => {
             {["No Credit Card", "Instant Access", "Always Free"].map((b) => (
               <Flex key={b} align="center" gap={2} color="#64748b">
                 <FaCheckCircle size={13} color="#22c55e" />
-                <Text fontSize="13px" fontWeight="600">{b}</Text>
+                <Text fontSize="13px" fontWeight="600">
+                  {b}
+                </Text>
               </Flex>
             ))}
           </Flex>
@@ -1279,9 +1767,13 @@ const Home = ({ setchoosesub }) => {
         <Flex justify="center" flexWrap="wrap" gap={4}>
           {socials.map(({ icon, label, sub, bg, glow, onClick }) => (
             <Box
-              key={label} onClick={onClick}
-              cursor="pointer" textAlign="center"
-              bg="white" borderRadius="20px" p={6}
+              key={label}
+              onClick={onClick}
+              cursor="pointer"
+              textAlign="center"
+              bg="white"
+              borderRadius="20px"
+              p={6}
               border="1.5px solid #e2e8f0"
               w={{ base: "calc(50% - 8px)", sm: "160px" }}
               _hover={{
@@ -1292,14 +1784,25 @@ const Home = ({ setchoosesub }) => {
               transition="all 0.28s cubic-bezier(0.34,1.56,0.64,1)"
             >
               <Flex
-                w="52px" h="52px" borderRadius="16px" mx="auto"
-                align="center" justify="center" color="white" mb={3}
-                bg={bg} boxShadow={`0 6px 16px ${glow}`}
+                w="52px"
+                h="52px"
+                borderRadius="16px"
+                mx="auto"
+                align="center"
+                justify="center"
+                color="white"
+                mb={3}
+                bg={bg}
+                boxShadow={`0 6px 16px ${glow}`}
               >
                 {icon}
               </Flex>
-              <Text fontSize="14px" fontWeight="800" color="#0f172a" mb={1}>{label}</Text>
-              <Text fontSize="12px" color="#94a3b8" fontWeight="500">{sub}</Text>
+              <Text fontSize="14px" fontWeight="800" color="#0f172a" mb={1}>
+                {label}
+              </Text>
+              <Text fontSize="12px" color="#94a3b8" fontWeight="500">
+                {sub}
+              </Text>
             </Box>
           ))}
         </Flex>
@@ -1314,14 +1817,6 @@ const Home = ({ setchoosesub }) => {
 };
 
 export default Home;
-
-
-
-
-
-
-
-
 
 // import { Box, Flex, Text, Image, Spinner } from "@chakra-ui/react";
 

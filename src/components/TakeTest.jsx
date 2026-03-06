@@ -28,25 +28,39 @@ import {
   AlertDialogOverlay,
 } from "@chakra-ui/react";
 import ModalPause from "./ModalPause";
-import { useNavigate } from "react-router-dom";
-import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
+import { useNavigate, useLocation } from "react-router-dom";
 import { HamburgerIcon } from "@chakra-ui/icons";
-import ReportQuestionDropdown from "./ReportQuestionDropdown.jsx";
-import { saveTestScore } from "../helpers/testProgressHelper";
-import { getCookies } from "../helpers/cookies.jsx";
-import { createTestApi } from "../services/testService";
+import { useAuth } from "../context/AuthContext";
+import { resultsAPI } from "../services/api";
+import { socket } from "../services/socket";
+import ReportQuestionDropdown from "./ReportQuestionDropdown";
 
-const TakeTest = ({ quest, handleFullScreen }) => {
+/**
+ * TakeTest
+ *
+ * Props (all required – no localStorage fallbacks):
+ *   quest          {Array}   – questions array from parent/API
+ *   testMeta       {Object}  – { subject, category, timeLimitMin, testIndex }
+ *                              timeLimitMin: if > 0 → countdown; if 0/null → count-up
+ *   handleFullScreen {fn}    – optional, called with false on submit
+ */
+const TakeTest = ({ handleFullScreen }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const toast = useToast();
+  const { user } = useAuth();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isMobile] = useMediaQuery("(max-width: 768px)");
+
+  // Read questions + metadata from navigation state (passed by TestDetailPage)
+  const quest = location.state?.quest ?? [];
+  const testMeta = location.state?.testMeta ?? {};
+
+  // ─── Shuffle questions once on mount ──────────────────────────
+  const [question] = useState(() => [...quest].sort(() => Math.random() - 0.5));
+
+  // ─── Answer tracking ──────────────────────────────────────────
   const [currentquestion, setcurrentquestion] = useState(0);
-  const shuffleArray = (arr) => [...arr]?.sort(() => Math.random() - 0.5);
-
-  const effectiveQuest =
-    quest && quest.length > 0
-      ? quest
-      : getLocalStorage("savedTestQuestions") || [];
-  const shuffledQuest = shuffleArray(effectiveQuest);
-  const [question] = useState(shuffledQuest);
-
   const [answeredQuestion, setAnsweredQuestion] = useState([]);
   const [markedAndAnswer, setMarkedAndAnswer] = useState([]);
   const [markedNotAnswer, setMarkedNotAnswer] = useState([]);
@@ -56,59 +70,42 @@ const TakeTest = ({ quest, handleFullScreen }) => {
   const [wrongansqus, setwrongansqus] = useState([]);
   const [allAns, setAllAns] = useState({});
   const [mark, setMark] = useState(0);
-  const [isMobile] = useMediaQuery("(max-width: 768px)");
   const [correctQus, setcorrectQus] = useState([]);
+  const [correctAns, setCorrectAns] = useState([]);
 
-  // ─── Timer state ───────────────────────────────────────────────
-  // COUNT UP (default / single test)
+  // ─── Timer ────────────────────────────────────────────────────
+  // timeLimitMin > 0 → countdown; 0 or absent → count-up
+  const timeLimitMin = Number(testMeta?.timeLimitMin) || 0;
+  const isCountdown = timeLimitMin > 0;
+  const totalTimeInSeconds = timeLimitMin * 60;
+
+  // Count-up state
   const [hour, sethour] = useState(0);
   const [min, setmin] = useState(0);
   const [sec, setsec] = useState(0);
 
-  // COUNTDOWN (multi-subcategory custom tests)
-  const [reversehour, setreversehour] = useState(0);
-  const [reversemin, setreversemin] = useState(0);
-  const [reversesec, setreversesec] = useState(0);
-  const [totalTimeInSeconds, setTotalTimeInSeconds] = useState(0);
+  // Countdown state
+  const [reversehour, setreversehour] = useState(() =>
+    Math.floor(totalTimeInSeconds / 3600),
+  );
+  const [reversemin, setreversemin] = useState(() =>
+    Math.floor((totalTimeInSeconds % 3600) / 60),
+  );
+  const [reversesec, setreversesec] = useState(() => totalTimeInSeconds % 60);
 
-  // ─── Determine timer mode ONCE ────────────────────────────────
-  // isCountdown = true ONLY when Testdata has multiple subcategories
-  // For direct test links: Testdata is set to [] by TestDetailPage → count up
-  const Testdata = getLocalStorage("Testdata") || [];
-  const isCountdown = Testdata.length > 1;
-  const isMultipleSubcategories = isCountdown;
-
-  const [size, setSize] = useState("");
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const toast = useToast();
-
-  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
-  const cancelSubmitRef = React.useRef();
-
+  // ─── Fullscreen state ─────────────────────────────────────────
   const [isFullscreenActive, setIsFullscreenActive] = useState(false);
   const [hasExitedFullscreen, setHasExitedFullscreen] = useState(false);
 
-  const [correctAns, setCorrectAns] = useState([]);
-  const navigate = useNavigate();
-
-  // ─── Initialize timer ─────────────────────────────────────────
-  useEffect(() => {
-    if (isCountdown) {
-      const calculatedTimeInSeconds = question.length * 30;
-      setTotalTimeInSeconds(calculatedTimeInSeconds);
-      setreversehour(Math.floor(calculatedTimeInSeconds / 3600));
-      setreversemin(Math.floor((calculatedTimeInSeconds % 3600) / 60));
-      setreversesec(calculatedTimeInSeconds % 60);
-    } else {
-      sethour(0);
-      setmin(0);
-      setsec(0);
-    }
-  }, [question.length, isCountdown]);
+  // ─── Submit dialog ────────────────────────────────────────────
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  const cancelSubmitRef = useRef();
+  const [size, setSize] = useState("");
 
   // ─── Fullscreen / navigation guard ────────────────────────────
   useEffect(() => {
     let isRequestingFullscreen = false;
+
     const requestFullscreen = async () => {
       if (isRequestingFullscreen) return;
       isRequestingFullscreen = true;
@@ -119,7 +116,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
           await elem.webkitRequestFullscreen();
         else if (elem.msRequestFullscreen) await elem.msRequestFullscreen();
         setIsFullscreenActive(true);
-      } catch (error) {
+      } catch {
         if (hasExitedFullscreen) {
           toast({
             title: "Fullscreen Required",
@@ -134,6 +131,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
         isRequestingFullscreen = false;
       }
     };
+
     const handleFullscreenChange = () => {
       const isCurrentlyFullscreen = !!(
         document.fullscreenElement ||
@@ -155,10 +153,12 @@ const TakeTest = ({ quest, handleFullScreen }) => {
         setIsFullscreenActive(true);
       }
     };
+
     const handleClickToFullscreen = () => {
       if (!isFullscreenActive && hasExitedFullscreen && !isMobile)
         requestFullscreen();
     };
+
     const handleBackButton = (e) => {
       e.preventDefault();
       window.history.pushState(null, "", window.location.href);
@@ -172,6 +172,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
         position: "top",
       });
     };
+
     const handleBeforeUnload = (e) => {
       e.preventDefault();
       e.returnValue =
@@ -201,7 +202,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
       window.removeEventListener("popstate", handleBackButton);
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [isMobile, isFullscreenActive, hasExitedFullscreen]);
+  }, [isMobile, isFullscreenActive, hasExitedFullscreen, toast]);
 
   // Prevent right-click
   useEffect(() => {
@@ -224,281 +225,13 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     return () => document.removeEventListener("keydown", h);
   }, []);
 
-  // ─── Ref for giveMark (to avoid stale closure in timer) ────────
+  // ─── Ref for giveMark (avoids stale closure in timer) ─────────
   const giveMarkRef = useRef(null);
-
-  const handlequestion = (con) => {
-    if (con === "svn") {
-      if (
-        answer !== null &&
-        allAns[currentquestion] !== undefined &&
-        !answeredQuestion.includes(currentquestion)
-      ) {
-        if (markedNotAnswer.includes(currentquestion)) {
-          let r = markedNotAnswer.indexOf(currentquestion);
-          markedNotAnswer.splice(r, 1);
-        }
-        if (notAnswer.includes(currentquestion)) {
-          let r = notAnswer.indexOf(currentquestion);
-          notAnswer.splice(r, 1);
-        }
-        if (markedAndAnswer.includes(currentquestion)) {
-          let r = markedAndAnswer.indexOf(currentquestion);
-          markedAndAnswer.splice(r, 1);
-        }
-        setAnsweredQuestion([...answeredQuestion, currentquestion]);
-        if (question.length - 1 > currentquestion)
-          setcurrentquestion(currentquestion + 1);
-      } else if (allAns[currentquestion] === undefined && answer === null) {
-        if (!notAnswer.includes(currentquestion)) {
-          if (markedNotAnswer.includes(currentquestion)) {
-            let r = markedNotAnswer.indexOf(currentquestion);
-            markedNotAnswer.splice(r, 1);
-          }
-          if (markedAndAnswer.includes(currentquestion)) {
-            let r = markedAndAnswer.indexOf(currentquestion);
-            markedAndAnswer.splice(r, 1);
-          }
-          if (answeredQuestion.includes(currentquestion)) {
-            let r = answeredQuestion.indexOf(currentquestion);
-            answeredQuestion.splice(r, 1);
-          }
-          setNotAnswer([...notAnswer, currentquestion]);
-        }
-      }
-      if (question.length - 1 > currentquestion)
-        setcurrentquestion(currentquestion + 1);
-    } else {
-      if (
-        answer !== null &&
-        allAns[currentquestion] !== undefined &&
-        !answeredQuestion.includes(currentquestion)
-      ) {
-        if (markedNotAnswer.includes(currentquestion)) {
-          let r = markedNotAnswer.indexOf(currentquestion);
-          markedNotAnswer.splice(r, 1);
-        }
-        if (notAnswer.includes(currentquestion)) {
-          let r = notAnswer.indexOf(currentquestion);
-          notAnswer.splice(r, 1);
-        }
-        if (markedAndAnswer.includes(currentquestion)) {
-          let r = markedAndAnswer.indexOf(currentquestion);
-          markedAndAnswer.splice(r, 1);
-        }
-        setAnsweredQuestion([...answeredQuestion, currentquestion]);
-        if (question.length - 1 > currentquestion) setcurrentquestion(con);
-      } else if (
-        answer === null &&
-        allAns[currentquestion] === undefined &&
-        !notAnswer.includes(currentquestion) &&
-        currentquestion !== con
-      ) {
-        if (markedNotAnswer.includes(currentquestion)) {
-          let r = markedNotAnswer.indexOf(currentquestion);
-          markedNotAnswer.splice(r, 1);
-        }
-        if (markedAndAnswer.includes(currentquestion)) {
-          let r = markedAndAnswer.indexOf(currentquestion);
-          markedAndAnswer.splice(r, 1);
-        }
-        if (answeredQuestion.includes(currentquestion)) {
-          let r = answeredQuestion.indexOf(currentquestion);
-          answeredQuestion.splice(r, 1);
-        }
-        setNotAnswer([...notAnswer, currentquestion]);
-        if (question.length - 1 > currentquestion) setcurrentquestion(con);
-      }
-      if (con !== isNaN) setcurrentquestion(con);
-    }
-    setans(null);
-  };
-
-  const markedQuestion = () => {
-    if (allAns[currentquestion] === undefined && answer !== null) {
-      setAllAns((p) => ({ ...p, [currentquestion]: answer }));
-    }
-    if (
-      allAns[currentquestion] !== undefined &&
-      !markedAndAnswer.includes(currentquestion)
-    ) {
-      if (answeredQuestion.includes(currentquestion)) {
-        let r = answeredQuestion.indexOf(currentquestion);
-        answeredQuestion.splice(r, 1);
-      }
-      if (markedNotAnswer.includes(currentquestion)) {
-        let r = markedNotAnswer.indexOf(currentquestion);
-        notAnswer.splice(r, 1);
-      }
-      if (notAnswer.includes(currentquestion)) {
-        let r = notAnswer.indexOf(currentquestion);
-        notAnswer.splice(r, 1);
-      }
-      setMarkedAndAnswer([...markedAndAnswer, currentquestion]);
-      setans(null);
-    } else if (
-      allAns[currentquestion] === undefined &&
-      !markedNotAnswer.includes(currentquestion)
-    ) {
-      setAllAns((p) => {
-        const u = { ...p };
-        delete u[currentquestion];
-        return u;
-      });
-      if (answeredQuestion.includes(currentquestion)) {
-        let r = answeredQuestion.indexOf(currentquestion);
-        answeredQuestion.splice(r, 1);
-      }
-      if (markedAndAnswer.includes(currentquestion)) {
-        let r = markedAndAnswer.indexOf(currentquestion);
-        notAnswer.splice(r, 1);
-      }
-      if (notAnswer.includes(currentquestion)) {
-        let r = notAnswer.indexOf(currentquestion);
-        notAnswer.splice(r, 1);
-      }
-      setMarkedNotAnswer([...markedNotAnswer, currentquestion]);
-    }
-    if (question.length - 1 > currentquestion)
-      setcurrentquestion(currentquestion + 1);
-  };
-
-  const handleAnswer = (ans, qus) => {
-    setans(ans);
-    if (
-      question[currentquestion].answer === qus + 1 &&
-      !correctAns.includes(currentquestion)
-    ) {
-      if (wrongansqus.includes(currentquestion)) {
-        setwrong(wrongans - 1);
-        let r = wrongansqus.indexOf(currentquestion);
-        wrongansqus.splice(r, 1);
-      }
-      setMark((m) => m + 1);
-      setcorrectQus((p) => [...p, currentquestion]);
-      setCorrectAns((p) => [...p, currentquestion]);
-    } else if (
-      question[currentquestion].answer !== qus + 1 &&
-      correctAns.includes(currentquestion)
-    ) {
-      let r = correctAns.indexOf(currentquestion);
-      correctAns.splice(r, 1);
-      let r2 = correctQus.indexOf(currentquestion);
-      correctQus.splice(r2, 1);
-      setMark((m) => m - 1);
-      setwrong((w) => w + 1);
-    }
-    if (
-      question[currentquestion].answer !== qus + 1 &&
-      !correctAns.includes(currentquestion) &&
-      !wrongansqus.includes(currentquestion)
-    ) {
-      setwrong((w) => w + 1);
-      setwrongansqus((p) => [...p, currentquestion]);
-    }
-    setAllAns((p) => ({ ...p, [currentquestion]: ans }));
-  };
-
-  const handleClearAnswer = (questionIndex) => {
-    if (answeredQuestion.includes(currentquestion)) {
-      let r = answeredQuestion.indexOf(currentquestion);
-      answeredQuestion.splice(r, 1);
-    }
-    if (markedAndAnswer.includes(currentquestion)) {
-      let r = markedAndAnswer.indexOf(currentquestion);
-      markedAndAnswer.splice(r, 1);
-    }
-    if (markedNotAnswer.includes(currentquestion)) {
-      let r = markedNotAnswer.indexOf(currentquestion);
-      markedNotAnswer.splice(r, 1);
-    }
-    setAllAns((p) => {
-      const u = { ...p };
-      delete u[questionIndex];
-      return u;
-    });
-    if (!notAnswer.includes(currentquestion))
-      setNotAnswer([...notAnswer, currentquestion]);
-  };
-
-  const handleSubmitClick = () => setIsSubmitDialogOpen(true);
-  const handleCancelSubmit = () => setIsSubmitDialogOpen(false);
-  const handleConfirmSubmit = () => {
-    setIsSubmitDialogOpen(false);
-    giveMark();
-  };
-
-  const giveMark = async () => {
-    try {
-      const category = getLocalStorage("category");
-      const user = await getCookies("_user");
-      const subject = getLocalStorage("Subject");
-      const scorePercentage =
-        question.length > 0 ? (mark / question.length) * 100 : 0;
-      const testIndex = getLocalStorage("currentTestIndex") || 0;
-      const subcategory = getLocalStorage("currentSubcategory") || category;
-      const currentCategory = getLocalStorage("currentCategory") || subject;
-      const TestdataLocal = getLocalStorage("Testdata") || [];
-      const isIndividualTest = TestdataLocal.length <= 1;
-
-      if (isIndividualTest) {
-        saveTestScore(
-          currentCategory,
-          subcategory,
-          testIndex,
-          scorePercentage,
-          true,
-        );
-      }
-
-      const newTestData = {
-        user,
-        subject,
-        rank: 0,
-        wrongans,
-        correctQus,
-        score: mark,
-        allAnswer: allAns,
-        wrongansqus,
-        answeredQuestion,
-        notAnswer,
-        markedAndAnswer,
-        markedNotAnswer,
-        section: category,
-        questions: question,
-      };
-
-      // Save result
-      await createTestApi(newTestData).catch(() => {});
-
-      setLocalStorage("Total", mark);
-      setLocalStorage("test", [newTestData]);
-      setLocalStorage("savedTestQuestions", null);
-
-      // Exit fullscreen
-      if (document.exitFullscreen) document.exitFullscreen();
-      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-      else if (document.msExitFullscreen) document.msExitFullscreen();
-
-      if (handleFullScreen) handleFullScreen(false);
-
-      // ✅ Always navigate to result page
-      navigate("/test-result", { replace: true });
-    } catch (error) {
-      console.error("Submit error:", error);
-      // Even on error, still navigate to result
-      navigate("/test-result", { replace: true });
-    }
-  };
-
-  // Keep giveMark in a ref so timer can call it without stale closure
-  giveMarkRef.current = giveMark;
 
   // ─── Timer effect ──────────────────────────────────────────────
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isCountdown) {
-        // COUNTDOWN mode
         const currentTimeInSeconds =
           reversehour * 3600 + reversemin * 60 + reversesec;
         if (currentTimeInSeconds <= 0) {
@@ -523,7 +256,6 @@ const TakeTest = ({ quest, handleFullScreen }) => {
           setreversesec(59);
         }
       } else {
-        // COUNT UP mode — no auto-submit
         if (sec < 59) setsec((s) => s + 1);
         else {
           setsec(0);
@@ -538,6 +270,300 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     return () => clearTimeout(timer);
   }, [hour, min, sec, reversehour, reversemin, reversesec, isCountdown]);
 
+  // ─── Question navigation ───────────────────────────────────────
+  const handlequestion = (con) => {
+    if (con === "svn") {
+      if (
+        answer !== null &&
+        allAns[currentquestion] !== undefined &&
+        !answeredQuestion.includes(currentquestion)
+      ) {
+        if (markedNotAnswer.includes(currentquestion)) {
+          const r = markedNotAnswer.indexOf(currentquestion);
+          markedNotAnswer.splice(r, 1);
+        }
+        if (notAnswer.includes(currentquestion)) {
+          const r = notAnswer.indexOf(currentquestion);
+          notAnswer.splice(r, 1);
+        }
+        if (markedAndAnswer.includes(currentquestion)) {
+          const r = markedAndAnswer.indexOf(currentquestion);
+          markedAndAnswer.splice(r, 1);
+        }
+        setAnsweredQuestion([...answeredQuestion, currentquestion]);
+        if (question.length - 1 > currentquestion)
+          setcurrentquestion(currentquestion + 1);
+      } else if (allAns[currentquestion] === undefined && answer === null) {
+        if (!notAnswer.includes(currentquestion)) {
+          if (markedNotAnswer.includes(currentquestion)) {
+            const r = markedNotAnswer.indexOf(currentquestion);
+            markedNotAnswer.splice(r, 1);
+          }
+          if (markedAndAnswer.includes(currentquestion)) {
+            const r = markedAndAnswer.indexOf(currentquestion);
+            markedAndAnswer.splice(r, 1);
+          }
+          if (answeredQuestion.includes(currentquestion)) {
+            const r = answeredQuestion.indexOf(currentquestion);
+            answeredQuestion.splice(r, 1);
+          }
+          setNotAnswer([...notAnswer, currentquestion]);
+        }
+      }
+      if (question.length - 1 > currentquestion)
+        setcurrentquestion(currentquestion + 1);
+    } else {
+      if (
+        answer !== null &&
+        allAns[currentquestion] !== undefined &&
+        !answeredQuestion.includes(currentquestion)
+      ) {
+        if (markedNotAnswer.includes(currentquestion)) {
+          const r = markedNotAnswer.indexOf(currentquestion);
+          markedNotAnswer.splice(r, 1);
+        }
+        if (notAnswer.includes(currentquestion)) {
+          const r = notAnswer.indexOf(currentquestion);
+          notAnswer.splice(r, 1);
+        }
+        if (markedAndAnswer.includes(currentquestion)) {
+          const r = markedAndAnswer.indexOf(currentquestion);
+          markedAndAnswer.splice(r, 1);
+        }
+        setAnsweredQuestion([...answeredQuestion, currentquestion]);
+        if (question.length - 1 > currentquestion) setcurrentquestion(con);
+      } else if (
+        answer === null &&
+        allAns[currentquestion] === undefined &&
+        !notAnswer.includes(currentquestion) &&
+        currentquestion !== con
+      ) {
+        if (markedNotAnswer.includes(currentquestion)) {
+          const r = markedNotAnswer.indexOf(currentquestion);
+          markedNotAnswer.splice(r, 1);
+        }
+        if (markedAndAnswer.includes(currentquestion)) {
+          const r = markedAndAnswer.indexOf(currentquestion);
+          markedAndAnswer.splice(r, 1);
+        }
+        if (answeredQuestion.includes(currentquestion)) {
+          const r = answeredQuestion.indexOf(currentquestion);
+          answeredQuestion.splice(r, 1);
+        }
+        setNotAnswer([...notAnswer, currentquestion]);
+        if (question.length - 1 > currentquestion) setcurrentquestion(con);
+      }
+      if (con !== isNaN) setcurrentquestion(con);
+    }
+    setans(null);
+  };
+
+  const markedQuestion = () => {
+    if (allAns[currentquestion] === undefined && answer !== null) {
+      setAllAns((p) => ({ ...p, [currentquestion]: answer }));
+    }
+    if (
+      allAns[currentquestion] !== undefined &&
+      !markedAndAnswer.includes(currentquestion)
+    ) {
+      if (answeredQuestion.includes(currentquestion)) {
+        const r = answeredQuestion.indexOf(currentquestion);
+        answeredQuestion.splice(r, 1);
+      }
+      if (markedNotAnswer.includes(currentquestion)) {
+        const r = markedNotAnswer.indexOf(currentquestion);
+        notAnswer.splice(r, 1);
+      }
+      if (notAnswer.includes(currentquestion)) {
+        const r = notAnswer.indexOf(currentquestion);
+        notAnswer.splice(r, 1);
+      }
+      setMarkedAndAnswer([...markedAndAnswer, currentquestion]);
+      setans(null);
+    } else if (
+      allAns[currentquestion] === undefined &&
+      !markedNotAnswer.includes(currentquestion)
+    ) {
+      setAllAns((p) => {
+        const u = { ...p };
+        delete u[currentquestion];
+        return u;
+      });
+      if (answeredQuestion.includes(currentquestion)) {
+        const r = answeredQuestion.indexOf(currentquestion);
+        answeredQuestion.splice(r, 1);
+      }
+      if (markedAndAnswer.includes(currentquestion)) {
+        const r = markedAndAnswer.indexOf(currentquestion);
+        notAnswer.splice(r, 1);
+      }
+      if (notAnswer.includes(currentquestion)) {
+        const r = notAnswer.indexOf(currentquestion);
+        notAnswer.splice(r, 1);
+      }
+      setMarkedNotAnswer([...markedNotAnswer, currentquestion]);
+    }
+    if (question.length - 1 > currentquestion)
+      setcurrentquestion(currentquestion + 1);
+  };
+
+  const handleAnswer = (ans, qus) => {
+    setans(ans);
+    if (
+      question[currentquestion].answer === qus + 1 &&
+      !correctAns.includes(currentquestion)
+    ) {
+      if (wrongansqus.includes(currentquestion)) {
+        setwrong(wrongans - 1);
+        const r = wrongansqus.indexOf(currentquestion);
+        wrongansqus.splice(r, 1);
+      }
+      setMark((m) => m + 1);
+      setcorrectQus((p) => [...p, currentquestion]);
+      setCorrectAns((p) => [...p, currentquestion]);
+    } else if (
+      question[currentquestion].answer !== qus + 1 &&
+      correctAns.includes(currentquestion)
+    ) {
+      const r = correctAns.indexOf(currentquestion);
+      correctAns.splice(r, 1);
+      const r2 = correctQus.indexOf(currentquestion);
+      correctQus.splice(r2, 1);
+      setMark((m) => m - 1);
+      setwrong((w) => w + 1);
+    }
+    if (
+      question[currentquestion].answer !== qus + 1 &&
+      !correctAns.includes(currentquestion) &&
+      !wrongansqus.includes(currentquestion)
+    ) {
+      setwrong((w) => w + 1);
+      setwrongansqus((p) => [...p, currentquestion]);
+    }
+    setAllAns((p) => ({ ...p, [currentquestion]: ans }));
+  };
+
+  const handleClearAnswer = (questionIndex) => {
+    if (answeredQuestion.includes(currentquestion)) {
+      const r = answeredQuestion.indexOf(currentquestion);
+      answeredQuestion.splice(r, 1);
+    }
+    if (markedAndAnswer.includes(currentquestion)) {
+      const r = markedAndAnswer.indexOf(currentquestion);
+      markedAndAnswer.splice(r, 1);
+    }
+    if (markedNotAnswer.includes(currentquestion)) {
+      const r = markedNotAnswer.indexOf(currentquestion);
+      markedNotAnswer.splice(r, 1);
+    }
+    setAllAns((p) => {
+      const u = { ...p };
+      delete u[questionIndex];
+      return u;
+    });
+    if (!notAnswer.includes(currentquestion))
+      setNotAnswer([...notAnswer, currentquestion]);
+  };
+
+  const handleSubmitClick = () => setIsSubmitDialogOpen(true);
+  const handleCancelSubmit = () => setIsSubmitDialogOpen(false);
+  const handleConfirmSubmit = () => {
+    setIsSubmitDialogOpen(false);
+    giveMark();
+  };
+
+  // ─── Submit & save to backend ─────────────────────────────────
+  const giveMark = async () => {
+    try {
+      const subject = testMeta?.subject || "";
+      const category = testMeta?.category || subject;
+      const timeTaken = isCountdown
+        ? totalTimeInSeconds -
+          (reversehour * 3600 + reversemin * 60 + reversesec)
+        : hour * 3600 + min * 60 + sec;
+      const scorePercentage =
+        question.length > 0 ? Math.round((mark / question.length) * 100) : 0;
+
+      // Save to backend and capture percentile from API response
+      let apiPercentile = null;
+      let savedResultId = null;
+      if (testMeta?.testId) {
+        try {
+          const res = await resultsAPI.submit({
+            testId: testMeta.testId,
+            score: mark,
+            totalQuestions: question.length,
+            wrongAnswers: wrongans,
+            timeTaken,
+            allAnswers: allAns,
+            correctQus,
+            wrongQus: wrongansqus,
+            answeredQus: answeredQuestion,
+            notAnsweredQus: notAnswer,
+            markedAndAnswered: markedAndAnswer,
+            markedNotAnswered: markedNotAnswer,
+          });
+          apiPercentile = res.data?.percentile ?? res.percentile ?? null;
+          savedResultId = res.data?._id ?? res._id ?? null;
+
+          // Emit real-time event so CoachingPage updates instantly
+          const coachingId = res.data?.coachingId ?? null;
+          if (coachingId) {
+            socket.emit("test:submitted", {
+              coachingId: coachingId.toString(),
+              testId: testMeta.testId,
+            });
+          }
+        } catch (err) {
+          console.error("Save result error:", err);
+        }
+      }
+
+      // Exit fullscreen
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
+      if (handleFullScreen) handleFullScreen(false);
+
+      // Pass ALL data to ResultPage via navigation state
+      navigate("/test-result", {
+        replace: true,
+        state: {
+          // Test metadata
+          testId: testMeta?.testId,
+          testTitle: testMeta?.testTitle || testMeta?.category || subject,
+          subject,
+          category,
+          // Score
+          score: mark,
+          totalQuestions: question.length,
+          scorePercentage,
+          percentile: apiPercentile,
+          savedResultId,
+          // Time
+          timeTaken,
+          // Question arrays (for review)
+          questions: question,
+          allAnswers: allAns,
+          // Status arrays
+          correctQus,
+          wrongansqus,
+          answeredQuestion,
+          notAnswer,
+          markedAndAnswer,
+          markedNotAnswer,
+          wrongans,
+        },
+      });
+    } catch (error) {
+      console.error("Submit error:", error);
+      navigate("/test-result", { replace: true });
+    }
+  };
+
+  // Keep giveMark in ref so timer can call it without stale closure
+  giveMarkRef.current = giveMark;
+
   const enterFullscreen = async () => {
     const elem = document.documentElement;
     try {
@@ -546,7 +572,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
         await elem.webkitRequestFullscreen();
       else if (elem.msRequestFullscreen) await elem.msRequestFullscreen();
       setIsFullscreenActive(true);
-    } catch (error) {
+    } catch {
       toast({
         title: "Fullscreen Failed",
         description: "Unable to enter fullscreen mode.",
@@ -563,6 +589,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
     onOpen();
   };
 
+  // ─── Sidebar ──────────────────────────────────────────────────
   const QuestionSidebar = () => (
     <VStack spacing={4} align="stretch" h="100%">
       <Box>
@@ -860,7 +887,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
             <Text fontSize="sm" color="gray.600">
               SECTIONS |{" "}
               <Text as="span" fontWeight="600">
-                {getLocalStorage("Subject") || "General"}
+                {testMeta?.subject || "General"}
               </Text>
             </Text>
             <ReportQuestionDropdown />
@@ -1011,7 +1038,7 @@ const TakeTest = ({ quest, handleFullScreen }) => {
         </>
       )}
 
-      {/* Submit dialog */}
+      {/* Submit confirmation dialog */}
       <AlertDialog
         isOpen={isSubmitDialogOpen}
         leastDestructiveRef={cancelSubmitRef}

@@ -41,12 +41,8 @@ import {
   FaClipboardList,
   FaExternalLinkAlt,
 } from "react-icons/fa";
-import {
-  createCoaching,
-  fetchCoachingBySlug,
-  fetchUserTestData,
-} from "../apis/question";
-import { getCurrentUser } from "../apis/auth";
+import { coachingAPI } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 const EXAM_TYPES = [
   { value: "SSC", label: "SSC", color: "#2563eb" },
@@ -170,13 +166,14 @@ const CoachingRegister = () => {
   }, []);
 
   useEffect(() => {
-    const savedSlug = localStorage.getItem("_myCoachingSlug");
+    const savedSlug = null;
     if (!savedSlug) return;
-    fetchCoachingBySlug(savedSlug)
+    coachingAPI
+      .getBySlug(savedSlug)
       .then((data) => {
         if (data) setRegisteredCoaching(data);
       })
-      .catch(() => localStorage.removeItem("_myCoachingSlug"));
+      .catch(() => {});
   }, []);
 
   const loadTests = useCallback(async () => {
@@ -226,8 +223,8 @@ const CoachingRegister = () => {
         name: form.name.trim(),
         ...(userId ? { owner: userId } : {}),
       };
-      const created = await createCoaching(payload);
-      localStorage.setItem("_myCoachingSlug", created.slug);
+      const created = await coachingAPI.create(payload);
+      // slug in state;
       setRegisteredCoaching(created);
     } catch (err) {
       setError(err.message ?? "Failed to register. Please try again.");

@@ -55,31 +55,33 @@ const ModalPause = ({
                 <Thead>
                   <Tr>
                     <>
-                    <Th>Section</Th>
-                    <Th>Total Question</Th>
-                    <Th>Not visited</Th>
-                    <Th>Not Answered</Th>
-                    <Th>Answered</Th>
-                    <Th>Marked</Th>
-                    <Th>Marked & Answered</Th></>
+                      <Th>Section</Th>
+                      <Th>Total Question</Th>
+                      <Th>Not visited</Th>
+                      <Th>Not Answered</Th>
+                      <Th>Answered</Th>
+                      <Th>Marked</Th>
+                      <Th>Marked & Answered</Th>
+                    </>
                   </Tr>
                 </Thead>
                 <Tbody>
                   <Tr>
                     <>
-                    <Td>{TestHeading}</Td>
-                    <Td>{question.length}</Td>
-                    <Td>
-                      {question.length -
-                        (notAnswer.length +
-                          answered.length +
-                          markedNotAnswer.length +
-                          markedAndAnswer.length)}
-                    </Td>
-                    <Td>{notAnswer.length}</Td>
-                    <Td>{answered.length}</Td>
-                    <Td>{markedNotAnswer.length}</Td>
-                    <Td>{markedAndAnswer.length}</Td></>
+                      <Td>{TestHeading}</Td>
+                      <Td>{question.length}</Td>
+                      <Td>
+                        {question.length -
+                          (notAnswer.length +
+                            answered.length +
+                            markedNotAnswer.length +
+                            markedAndAnswer.length)}
+                      </Td>
+                      <Td>{notAnswer.length}</Td>
+                      <Td>{answered.length}</Td>
+                      <Td>{markedNotAnswer.length}</Td>
+                      <Td>{markedAndAnswer.length}</Td>
+                    </>
                   </Tr>
                 </Tbody>
               </Table>

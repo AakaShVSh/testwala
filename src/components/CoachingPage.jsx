@@ -66,6 +66,7 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import {
   FaSearch,
   FaPlus,
@@ -91,21 +92,8 @@ import {
 } from "react-icons/fa";
 import * as XLSX from "xlsx";
 
-
-const BASE = "https://testwala-backend.onrender.com";
-// "http://localhost:80"; // change to https://testwala-backend.onrender.com for prod
-
-
-const apiFetch = async (path, opts = {}) => {
-  const res = await fetch(`${BASE}${path}`, {
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    ...opts,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.message || "Request failed");
-  return json;
-};
+import { apiFetch } from "../services/api";
+import { socket } from "../services/socket";
 
 const EXAM_TYPES = [
   "SSC",
@@ -136,14 +124,6 @@ const toSlug = (s) =>
     .trim()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
-
-const getCurrentUser = () => {
-  try {
-    return JSON.parse(sessionStorage.getItem("user") || "null");
-  } catch {
-    return null;
-  }
-};
 
 // ─── Excel helpers ────────────────────────────────────────────────
 const downloadExcelTemplate = () => {
@@ -225,6 +205,7 @@ function CreateTestDrawer({
   coachingId,
   coachingExamTypes = [],
   onCreated,
+  currentUser,
 }) {
   const toast = useToast();
   const fileRef = useRef();
@@ -284,7 +265,7 @@ function CreateTestDrawer({
 
     setBusy(true);
     try {
-      const user = getCurrentUser();
+      const user = currentUser;
       if (!user?._id) throw new Error("Please sign in first");
 
       const payload = {
@@ -746,7 +727,7 @@ function CreateTestDrawer({
 // ═══════════════════════════════════════════════
 // ADD COACHING DRAWER
 // ═══════════════════════════════════════════════
-function AddCoachingDrawer({ isOpen, onClose, onCreated }) {
+function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   const [errs, setErrs] = useState({});
@@ -784,7 +765,7 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated }) {
     }
     setBusy(true);
     try {
-      const user = getCurrentUser();
+      const user = currentUser;
       const payload = {
         ...form,
         name: form.name.trim(),
@@ -1107,6 +1088,7 @@ function CoachingDetail({ coaching, onDeleted }) {
   const navigate = useNavigate();
   const toast = useToast();
   const cancelRef = useRef();
+  const { user } = useAuth();
   const {
     isOpen: testOpen,
     onOpen: openTest,
@@ -1123,9 +1105,8 @@ function CoachingDetail({ coaching, onDeleted }) {
   // FIX: default activeTab is null = "All" tab
   const [activeTab, setActiveTab] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [socketConnected, setSocketConnected] = useState(socket.connected);
   const [deletingId, setDeletingId] = useState(null);
-
-  const user = getCurrentUser();
   const isOwner = Boolean(
     user &&
     coaching &&
@@ -1151,6 +1132,55 @@ function CoachingDetail({ coaching, onDeleted }) {
   useEffect(() => {
     loadTests();
   }, [loadTests]);
+
+  // Socket: live update when a student submits a test
+  useEffect(() => {
+    const roomId = coaching._id?.toString();
+    if (!roomId) return;
+    const room = `coaching:${roomId}`;
+
+    const joinRoom = () => {
+      socket.emit("join-coaching", room);
+      console.log("[socket] joined room:", room);
+    };
+
+    if (socket.connected) {
+      joinRoom();
+    } else {
+      socket.connect();
+      socket.once("connect", joinRoom);
+    }
+
+    socket.on("connect", () => setSocketConnected(true));
+    socket.on("disconnect", () => setSocketConnected(false));
+
+    const handleTestAttempted = (data) => {
+      console.log("[socket] test:attempted", data);
+      if (data?.coachingId?.toString() === roomId) {
+        setTests((prev) =>
+          prev.map((t) =>
+            t._id?.toString() === data.testId?.toString()
+              ? {
+                  ...t,
+                  totalAttempts:
+                    data.totalAttempts ?? (t.totalAttempts || 0) + 1,
+                }
+              : t,
+          ),
+        );
+      }
+    };
+
+    socket.on("test:attempted", handleTestAttempted);
+
+    return () => {
+      socket.off("connect", joinRoom);
+      socket.off("connect", () => setSocketConnected(true));
+      socket.off("disconnect", () => setSocketConnected(false));
+      socket.off("test:attempted", handleTestAttempted);
+      socket.emit("leave-coaching", room);
+    };
+  }, [coaching._id]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl).then(() => {
@@ -1220,6 +1250,12 @@ function CoachingDetail({ coaching, onDeleted }) {
 
   return (
     <Box minH="100vh" bg="#f8fafc" fontFamily="'Sora',sans-serif">
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.4); }
+        }
+      `}</style>
       {/* Hero */}
       <Box
         bg="linear-gradient(135deg,#0f1e3a 0%,#1e3a5f 45%,#2d5fa8 100%)"
@@ -1418,10 +1454,33 @@ function CoachingDetail({ coaching, onDeleted }) {
                 color="rgba(255,255,255,.4)"
                 textTransform="uppercase"
                 letterSpacing="2.5px"
-                mb={6}
+                mb={0}
               >
                 Owner Controls
               </Text>
+              <Flex align="center" gap={2} mb={6} mt={2}>
+                <Box
+                  w="8px"
+                  h="8px"
+                  borderRadius="full"
+                  bg={socketConnected ? "#22c55e" : "#ef4444"}
+                  boxShadow={socketConnected ? "0 0 6px #22c55e" : "none"}
+                  style={
+                    socketConnected ? { animation: "pulse 2s infinite" } : {}
+                  }
+                />
+                <Text
+                  fontSize="11px"
+                  fontWeight={600}
+                  color={
+                    socketConnected
+                      ? "rgba(100,255,150,.8)"
+                      : "rgba(255,100,100,.8)"
+                  }
+                >
+                  {socketConnected ? "Live updates active" : "Connecting…"}
+                </Text>
+              </Flex>
               <Box mb={7}>
                 <Text
                   fontSize="13px"
@@ -1925,6 +1984,7 @@ function CoachingDetail({ coaching, onDeleted }) {
         coachingId={coaching._id}
         coachingExamTypes={coachingExamTypes}
         onCreated={onTestCreated}
+        currentUser={user}
       />
 
       <AlertDialog
@@ -1985,6 +2045,7 @@ function CoachingDetail({ coaching, onDeleted }) {
 function CoachingList({ onCoachingCreated }) {
   const navigate = useNavigate();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { user: currentUser } = useAuth();
   const [all, setAll] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -2354,6 +2415,7 @@ function CoachingList({ onCoachingCreated }) {
         isOpen={isOpen}
         onClose={onClose}
         onCreated={handleCreated}
+        currentUser={currentUser}
       />
     </Box>
   );
@@ -2369,7 +2431,7 @@ export default function CoachingPage() {
   const [slugLoading, setSlugLoading] = useState(false);
   const [slugError, setSlugError] = useState(false);
   const navigate = useNavigate();
-  const user = getCurrentUser();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (!slug) return;
@@ -2383,21 +2445,18 @@ export default function CoachingPage() {
 
   useEffect(() => {
     if (slug) return;
+    if (authLoading) return; // wait for auth to resolve
     if (!user?._id) {
       setMyCoaching(null);
       return;
     }
-    apiFetch("/coaching")
+    apiFetch("/coaching/mine")
       .then((r) => {
-        const mine = (r.data ?? []).find(
-          (c) =>
-            String(c.owner) === String(user._id) ||
-            String(c.owner?._id) === String(user._id),
-        );
-        setMyCoaching(mine || null);
+        const mine = r.data ?? null; // /coaching/mine returns single object
+        setMyCoaching(mine);
       })
       .catch(() => setMyCoaching(null));
-  }, [slug, user?._id]);
+  }, [slug, user?._id, authLoading]);
 
   if (slug) {
     if (slugLoading)

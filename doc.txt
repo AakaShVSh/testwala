@@ -1,0 +1,37 @@
+user comes on landing page, user signin or signup, after signup clicking on coaching from navbar
+1st senerio 
+if user does not have coaching then he will see list of coaching after clicking anyone coaching from the list then he will see coaching details along with 
+tests of courses and when user clicks on test he will see detail of test with start test if signin else signin first.when clicked on start test then it 
+should start the test and when time ends or user submits the test it should show the result page with percentile with back button to go back to the tests of that coaching.
+2nd senerio
+if user have coaching then he should see his coaching details with total students, test taken list, create test button. if he clicks create test then he 
+should be ask to submit test paper of any format eg img, pdf, excel and after submit we create test then send update in there coaching page then user should click on it see 
+the details question is proper or not and then send the test link in there whatsapp group then from whats app group student will click on the link and go to the test detail page 
+if not signin then he should signin first else he will see start test then click on start test give the test and then submit the test, after submit he should see 
+his percentile score correct incorrect question etc andback button to go to coaching and coaching can see the test result in there coaching page after clicking on tests  
+
+
+
+
+{
+    "message": "Coaching created",
+    "data": {
+        "name": "Vision IAS Academy",
+        "slug": "vision-ias-academy-1772602438380",
+        "description": "Top coaching for UPSC aspirants in Delhi",
+        "city": "Delhi",
+        "email": "contact@visionias.com",
+        "phone": "011-12345678",
+        "website": "https://visionias.com",
+        "logoUrl": "",
+        "examTypes": [
+            "UPSC",
+            "STATE"
+        ],
+        "owner": "69a7c3921daa05d7ce798bef",
+        "isActive": true,
+        "_id": "69a7c4461daa05d7ce798bf6",
+        "createdAt": "2026-03-04T05:33:58.384Z",
+        "updatedAt": "2026-03-04T05:33:58.384Z"
+    }
+}

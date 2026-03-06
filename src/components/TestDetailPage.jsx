@@ -43,49 +43,12 @@ import {
   FaBookOpen,
   FaCrown,
   FaFire,
-  FaAward,
   FaGlobe,
   FaInfoCircle,
   FaShieldAlt,
-  FaListUl,
 } from "react-icons/fa";
-
-
-const BASE = "https://testwala-backend.onrender.com";
-// "http://localhost:80"; // change to https://testwala-backend.onrender.com for prod
-
-
-const apiFetch = async (path, opts = {}) => {
-  const res = await fetch(`${BASE}${path}`, {
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    ...opts,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.message || "Request failed");
-  return json;
-};
-
-const getCurrentUser = () => {
-  try {
-    return JSON.parse(sessionStorage.getItem("user") || "null");
-  } catch {
-    return null;
-  }
-};
-
-const getLS = (key) => {
-  try {
-    return JSON.parse(localStorage.getItem(key));
-  } catch {
-    return null;
-  }
-};
-const setLS = (key, val) => {
-  try {
-    localStorage.setItem(key, JSON.stringify(val));
-  } catch {}
-};
+import { apiFetch } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
 // ─── Stat Card ────────────────────────────────────────────────────
 function StatCard({ icon, label, value, color = "#4a72b8", bg = "#eff6ff" }) {
@@ -193,7 +156,6 @@ function LeaderRow({ rank, result, currentUserId }) {
 }
 
 // ─── Test Info / Landing Page ─────────────────────────────────────
-// This is shown BEFORE starting the test - shows all test details and a big Start button
 function TestInfoPage({ test, stats, onStart, user, myResult }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -201,16 +163,6 @@ function TestInfoPage({ test, stats, onStart, user, myResult }) {
   const isPrivate =
     test.visibility === "private" || test.accessType === "private";
   const questionCount = test.questions?.length || 0;
-
-  const handleStartClick = () => {
-    if (!user) {
-      // Redirect to signin, then come back to THIS page
-      const returnPath = location.pathname + location.search;
-      navigate(`/auth/signin?redirect=${encodeURIComponent(returnPath)}`);
-      return;
-    }
-    onStart();
-  };
 
   const RULES = [
     "Do not switch tabs or windows during the test",
@@ -222,7 +174,6 @@ function TestInfoPage({ test, stats, onStart, user, myResult }) {
 
   return (
     <Box minH="100vh" bg="#f8fafc" fontFamily="'Sora',sans-serif">
-      {/* Hero */}
       <Box
         bg="linear-gradient(135deg,#0f1e3a 0%,#1e3a5f 50%,#2d5fa8 100%)"
         px={{ base: 4, md: 8 }}
@@ -346,12 +297,9 @@ function TestInfoPage({ test, stats, onStart, user, myResult }) {
         </Box>
       </Box>
 
-      {/* Body */}
       <Box maxW="800px" mx="auto" px={{ base: 4, md: 8 }} py={8}>
         <Grid templateColumns={{ base: "1fr", md: "1fr 340px" }} gap={6}>
-          {/* Left */}
           <Box>
-            {/* Test Details */}
             <Box
               bg="white"
               borderRadius="16px"
@@ -404,7 +352,6 @@ function TestInfoPage({ test, stats, onStart, user, myResult }) {
               </Grid>
             </Box>
 
-            {/* Instructions */}
             <Box
               bg="white"
               borderRadius="16px"
@@ -448,7 +395,6 @@ function TestInfoPage({ test, stats, onStart, user, myResult }) {
             </Box>
           </Box>
 
-          {/* Right - Start Card */}
           <Box>
             <Box
               bg="white"
@@ -517,7 +463,7 @@ function TestInfoPage({ test, stats, onStart, user, myResult }) {
                     fontWeight={800}
                     fontSize="15px"
                     leftIcon={<FaPlay />}
-                    onClick={handleStartClick}
+                    onClick={onStart}
                     _hover={{
                       opacity: 0.9,
                       transform: "translateY(-2px)",
@@ -558,7 +504,7 @@ function TestInfoPage({ test, stats, onStart, user, myResult }) {
                   fontWeight={800}
                   fontSize="16px"
                   leftIcon={<FaPlay />}
-                  onClick={handleStartClick}
+                  onClick={onStart}
                   _hover={{
                     opacity: 0.9,
                     transform: "translateY(-2px)",
@@ -577,7 +523,6 @@ function TestInfoPage({ test, stats, onStart, user, myResult }) {
               )}
             </Box>
 
-            {/* Quick Stats */}
             {stats && stats.totalAttempts > 0 && (
               <Box
                 bg="white"
@@ -650,14 +595,14 @@ export default function TestDetailPage() {
   const location = useLocation();
   const toast = useToast();
   const cancelRef = useRef();
-  const user = getCurrentUser();
+  const { user } = useAuth();
 
   const [test, setTest] = useState(null);
   const [stats, setStats] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [myResult, setMyResult] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState("info"); // info | leaderboard | questions
+  const [tab, setTab] = useState("info");
   const [copied, setCopied] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
   const [pwInput, setPwInput] = useState("");
@@ -677,7 +622,7 @@ export default function TestDetailPage() {
       setLeaderboard(lbRes.data || []);
 
       if (user?._id) {
-        apiFetch(`/results/student/${user._id}?testId=${id}`)
+        apiFetch(`/results/student/me?testId=${id}`)
           .then((r) => setMyResult(r.data?.[0] || null))
           .catch(() => {});
       }
@@ -731,24 +676,26 @@ export default function TestDetailPage() {
     });
   };
 
-  // The actual function to launch the test (prep localStorage then navigate)
+  // ─── FIXED: navigate with state instead of localStorage ───────
   const launchTest = () => {
     if (!test.questions || test.questions.length === 0) {
       toast({ title: "This test has no questions", status: "error" });
       return;
     }
-
-    // ✅ CRITICAL: Set Testdata as empty array [] so TakeTest uses COUNT-UP timer
-    // If we set it as [test] (length=1), Testdata.length > 1 check is false, so COUNT-UP
-    // The timer logic: Testdata.length > 1 → countdown, else → count up
-    setLS("savedTestQuestions", test.questions);
-    setLS("category", test.title);
-    setLS("Subject", test.subject || "general");
-    setLS("currentTestId", test._id);
-    setLS("Testdata", []); // ✅ Empty array = single test = COUNT-UP timer, no auto-submit
-    setLS("currentTestTimeLimitMin", timeLimitMin); // Store time limit for custom usage
-
-    navigate("/test");
+    // Pass everything the TakeTest component needs via navigation state
+    navigate("/test", {
+      state: {
+        quest: test.questions,
+        testMeta: {
+          subject: test.subject || "general",
+          category: test.examType || test.title,
+          timeLimitMin: timeLimitMin, // >0 = countdown, 0 = count-up
+          testIndex: 0,
+          testId: test._id,
+          testTitle: test.title,
+        },
+      },
+    });
   };
 
   const handleStartTest = () => {
@@ -783,7 +730,7 @@ export default function TestDetailPage() {
     }
   };
 
-  // If tab is "info" (default), show the full-page info/landing view
+  // Non-owner: show full info/landing page
   if (tab === "info" && !isOwner) {
     return (
       <>
@@ -794,7 +741,6 @@ export default function TestDetailPage() {
           user={user}
           myResult={myResult}
         />
-        {/* Password Modal */}
         <Modal isOpen={pwOpen} onClose={() => setPwOpen(false)} isCentered>
           <ModalOverlay backdropFilter="blur(4px)" />
           <ModalContent
@@ -854,12 +800,11 @@ export default function TestDetailPage() {
     );
   }
 
-  // Owner view — full dashboard
+  // Owner dashboard view
   const TABS = ["overview", "leaderboard", ...(isOwner ? ["questions"] : [])];
 
   return (
     <Box minH="100vh" bg="#f8fafc" fontFamily="'Sora',sans-serif">
-      {/* ── HERO ── */}
       <Box
         bg="linear-gradient(135deg,#0f1e3a 0%,#1e3a5f 50%,#2d5fa8 100%)"
         px={{ base: 4, md: 8 }}
@@ -1130,9 +1075,8 @@ export default function TestDetailPage() {
         </Box>
       </Box>
 
-      {/* ── BODY ── */}
+      {/* Body */}
       <Box maxW="1100px" mx="auto" px={{ base: 4, md: 8 }} py={8}>
-        {/* Tabs */}
         <Flex gap={2} mb={6} flexWrap="wrap">
           {TABS.map((t) => (
             <Box
@@ -1159,7 +1103,6 @@ export default function TestDetailPage() {
           ))}
         </Flex>
 
-        {/* Overview */}
         {tab === "overview" && (
           <Grid
             templateColumns={{
@@ -1198,7 +1141,6 @@ export default function TestDetailPage() {
           </Grid>
         )}
 
-        {/* Leaderboard */}
         {tab === "leaderboard" && (
           <Box
             bg="white"
@@ -1254,7 +1196,6 @@ export default function TestDetailPage() {
           </Box>
         )}
 
-        {/* Questions (owner only) */}
         {tab === "questions" && isOwner && (
           <Box
             bg="white"
