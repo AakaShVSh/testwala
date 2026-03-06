@@ -1,47 +1,37 @@
-// Fixed ResultPage.jsx - Added reactive bookmark state
-// Key changes:
-// 1. Bookmark state updates when questions change
-// 2. Better localStorage synchronization
-// 3. Added useCallback for performance
+/**
+ * ResultPage.jsx
+ *
+ * Reads ALL data from useLocation().state — zero localStorage.
+ * State sent by TakeTest.jsx:
+ *   testId, testTitle, subject, category,
+ *   score, totalQuestions, scorePercentage, percentile, savedResultId, timeTaken,
+ *   questions[], allAnswers{}, correctQus[], wrongansqus[], answeredQuestion[],
+ *   notAnswer[], markedAndAnswer[], markedNotAnswer[], wrongans
+ */
 
 import {
   Box,
   Flex,
-  Heading,
-  Icon,
   Text,
   Badge,
   Progress,
-  Container,
+  Icon,
+  Spinner,
   Grid,
-  Card,
-  CardBody,
-  Stat,
-  StatLabel,
-  StatNumber,
+  GridItem,
   Tabs,
   TabList,
   TabPanels,
   Tab,
   TabPanel,
-  Divider,
-  Circle,
   VStack,
   HStack,
+  Divider,
   IconButton,
-  useToast,
   Tooltip,
+  Circle,
+  useToast,
 } from "@chakra-ui/react";
-import {
-  FiTarget,
-  FiCheckCircle,
-  FiXCircle,
-  FiCircle,
-  FiArrowLeft,
-  FiFlag,
-  FiAlertCircle,
-  FiBookmark,
-} from "react-icons/fi";
 import { Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -54,11 +44,21 @@ import {
   Tooltip as ChartTooltip,
   Legend,
 } from "chart.js";
-import { useEffect, useState, useCallback } from "react";
-import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
-import { Link } from "react-router-dom";
-import AdBanner from "./AdBanner";
-import FloatingVideoAd from "./FloatingVideoAd";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  FaArrowLeft,
+  FaTrophy,
+  FaClock,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaFlag,
+  FaCircle,
+  FaGraduationCap,
+  FaMedal,
+  FaChartBar,
+} from "react-icons/fa";
+import { FiBookmark, FiAlertCircle, FiTarget, FiAward } from "react-icons/fi";
 
 ChartJS.register(
   ArcElement,
@@ -71,2058 +71,1105 @@ ChartJS.register(
   Legend,
 );
 
-const ResultPage = () => {
-  const [totalMark, setTotalMark] = useState(0);
-  const [TotalQuestion, SetTotalQuestion] = useState([]);
-  const [allAnswers, setAllAnswers] = useState({});
-  const [savedQuestionIndices, setSavedQuestionIndices] = useState(new Set());
-  const [testData, setTestData] = useState(null);
-  const toast = useToast();
+// ── helpers ───────────────────────────────────────────────────────────────
+const fmtTime = (s) => {
+  if (!s && s !== 0) return "—";
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h ${m}m ${sec}s`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+};
 
-  const [answeredQuestion, setAnsweredQuestion] = useState([]);
-  const [correctQus, setCorrectQus] = useState([]);
-  const [wrongAnsQus, setWrongAnsQus] = useState([]);
-  const [markedAndAnswer, setMarkedAndAnswer] = useState([]);
-  const [markedNotAnswer, setMarkedNotAnswer] = useState([]);
-  const [notAnswer, setNotAnswer] = useState([]);
+const pctColor = (p) => (p >= 70 ? "#16a34a" : p >= 40 ? "#d97706" : "#ef4444");
+const pctBg = (p) => (p >= 70 ? "#f0fdf4" : p >= 40 ? "#fffbeb" : "#fef2f2");
+const pctLabel = (p) =>
+  p >= 80
+    ? "Excellent 🌟"
+    : p >= 60
+      ? "Good 👍"
+      : p >= 40
+        ? "Average 📈"
+        : "Needs Work 💪";
 
-  // ✅ FIXED: Made loadSavedQuestions a useCallback so it can be a dependency
-  const loadSavedQuestions = useCallback(() => {
-    if (TotalQuestion.length === 0) return;
+// ── QuestionCard ──────────────────────────────────────────────────────────
+function QuestionCard({
+  question,
+  index,
+  allAnswers,
+  correctQus,
+  wrongansqus,
+  markedAndAnswer,
+  markedNotAnswer,
+  notAnswer,
+  answeredQuestion,
+}) {
+  if (!question) return null;
 
-    const subject = getLocalStorage("Subject");
-    const subjectKey = subject?.toLowerCase() || "general studies";
-    const allSaved = getLocalStorage("savedQuestionsBySubject") || {};
-    const savedForSubject = allSaved[subjectKey] || [];
-    const savedTexts = new Set(savedForSubject.map((q) => q.qus));
-    const savedIndices = new Set();
-
-    TotalQuestion.forEach((q, idx) => {
-      if (savedTexts.has(q.qus)) savedIndices.add(idx);
-    });
-
-    setSavedQuestionIndices(savedIndices);
-
-    console.log("🔄 Loaded saved questions:", {
-      subject: subjectKey,
-      totalSaved: savedIndices.size,
-      indices: Array.from(savedIndices),
-    });
-  }, [TotalQuestion]);
-
-  useEffect(() => {
-    const savedTest = getLocalStorage("test");
-    if (!savedTest || !savedTest[0]) return;
-
-    const data = savedTest[0];
-    SetTotalQuestion(data.questions || []);
-    setTotalMark(data.score || 0);
-    setAllAnswers(data.allAnswer || {});
-    setTestData(data);
-    setAnsweredQuestion(data.answeredQuestion || []);
-    setCorrectQus(data.correctQus || []);
-    setWrongAnsQus(data.wrongansqus || []);
-    setMarkedAndAnswer(data.markedAndAnswer || []);
-    setMarkedNotAnswer(data.markedNotAnswer || []);
-    setNotAnswer(data.notAnswer || []);
-  }, []);
-
-  // ✅ FIXED: Reload bookmarks when questions change
-  useEffect(() => {
-    loadSavedQuestions();
-  }, [loadSavedQuestions]);
-
-  // ✅ NEW: Listen for storage changes (if user bookmarks in another tab)
-  useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === "savedQuestionsBySubject") {
-        console.log("📡 Storage changed, reloading bookmarks");
-        loadSavedQuestions();
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, [loadSavedQuestions]);
-
-  const toggleSaveQuestion = (question, index) => {
-    const subject = getLocalStorage("Subject");
-    const subjectKey = subject?.toLowerCase() || "general studies";
-    const allSaved = getLocalStorage("savedQuestionsBySubject") || {};
-    const savedForSubject = allSaved[subjectKey] || [];
-    const existingIndex = savedForSubject.findIndex(
-      (q) => q.qus === question.qus,
-    );
-
-    if (existingIndex >= 0) {
-      // Remove bookmark
-      savedForSubject.splice(existingIndex, 1);
-      allSaved[subjectKey] = savedForSubject;
-      setLocalStorage("savedQuestionsBySubject", allSaved);
-
-      const qusno = (getLocalStorage("qusno") || []).filter(
-        (t) => t !== question.qus,
-      );
-      setLocalStorage("qusno", qusno);
-
-      setSavedQuestionIndices((prev) => {
-        const s = new Set(prev);
-        s.delete(index);
-        return s;
-      });
-
-      toast({
-        title: "Question removed",
-        status: "info",
-        duration: 2000,
-        isClosable: true,
-        position: "top",
-      });
-    } else {
-      // Add bookmark
-      savedForSubject.push(question);
-      allSaved[subjectKey] = savedForSubject;
-      setLocalStorage("savedQuestionsBySubject", allSaved);
-
-      const qusno = getLocalStorage("qusno") || [];
-      if (!qusno.includes(question.qus)) {
-        qusno.push(question.qus);
-        setLocalStorage("qusno", qusno);
-      }
-
-      setSavedQuestionIndices((prev) => new Set(prev).add(index));
-
-      toast({
-        title: "Question saved!",
-        status: "success",
-        duration: 2000,
-        isClosable: true,
-        position: "top",
-      });
-    }
-  };
-
-  const totalQ = TotalQuestion.length;
-  const correctCount = correctQus.length;
-  const wrongCount = wrongAnsQus.length;
-  const answeredCount = answeredQuestion.length;
-  const markedAndAnswerCount = markedAndAnswer.length;
-  const markedNotAnswerCount = markedNotAnswer.length;
-  const markedTotal = markedAndAnswerCount + markedNotAnswerCount;
-  const notAnswerCount = notAnswer.length;
-  const accuracy = totalQ > 0 ? (correctCount / totalQ) * 100 : 0;
-  const completion =
-    totalQ > 0
-      ? Math.round(((answeredCount + markedAndAnswerCount) / totalQ) * 100)
-      : 0;
-
-  const getStatus = (index) => {
+  const getStatus = () => {
     if (correctQus.includes(index)) return "correct";
-    if (wrongAnsQus.includes(index)) return "incorrect";
+    if (wrongansqus.includes(index)) return "incorrect";
     if (markedAndAnswer.includes(index)) return "markedAnswered";
-    if (markedNotAnswer.includes(index)) return "markedNotAnswered";
-    if (notAnswer.includes(index)) return "notAnswered";
+    if (markedNotAnswer.includes(index)) return "markedSkipped";
+    if (notAnswer.includes(index)) return "skipped";
     if (answeredQuestion.includes(index)) return "answered";
     return "notVisited";
   };
 
-  const STATUS_CFG = {
+  const STATUS = {
     correct: {
-      color: "green",
-      text: "Correct",
-      icon: FiCheckCircle,
-      border: "green.200",
+      label: "Correct",
+      color: "#16a34a",
+      bg: "#f0fdf4",
+      border: "#bbf7d0",
+      icon: FaCheckCircle,
     },
     incorrect: {
-      color: "red",
-      text: "Incorrect",
-      icon: FiXCircle,
-      border: "red.200",
+      label: "Incorrect",
+      color: "#ef4444",
+      bg: "#fef2f2",
+      border: "#fecaca",
+      icon: FaTimesCircle,
     },
     markedAnswered: {
-      color: "purple",
-      text: "Marked & Answered",
-      icon: FiFlag,
-      border: "purple.200",
+      label: "Marked & Answered",
+      color: "#7c3aed",
+      bg: "#f5f3ff",
+      border: "#ddd6fe",
+      icon: FaFlag,
     },
-    markedNotAnswered: {
-      color: "orange",
-      text: "Marked (No Answer)",
-      icon: FiFlag,
-      border: "orange.200",
+    markedSkipped: {
+      label: "Marked (Skipped)",
+      color: "#d97706",
+      bg: "#fffbeb",
+      border: "#fde68a",
+      icon: FaFlag,
     },
-    notAnswered: {
-      color: "gray",
-      text: "Not Attempted",
-      icon: FiCircle,
-      border: "gray.100",
+    skipped: {
+      label: "Not Attempted",
+      color: "#64748b",
+      bg: "#f8fafc",
+      border: "#e2e8f0",
+      icon: FaCircle,
     },
     answered: {
-      color: "blue",
-      text: "Answered",
-      icon: FiCheckCircle,
-      border: "blue.200",
+      label: "Answered",
+      color: "#2563eb",
+      bg: "#eff6ff",
+      border: "#bfdbfe",
+      icon: FaCheckCircle,
     },
     notVisited: {
-      color: "gray",
-      text: "Not Visited",
-      icon: FiCircle,
-      border: "gray.100",
+      label: "Not Visited",
+      color: "#94a3b8",
+      bg: "#f8fafc",
+      border: "#e2e8f0",
+      icon: FaCircle,
     },
   };
 
-  const doughnutData = {
-    labels: ["Correct", "Incorrect", "Not Attempted"],
-    datasets: [
-      {
-        data: [correctCount, wrongCount, notAnswerCount],
-        backgroundColor: ["#48BB78", "#F56565", "#CBD5E0"],
-        borderWidth: 0,
-        cutout: "75%",
-      },
-    ],
-  };
+  const status = getStatus();
+  const cfg = STATUS[status];
 
-  const doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: "rgba(0,0,0,0.8)",
-        padding: 12,
-        borderRadius: 8,
-      },
-    },
-  };
+  // allAnswers keys can be numbers or strings
+  const userAnswerIdx = allAnswers[index] ?? allAnswers[String(index)];
+  const userAnswerText =
+    userAnswerIdx !== undefined && userAnswerIdx !== null
+      ? question.options?.[userAnswerIdx]
+      : null;
 
-  // QuestionCard component - same as before but with reactive bookmark
-  const QuestionCard = ({ question, index }) => {
-    if (!question) return null;
-    const userAnswer = allAnswers[index] ?? allAnswers[String(index)];
-    const correctIdx = question.answer - 1;
-    const correctAnswerText = question.options?.[correctIdx];
-    const status = getStatus(index);
-    const cfg = STATUS_CFG[status] || STATUS_CFG.notVisited;
-    const isSaved = savedQuestionIndices.has(index);
-
-    return (
-      <Card
-        mb={{ base: 3, md: 4 }}
-        bg="white"
-        shadow="md"
-        borderRadius={{ base: "md", md: "lg" }}
-        border="2px"
-        borderColor={cfg.border}
-        width="100%"
-      >
-        <CardBody p={{ base: 3, sm: 4, md: 5 }}>
-          <Flex
-            justify="space-between"
-            align="flex-start"
-            mb={{ base: 3, md: 4 }}
-            gap={2}
-            wrap="wrap"
-          >
-            <HStack spacing={{ base: 1.5, sm: 2, md: 3 }} wrap="wrap" flex="1">
-              <Circle
-                size={{ base: "24px", sm: "28px", md: "32px" }}
-                bg="gray.100"
-                fontWeight="bold"
-                fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                color="gray.700"
-              >
-                {index + 1}
-              </Circle>
-              <Badge
-                colorScheme={cfg.color}
-                px={{ base: 1.5, sm: 2, md: 3 }}
-                py={1}
-                borderRadius="full"
-                fontSize="2xs"
-              >
-                <HStack spacing={1}>
-                  <Icon as={cfg.icon} boxSize={{ base: 2.5, md: 3 }} />
-                  <Text>{cfg.text}</Text>
-                </HStack>
-              </Badge>
-            </HStack>
-            <Tooltip
-              label={isSaved ? "Remove from saved" : "Save question"}
-              placement="top"
-              hasArrow
-            >
-              <IconButton
-                icon={<FiBookmark />}
-                size={{ base: "sm", md: "md" }}
-                variant={isSaved ? "solid" : "outline"}
-                colorScheme={isSaved ? "purple" : "gray"}
-                aria-label={isSaved ? "Remove bookmark" : "Bookmark question"}
-                onClick={() => toggleSaveQuestion(question, index)}
-                _hover={{ transform: "scale(1.1)", shadow: "md" }}
-                transition="all 0.2s"
-              />
-            </Tooltip>
-          </Flex>
-
-          <Text
-            fontSize={{ base: "xs", sm: "sm", md: "md" }}
-            fontWeight="semibold"
-            color="gray.700"
-            mb={{ base: 3, md: 4 }}
-            lineHeight="tall"
-          >
-            {question.qus}
-          </Text>
-
-          <VStack
-            align="stretch"
-            spacing={{ base: 2, md: 3 }}
-            mb={{ base: 3, md: 4 }}
-          >
-            {question.options?.map((option, optIndex) => {
-              const isUserAns = userAnswer === option;
-              const isCorrectOption = optIndex === correctIdx;
-              const isWrongPick = isUserAns && status === "incorrect";
-
-              let borderColor = "gray.200";
-              let bgColor = "transparent";
-              let circleBg = "gray.300";
-
-              if (isCorrectOption) {
-                borderColor = "green.400";
-                bgColor = "green.50";
-                circleBg = "green.500";
-              } else if (isWrongPick) {
-                borderColor = "red.400";
-                bgColor = "red.50";
-                circleBg = "red.500";
-              }
-
-              return (
-                <Box
-                  key={optIndex}
-                  p={{ base: 2, sm: 2.5, md: 3 }}
-                  borderRadius="md"
-                  border="2px"
-                  borderColor={borderColor}
-                  bg={bgColor}
-                >
-                  <Flex
-                    justify="space-between"
-                    align="center"
-                    gap={2}
-                    wrap="wrap"
-                  >
-                    <HStack spacing={{ base: 2, md: 3 }} flex="1" minW="0">
-                      <Circle
-                        size={{ base: "20px", sm: "22px", md: "24px" }}
-                        bg={circleBg}
-                        color="white"
-                        fontSize="2xs"
-                        fontWeight="bold"
-                        flexShrink={0}
-                      >
-                        {String.fromCharCode(65 + optIndex)}
-                      </Circle>
-                      <Text
-                        fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                        color="gray.700"
-                        fontWeight={
-                          isUserAns || isCorrectOption ? "semibold" : "normal"
-                        }
-                        wordBreak="break-word"
-                      >
-                        {option}
-                      </Text>
-                    </HStack>
-                    <HStack spacing={1} flexShrink={0}>
-                      {isCorrectOption && (
-                        <Badge colorScheme="green" fontSize="2xs">
-                          Correct Answer
-                        </Badge>
-                      )}
-                      {isUserAns && status === "correct" && (
-                        <Badge colorScheme="green" fontSize="2xs">
-                          Your Answer ✓
-                        </Badge>
-                      )}
-                      {isWrongPick && (
-                        <Badge colorScheme="red" fontSize="2xs">
-                          Your Answer ✗
-                        </Badge>
-                      )}
-                      {isUserAns && status === "markedAnswered" && (
-                        <Badge colorScheme="purple" fontSize="2xs">
-                          Your Answer
-                        </Badge>
-                      )}
-                    </HStack>
-                  </Flex>
-                </Box>
-              );
-            })}
-          </VStack>
-
-          {question.explanation && (
-            <Box
-              p={{ base: 2.5, sm: 3, md: 4 }}
-              bg="blue.50"
-              borderRadius="md"
-              borderLeft="4px"
-              borderColor="blue.400"
-              mb={{ base: 3, md: 4 }}
-            >
-              <HStack spacing={2} mb={2}>
-                <Icon
-                  as={FiAlertCircle}
-                  color="blue.500"
-                  boxSize={{ base: 3.5, sm: 4, md: 5 }}
-                />
-                <Text
-                  fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                  fontWeight="bold"
-                  color="blue.700"
-                >
-                  Explanation
-                </Text>
-              </HStack>
-              <Text
-                fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                color="blue.800"
-                lineHeight="tall"
-              >
-                {question.explanation}
-              </Text>
-            </Box>
-          )}
-
-          <Box pt={{ base: 3, md: 4 }} borderTop="1px" borderColor="gray.200">
-            <Flex
-              justify="space-between"
-              align={{ base: "flex-start", sm: "center" }}
-              gap={{ base: 2, md: 3 }}
-              direction={{ base: "column", sm: "row" }}
-            >
-              <VStack align="start" spacing={1} flex="1">
-                <Text
-                  fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                  color="gray.600"
-                >
-                  Your Answer:{" "}
-                  <Text
-                    as="span"
-                    fontWeight="bold"
-                    color={
-                      status === "correct"
-                        ? "green.600"
-                        : status === "incorrect"
-                          ? "red.600"
-                          : "gray.500"
-                    }
-                  >
-                    {userAnswer || "Not Attempted"}
-                  </Text>
-                </Text>
-                <Text
-                  fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                  color="gray.600"
-                >
-                  Correct Answer:{" "}
-                  <Text as="span" fontWeight="bold" color="green.600">
-                    {correctAnswerText}
-                  </Text>
-                </Text>
-              </VStack>
-              {status === "correct" && (
-                <Badge colorScheme="green" px={3} py={1} fontSize="2xs">
-                  +1 Point
-                </Badge>
-              )}
-              {status === "incorrect" && (
-                <Badge colorScheme="red" px={3} py={1} fontSize="2xs">
-                  0 Points
-                </Badge>
-              )}
-              {status === "markedAnswered" && (
-                <Badge colorScheme="purple" px={3} py={1} fontSize="2xs">
-                  Marked
-                </Badge>
-              )}
-              {status === "markedNotAnswered" && (
-                <Badge colorScheme="orange" px={3} py={1} fontSize="2xs">
-                  Marked
-                </Badge>
-              )}
-              {(status === "notAnswered" || status === "notVisited") && (
-                <Badge colorScheme="gray" px={3} py={1} fontSize="2xs">
-                  Not Attempted
-                </Badge>
-              )}
-            </Flex>
-          </Box>
-        </CardBody>
-      </Card>
-    );
-  };
-
-  const renderQuestions = (indices) => {
-    if (!indices || indices.length === 0) {
-      return (
-        <Box textAlign="center" py={{ base: 6, md: 10 }}>
-          <Icon
-            as={FiAlertCircle}
-            boxSize={{ base: 8, sm: 10, md: 12 }}
-            color="gray.300"
-            mb={4}
-          />
-          <Text color="gray.500" fontSize={{ base: "xs", sm: "sm", md: "md" }}>
-            No questions in this category
-          </Text>
-        </Box>
-      );
-    }
-    return indices.map((qIndex) => {
-      const q = TotalQuestion[qIndex];
-      if (!q) return null;
-      return <QuestionCard key={qIndex} question={q} index={qIndex} />;
-    });
-  };
-
-  const allIndices = Array.from({ length: totalQ }, (_, i) => i);
-  const markedAllIndices = [...markedNotAnswer, ...markedAndAnswer];
-
-  const MetricCard = ({ icon, label, value, subtext, color, bgColor }) => (
-    <Card
-      bg="white"
-      shadow="sm"
-      borderRadius={{ base: "lg", md: "xl" }}
-      overflow="hidden"
-      transition="all 0.3s"
-      _hover={{ shadow: "md", transform: "translateY(-4px)" }}
-      border="1px"
-      borderColor="gray.100"
-      height="100%"
-    >
-      <CardBody p={{ base: 3, sm: 4, md: 5 }}>
-        <Flex
-          align="center"
-          justify="space-between"
-          mb={{ base: 2, md: 3 }}
-          direction={{ base: "column", sm: "row" }}
-          gap={2}
-        >
-          <Circle size={{ base: "36px", sm: "40px", md: "48px" }} bg={bgColor}>
-            <Icon as={icon} boxSize={{ base: 3, sm: 4, md: 5 }} color={color} />
-          </Circle>
-          <Badge
-            colorScheme={color.split(".")[0]}
-            fontSize={{ base: "2xs", md: "xs" }}
-            px={{ base: 2, md: 3 }}
-            py={1}
-            borderRadius="full"
-          >
-            {subtext}
-          </Badge>
-        </Flex>
-        <Stat>
-          <StatLabel
-            fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-            color="gray.500"
-            mb={1}
-          >
-            {label}
-          </StatLabel>
-          <StatNumber
-            fontSize={{ base: "lg", sm: "xl", md: "2xl" }}
-            fontWeight="bold"
-            color="gray.700"
-          >
-            {value}
-          </StatNumber>
-        </Stat>
-      </CardBody>
-    </Card>
-  );
-
-  const ScoreItem = ({ icon, label, value, color }) => (
-    <Flex align="center" py={{ base: 2, md: 3 }}>
-      <Circle
-        size={{ base: "32px", sm: "36px", md: "40px" }}
-        bg={`${color}.50`}
-        mr={{ base: 2, md: 3 }}
-      >
-        <Icon
-          as={icon}
-          color={`${color}.600`}
-          boxSize={{ base: 3, sm: 4, md: 5 }}
-        />
-      </Circle>
-      <Box flex="1">
-        <Text
-          fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-          color="gray.600"
-          mb={1}
-        >
-          {label}
-        </Text>
-        <Text
-          fontSize={{ base: "sm", sm: "md", md: "lg" }}
-          fontWeight="semibold"
-          color="gray.700"
-        >
-          {value}
-        </Text>
-      </Box>
-    </Flex>
-  );
-
-  const TABS = [
-    {
-      label: "All Questions",
-      count: totalQ,
-      indices: allIndices,
-      headingColor: "gray.700",
-      desc: "Every question with its status, your answer, and the correct answer.",
-    },
-    {
-      label: "Answered",
-      count: answeredCount,
-      indices: answeredQuestion,
-      headingColor: "blue.600",
-      desc: "All questions you submitted an answer for (correct + incorrect).",
-    },
-    {
-      label: "Correct",
-      count: correctCount,
-      indices: correctQus,
-      headingColor: "green.600",
-      desc: "Questions you answered correctly. 🎉",
-    },
-    {
-      label: "Incorrect",
-      count: wrongCount,
-      indices: wrongAnsQus,
-      headingColor: "red.600",
-      desc: "Review these to improve. 💡 Bookmark them for later practice!",
-    },
-    {
-      label: "Marked",
-      count: markedTotal,
-      indices: markedAllIndices,
-      headingColor: "orange.600",
-      desc: null,
-    },
-    {
-      label: "Not Attempted",
-      count: notAnswerCount,
-      indices: notAnswer,
-      headingColor: "gray.600",
-      desc: "Questions you skipped entirely.",
-    },
-  ];
+  // answer stored as 0-based index directly
+  const correctIdx =
+    typeof question.answer === "number" ? question.answer : question.answer - 1;
+  const correctText = question.options?.[correctIdx];
 
   return (
     <Box
-      minH="100vh"
-      bgGradient="linear(to-br, blue.50, purple.50)"
-      py={{ base: 3, sm: 4, md: 6, lg: 8 }}
-      px={{ base: 2, sm: 3, md: 6, lg: 10 }}
+      bg="white"
+      borderRadius="14px"
+      border="1.5px solid"
+      borderColor={cfg.border}
+      overflow="hidden"
+      mb={3}
+      boxShadow="0 2px 8px rgba(0,0,0,.04)"
+      style={{ background: cfg.bg }}
     >
-      <Container maxW="1400px" px={{ base: 2, sm: 3, md: 4 }}>
-        {/* Header */}
-        <Flex align="center" mb={{ base: 4, sm: 6, md: 8 }}>
-          <Link to="/">
-            <Icon
-              as={FiArrowLeft}
-              boxSize={{ base: 4, sm: 5, md: 6 }}
-              color="purple.600"
-              cursor="pointer"
-              mr={{ base: 2, sm: 3, md: 4 }}
-              _hover={{ transform: "translateX(-4px)" }}
-              transition="all 0.2s"
-            />
-          </Link>
+      {/* Header bar */}
+      <Flex
+        align="center"
+        justify="space-between"
+        px={5}
+        py={3}
+        borderBottom="1px solid"
+        borderColor={cfg.border}
+        bg="white"
+      >
+        <Flex align="center" gap={3}>
+          <Flex
+            w="28px"
+            h="28px"
+            bg={cfg.bg}
+            borderRadius="full"
+            align="center"
+            justify="center"
+            border="1.5px solid"
+            borderColor={cfg.border}
+          >
+            <Text fontSize="12px" fontWeight={800} color={cfg.color}>
+              {index + 1}
+            </Text>
+          </Flex>
+          <Badge
+            px={3}
+            py={1}
+            borderRadius="full"
+            fontSize="11px"
+            fontWeight={700}
+            bg={cfg.bg}
+            color={cfg.color}
+            border="1px solid"
+            borderColor={cfg.border}
+          >
+            <Flex align="center" gap={1.5}>
+              <Icon as={cfg.icon} fontSize="11px" />
+              {cfg.label}
+            </Flex>
+          </Badge>
+        </Flex>
+        {status === "correct" && (
+          <Badge
+            bg="#f0fdf4"
+            color="#16a34a"
+            border="1px solid #bbf7d0"
+            fontSize="11px"
+            fontWeight={700}
+            px={3}
+            py={1}
+            borderRadius="full"
+          >
+            +1 pt
+          </Badge>
+        )}
+        {status === "incorrect" && (
+          <Badge
+            bg="#fef2f2"
+            color="#ef4444"
+            border="1px solid #fecaca"
+            fontSize="11px"
+            fontWeight={700}
+            px={3}
+            py={1}
+            borderRadius="full"
+          >
+            0 pts
+          </Badge>
+        )}
+      </Flex>
+
+      <Box px={5} py={4}>
+        {/* Question text */}
+        <Text
+          fontSize="14px"
+          fontWeight={600}
+          color="#1e293b"
+          mb={4}
+          lineHeight="1.7"
+        >
+          {question.qus}
+        </Text>
+
+        {/* Options */}
+        <VStack spacing={2} align="stretch" mb={4}>
+          {question.options?.map((opt, i) => {
+            const isCorrect = i === correctIdx;
+            const isUserPick = userAnswerIdx === i;
+            const isWrongPick = isUserPick && !isCorrect;
+
+            return (
+              <Flex
+                key={i}
+                align="center"
+                gap={3}
+                px={4}
+                py={3}
+                borderRadius="10px"
+                border="1.5px solid"
+                borderColor={
+                  isCorrect ? "#86efac" : isWrongPick ? "#fca5a5" : "#e2e8f0"
+                }
+                bg={isCorrect ? "#f0fdf4" : isWrongPick ? "#fef2f2" : "white"}
+              >
+                <Flex
+                  w="26px"
+                  h="26px"
+                  borderRadius="full"
+                  flexShrink={0}
+                  align="center"
+                  justify="center"
+                  fontWeight={800}
+                  fontSize="11px"
+                  bg={
+                    isCorrect ? "#16a34a" : isWrongPick ? "#ef4444" : "#f1f5f9"
+                  }
+                  color={isCorrect || isWrongPick ? "white" : "#64748b"}
+                >
+                  {String.fromCharCode(65 + i)}
+                </Flex>
+                <Text
+                  flex={1}
+                  fontSize="13px"
+                  color="#374151"
+                  fontWeight={isCorrect || isUserPick ? 600 : 400}
+                >
+                  {opt}
+                </Text>
+                <Flex gap={1.5} flexShrink={0}>
+                  {isCorrect && (
+                    <Badge
+                      bg="#f0fdf4"
+                      color="#16a34a"
+                      fontSize="10px"
+                      fontWeight={700}
+                      border="1px solid #bbf7d0"
+                      px={2}
+                      py={0.5}
+                      borderRadius="full"
+                    >
+                      ✓ Correct Answer
+                    </Badge>
+                  )}
+                  {isUserPick && isCorrect && (
+                    <Badge
+                      bg="#eff6ff"
+                      color="#2563eb"
+                      fontSize="10px"
+                      fontWeight={700}
+                      border="1px solid #bfdbfe"
+                      px={2}
+                      py={0.5}
+                      borderRadius="full"
+                    >
+                      Your Answer
+                    </Badge>
+                  )}
+                  {isWrongPick && (
+                    <Badge
+                      bg="#fef2f2"
+                      color="#ef4444"
+                      fontSize="10px"
+                      fontWeight={700}
+                      border="1px solid #fecaca"
+                      px={2}
+                      py={0.5}
+                      borderRadius="full"
+                    >
+                      ✗ Your Answer
+                    </Badge>
+                  )}
+                </Flex>
+              </Flex>
+            );
+          })}
+        </VStack>
+
+        {/* Answer summary row */}
+        <Flex gap={6} mb={question.explanation ? 3 : 0} flexWrap="wrap">
           <Box>
-            <Heading
-              fontSize={{ base: "lg", sm: "xl", md: "2xl", lg: "3xl" }}
-              fontWeight="bold"
-              color="gray.700"
+            <Text
+              fontSize="11px"
+              color="#94a3b8"
+              fontWeight={600}
+              textTransform="uppercase"
               mb={1}
             >
-              Test Results
-            </Heading>
+              Your Answer
+            </Text>
             <Text
-              color="gray.500"
-              fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-              display={{ base: "none", sm: "block" }}
+              fontSize="13px"
+              fontWeight={700}
+              color={
+                status === "correct"
+                  ? "#16a34a"
+                  : status === "incorrect"
+                    ? "#ef4444"
+                    : "#94a3b8"
+              }
             >
-              Detailed performance analysis and insights
+              {userAnswerText || "Not Attempted"}
             </Text>
           </Box>
-          <Box
-            ml="auto"
-            fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-            fontWeight="medium"
-            bg="blue.600"
-            color="white"
-            px={{ base: 2, sm: 2.5, md: 3 }}
-            py={{ base: 1, sm: 1.5, md: 2 }}
-            borderRadius="md"
-            whiteSpace="nowrap"
-          >
-            <Link to="/Review-Test">Review Test</Link>
+          <Box>
+            <Text
+              fontSize="11px"
+              color="#94a3b8"
+              fontWeight={600}
+              textTransform="uppercase"
+              mb={1}
+            >
+              Correct Answer
+            </Text>
+            <Text fontSize="13px" fontWeight={700} color="#16a34a">
+              {correctText || "—"}
+            </Text>
           </Box>
         </Flex>
 
-        <VStack spacing={{ base: 4, md: 6 }} mb={{ base: 4, md: 6, lg: 8 }}>
-          {/* Doughnut Chart */}
-          <Card
-            bg="white"
-            shadow="lg"
-            borderRadius={{ base: "lg", md: "2xl" }}
-            overflow="hidden"
-            border="1px"
-            borderColor="gray.100"
-            width="100%"
+        {/* Explanation */}
+        {question.explanation && (
+          <Box
+            mt={3}
+            p={4}
+            bg="#eff6ff"
+            borderRadius="10px"
+            borderLeft="3px solid #4a72b8"
           >
-            <CardBody p={{ base: 3, sm: 4, md: 6 }}>
-              <Box
-                h={{ base: "180px", sm: "220px", md: "280px" }}
-                position="relative"
-                mb={{ base: 3, sm: 4, md: 6 }}
+            <Flex align="center" gap={2} mb={1.5}>
+              <Icon as={FiAlertCircle} color="#4a72b8" fontSize="14px" />
+              <Text
+                fontSize="11px"
+                fontWeight={700}
+                color="#1e3a5f"
+                textTransform="uppercase"
               >
-                <Doughnut data={doughnutData} options={doughnutOptions} />
-                <Flex
-                  position="absolute"
-                  top="50%"
-                  left="50%"
-                  transform="translate(-50%, -50%)"
-                  direction="column"
-                  align="center"
-                >
-                  <Text
-                    fontSize={{ base: "2xl", sm: "3xl", md: "4xl" }}
-                    fontWeight="bold"
-                    color="purple.600"
-                  >
-                    {totalMark}
-                  </Text>
-                  <Text
-                    fontSize={{ base: "sm", sm: "md", md: "lg" }}
-                    color="gray.500"
-                  >
-                    / {totalQ}
-                  </Text>
-                  <Text
-                    fontSize={{ base: "2xs", md: "xs" }}
-                    color="gray.400"
-                    mt={1}
-                  >
-                    Score
-                  </Text>
-                </Flex>
-              </Box>
+                Explanation
+              </Text>
+            </Flex>
+            <Text fontSize="13px" color="#1e3a5f" lineHeight="1.7">
+              {question.explanation}
+            </Text>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
+}
 
-              <Divider mb={{ base: 3, md: 4 }} />
+// ── Stat card ─────────────────────────────────────────────────────────────
+function StatBox({ label, value, sub, color, bg, border, icon }) {
+  return (
+    <Box
+      bg={bg}
+      border="1.5px solid"
+      borderColor={border}
+      borderRadius="14px"
+      p={4}
+    >
+      <Flex align="center" gap={2} mb={2}>
+        <Icon as={icon} color={color} fontSize="14px" />
+        <Text
+          fontSize="11px"
+          fontWeight={700}
+          color={color}
+          textTransform="uppercase"
+        >
+          {label}
+        </Text>
+      </Flex>
+      <Text fontSize="26px" fontWeight={900} color={color} lineHeight={1}>
+        {value}
+      </Text>
+      {sub && (
+        <Text fontSize="11px" color={color} opacity={0.7} mt={1}>
+          {sub}
+        </Text>
+      )}
+    </Box>
+  );
+}
 
-              <Box
-                display="flex"
-                flexDirection="row"
-                gap="10"
-                justifyContent="center"
-                flexWrap="wrap"
+// ── Main ResultPage ───────────────────────────────────────────────────────
+export default function ResultPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const s = location.state || {};
+
+  // ── unpack navigation state ──────────────────────────────────
+  const testTitle = s.testTitle || s.category || s.subject || "Test";
+  const score = s.score ?? 0;
+  const totalQuestions = s.totalQuestions ?? 0;
+  const scorePercentage =
+    s.scorePercentage ??
+    (totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0);
+  const percentile = s.percentile ?? null;
+  const timeTaken = s.timeTaken ?? 0;
+
+  const questions = s.questions || [];
+  const allAnswers = s.allAnswers || {};
+  const correctQus = s.correctQus || [];
+  const wrongansqus = s.wrongansqus || [];
+  const answeredQuestion = s.answeredQuestion || [];
+  const notAnswer = s.notAnswer || [];
+  const markedAndAnswer = s.markedAndAnswer || [];
+  const markedNotAnswer = s.markedNotAnswer || [];
+  const wrongans = s.wrongans ?? wrongansqus.length;
+
+  // ── computed ──────────────────────────────────────────────────
+  const correctCount = correctQus.length;
+  const wrongCount = wrongansqus.length;
+  const skippedCount = notAnswer.length;
+  const markedCount = markedAndAnswer.length + markedNotAnswer.length;
+  const accuracy =
+    totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
+  const pct = Math.round(scorePercentage);
+
+  const allIndices = questions.map((_, i) => i);
+  const markedAll = [...markedAndAnswer, ...markedNotAnswer];
+
+  // ── chart ─────────────────────────────────────────────────────
+  const donut = {
+    labels: ["Correct", "Wrong", "Skipped"],
+    datasets: [
+      {
+        data: [correctCount, wrongCount, skippedCount],
+        backgroundColor: ["#4ade80", "#f87171", "#cbd5e1"],
+        borderWidth: 0,
+        cutout: "72%",
+      },
+    ],
+  };
+  const donutOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { padding: 10 } },
+  };
+
+  // ── tab config ────────────────────────────────────────────────
+  const TABS = [
+    { label: "All", count: totalQuestions, indices: allIndices },
+    { label: "Correct", count: correctCount, indices: correctQus },
+    { label: "Wrong", count: wrongCount, indices: wrongansqus },
+    { label: "Skipped", count: skippedCount, indices: notAnswer },
+    { label: "Marked", count: markedCount, indices: markedAll },
+    {
+      label: "Answered",
+      count: answeredQuestion.length,
+      indices: answeredQuestion,
+    },
+  ];
+
+  // ── guard — if no data ────────────────────────────────────────
+  if (!s.score && !s.questions) {
+    return (
+      <Flex
+        minH="100vh"
+        align="center"
+        justify="center"
+        direction="column"
+        gap={4}
+        bg="#f8fafc"
+        fontFamily="'Sora',sans-serif"
+      >
+        <Icon as={FaChartBar} fontSize="48px" color="#e2e8f0" />
+        <Text fontSize="16px" fontWeight={700} color="#374151">
+          No result data found
+        </Text>
+        <Text fontSize="13px" color="#94a3b8" mb={2}>
+          Please take a test first
+        </Text>
+        <Box
+          as="button"
+          px={6}
+          py={3}
+          bg="#4a72b8"
+          color="white"
+          borderRadius="10px"
+          fontWeight={700}
+          fontSize="14px"
+          onClick={() => navigate("/coaching")}
+        >
+          Browse Tests
+        </Box>
+      </Flex>
+    );
+  }
+
+  return (
+    <Box minH="100vh" bg="#f1f5f9" fontFamily="'Sora',sans-serif">
+      {/* ── Top bar ── */}
+      <Box
+        bg="linear-gradient(135deg,#0f1e3a,#1e3a5f,#2d5fa8)"
+        px={{ base: 4, md: 8 }}
+        py={5}
+      >
+        <Flex maxW="1200px" mx="auto" align="center" justify="space-between">
+          <Flex align="center" gap={3}>
+            <Box
+              cursor="pointer"
+              onClick={() => navigate("/")}
+              color="rgba(255,255,255,.5)"
+              _hover={{ color: "white" }}
+            >
+              <Icon as={FaArrowLeft} fontSize="14px" />
+            </Box>
+            <Box>
+              <Text
+                fontSize={{ base: "15px", md: "18px" }}
+                fontWeight={800}
+                color="white"
+                noOfLines={1}
               >
-                <ScoreItem
-                  icon={FiCheckCircle}
-                  label="Correct Answers"
-                  value={correctCount}
-                  color="green"
-                />
-                <ScoreItem
-                  icon={FiXCircle}
-                  label="Incorrect Answers"
-                  value={wrongCount}
-                  color="red"
-                />
-                <ScoreItem
-                  icon={FiCheckCircle}
-                  label="Answered (total)"
-                  value={answeredCount}
-                  color="blue"
-                />
-                <ScoreItem
-                  icon={FiFlag}
-                  label="Marked & Answered"
-                  value={markedAndAnswerCount}
-                  color="purple"
-                />
-                <ScoreItem
-                  icon={FiFlag}
-                  label="Marked (No Answer)"
-                  value={markedNotAnswerCount}
-                  color="orange"
-                />
-                <ScoreItem
-                  icon={FiCircle}
-                  label="Not Attempted"
-                  value={notAnswerCount}
-                  color="gray"
-                />
-              </Box>
-            </CardBody>
-          </Card>
+                {testTitle}
+              </Text>
+              <Text fontSize="12px" color="rgba(255,255,255,.5)">
+                Test Result
+              </Text>
+            </Box>
+          </Flex>
+          <Box
+            px={4}
+            py={2}
+            bg="rgba(255,255,255,.1)"
+            borderRadius="10px"
+            border="1px solid rgba(255,255,255,.15)"
+            cursor="pointer"
+            onClick={() =>
+              navigate("/Review-Test", {
+                state: {
+                  testTitle,
+                  questions,
+                  allAnswers,
+                  correctQus,
+                  wrongansqus,
+                  answeredQuestion,
+                  notAnswer,
+                  markedAndAnswer,
+                  markedNotAnswer,
+                  score,
+                  totalQuestions,
+                  scorePercentage,
+                  timeTaken,
+                },
+              })
+            }
+            _hover={{ bg: "rgba(255,255,255,.15)" }}
+          >
+            <Text fontSize="12px" fontWeight={700} color="white">
+              Review Test
+            </Text>
+          </Box>
+        </Flex>
+      </Box>
 
-          {/* Ad Banner */}
-          <Box w="100%">
-            <AdBanner
-              type="horizontal"
-              height={{ base: "90px", md: "100px" }}
-              width="100%"
-              label="Sponsored"
+      <Box maxW="1200px" mx="auto" px={{ base: 3, md: 8 }} py={6}>
+        {/* ── Score Hero card ── */}
+        <Box
+          bg="white"
+          borderRadius="20px"
+          border="1px solid #e2e8f0"
+          boxShadow="0 4px 24px rgba(0,0,0,.06)"
+          overflow="hidden"
+          mb={5}
+        >
+          {/* Score band */}
+          <Box h="5px" bg={pctBg(pct)}>
+            <Box
+              h="100%"
+              w={`${pct}%`}
+              bg={pctColor(pct)}
+              borderRadius="full"
+              style={{ transition: "width 1s ease" }}
             />
           </Box>
 
-          {/* Metric Cards */}
-          <Grid
-            templateColumns={{ base: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }}
-            gap={{ base: 2, sm: 3, md: 4 }}
-            width="100%"
+          <Flex
+            direction={{ base: "column", md: "row" }}
+            align="center"
+            px={{ base: 5, md: 8 }}
+            py={{ base: 6, md: 8 }}
+            gap={{ base: 6, md: 10 }}
           >
-            <MetricCard
-              icon={FiTarget}
-              label="Accuracy"
-              value={`${accuracy.toFixed(1)}%`}
-              subtext="Performance"
-              color="green.600"
-              bgColor="green.50"
-            />
-            <MetricCard
-              icon={FiCheckCircle}
-              label="Completion"
-              value={`${completion}%`}
-              subtext="Attempted"
-              color="orange.600"
-              bgColor="orange.50"
-            />
-            <MetricCard
-              icon={FiFlag}
-              label="Marked"
-              value={markedTotal}
-              subtext="For Review"
-              color="purple.600"
-              bgColor="purple.50"
-            />
-            <MetricCard
-              icon={FiCircle}
-              label="Not Attempted"
-              value={notAnswerCount}
-              subtext="Skipped"
-              color="gray.600"
-              bgColor="gray.50"
-            />
-          </Grid>
-
-          {/* Progress Bar */}
-          <Card
-            bg="white"
-            shadow="sm"
-            borderRadius={{ base: "lg", md: "xl" }}
-            border="1px"
-            borderColor="gray.100"
-            width="100%"
-          >
-            <CardBody p={{ base: 3, sm: 4, md: 6 }}>
+            {/* Donut */}
+            <Box flexShrink={0} position="relative" w="160px" h="160px">
+              <Doughnut data={donut} options={donutOpts} />
               <Flex
-                justify="space-between"
+                position="absolute"
+                top="50%"
+                left="50%"
+                transform="translate(-50%,-50%)"
+                direction="column"
                 align="center"
-                mb={{ base: 2, md: 3 }}
               >
                 <Text
-                  fontSize={{ base: "xs", sm: "sm", md: "md" }}
-                  fontWeight="semibold"
-                  color="gray.700"
+                  fontSize="28px"
+                  fontWeight={900}
+                  color={pctColor(pct)}
+                  lineHeight={1}
                 >
-                  Overall Performance
+                  {pct}%
                 </Text>
-                <Text
-                  fontSize={{ base: "md", sm: "lg", md: "xl" }}
-                  fontWeight="bold"
-                  color="purple.600"
-                >
-                  {accuracy.toFixed(1)}%
+                <Text fontSize="11px" color="#94a3b8" fontWeight={600} mt={0.5}>
+                  Score
                 </Text>
               </Flex>
-              <Progress
-                value={accuracy}
-                size={{ base: "sm", md: "lg" }}
-                borderRadius="full"
-                colorScheme="purple"
-                hasStripe
-                isAnimated
-              />
-              <Flex justify="space-between" mt={2}>
-                <Text fontSize="2xs" color="gray.500">
-                  0%
-                </Text>
-                <Text fontSize="2xs" color="gray.500">
-                  100%
-                </Text>
-              </Flex>
-            </CardBody>
-          </Card>
-        </VStack>
+            </Box>
 
-        {/* Tabs */}
-        <Card
-          bg="white"
-          shadow="lg"
-          borderRadius={{ base: "lg", md: "2xl" }}
-          overflow="hidden"
-          border="1px"
-          borderColor="gray.100"
-        >
-          <CardBody p={0}>
-            <Tabs colorScheme="purple" variant="soft-rounded">
-              <Box
-                px={{ base: 2, sm: 3, md: 6 }}
-                pt={{ base: 3, sm: 4, md: 6 }}
-              >
-                <Box
-                  bg="gray.50"
-                  p={1}
-                  borderRadius="xl"
-                  overflowX="auto"
-                  css={{
-                    "&::-webkit-scrollbar": { height: "4px" },
-                    "&::-webkit-scrollbar-thumb": {
-                      background: "#CBD5E0",
-                      borderRadius: "10px",
-                    },
-                  }}
+            {/* Details */}
+            <Box flex={1} w="100%">
+              <Flex align="center" gap={3} mb={1} flexWrap="wrap">
+                <Text
+                  fontSize={{ base: "22px", md: "28px" }}
+                  fontWeight={900}
+                  color="#0f172a"
                 >
-                  <TabList
-                    border="none"
-                    gap={{ base: 1, md: 2 }}
-                    minWidth="max-content"
+                  {score} / {totalQuestions}
+                </Text>
+                <Badge
+                  px={3}
+                  py={1}
+                  borderRadius="full"
+                  fontSize="12px"
+                  fontWeight={700}
+                  bg={pctBg(pct)}
+                  color={pctColor(pct)}
+                >
+                  {pctLabel(pct)}
+                </Badge>
+              </Flex>
+
+              {/* Percentile row */}
+              {percentile !== null && (
+                <Flex align="center" gap={2} mb={4}>
+                  <Flex
+                    align="center"
+                    gap={1.5}
+                    px={3}
+                    py={1.5}
+                    bg="#fefce8"
+                    border="1px solid #fde68a"
+                    borderRadius="10px"
                   >
-                    {TABS.map(({ label, count }) => (
-                      <Tab
-                        key={label}
-                        fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                        fontWeight="medium"
-                        px={{ base: 2, sm: 2.5, md: 3 }}
-                        py={{ base: 1, sm: 1.5, md: 2 }}
-                        _selected={{ bg: "purple.600", color: "white" }}
-                        whiteSpace="nowrap"
-                      >
-                        {label} ({count})
-                      </Tab>
-                    ))}
-                  </TabList>
-                </Box>
-              </Box>
+                    <Icon as={FaTrophy} color="#d97706" fontSize="13px" />
+                    <Text fontSize="13px" fontWeight={700} color="#92400e">
+                      Percentile:{" "}
+                      {typeof percentile === "number"
+                        ? `${percentile.toFixed(1)}%`
+                        : percentile}
+                    </Text>
+                  </Flex>
+                  <Text fontSize="12px" color="#94a3b8">
+                    Better than{" "}
+                    {typeof percentile === "number"
+                      ? `${percentile.toFixed(0)}%`
+                      : percentile}{" "}
+                    of all students
+                  </Text>
+                </Flex>
+              )}
 
-              <TabPanels>
-                {TABS.map(({ label, count, indices, headingColor, desc }) => (
-                  <TabPanel key={label} p={{ base: 2, sm: 3, md: 6 }}>
-                    <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
-                      <Box mb={{ base: 1, sm: 2, md: 4 }}>
-                        <Heading
-                          size={{ base: "xs", sm: "sm", md: "md" }}
-                          mb={{ base: 1, md: 2 }}
-                          color={headingColor}
-                        >
-                          {label} ({count})
-                        </Heading>
-                        {label === "Marked" && (
-                          <HStack spacing={3} mb={2} wrap="wrap">
-                            <Badge
-                              colorScheme="purple"
-                              fontSize="xs"
-                              px={2}
-                              py={1}
-                              borderRadius="full"
-                            >
-                              Marked + Answered: {markedAndAnswerCount}
-                            </Badge>
-                            <Badge
-                              colorScheme="orange"
-                              fontSize="xs"
-                              px={2}
-                              py={1}
-                              borderRadius="full"
-                            >
-                              Marked (No Answer): {markedNotAnswerCount}
-                            </Badge>
-                          </HStack>
-                        )}
-                        {desc && (
-                          <Text
-                            fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-                            color="gray.500"
-                          >
-                            {desc}
-                          </Text>
-                        )}
-                      </Box>
-                      {renderQuestions(indices)}
-                    </VStack>
-                  </TabPanel>
+              {/* Stats grid */}
+              <Grid
+                templateColumns={{ base: "repeat(2,1fr)", sm: "repeat(4,1fr)" }}
+                gap={3}
+              >
+                {[
+                  {
+                    label: "Correct",
+                    value: correctCount,
+                    color: "#16a34a",
+                    bg: "#f0fdf4",
+                    border: "#bbf7d0",
+                    icon: FaCheckCircle,
+                  },
+                  {
+                    label: "Wrong",
+                    value: wrongCount,
+                    color: "#ef4444",
+                    bg: "#fef2f2",
+                    border: "#fecaca",
+                    icon: FaTimesCircle,
+                  },
+                  {
+                    label: "Skipped",
+                    value: skippedCount,
+                    color: "#64748b",
+                    bg: "#f8fafc",
+                    border: "#e2e8f0",
+                    icon: FaCircle,
+                  },
+                  {
+                    label: "Marked",
+                    value: markedCount,
+                    color: "#7c3aed",
+                    bg: "#f5f3ff",
+                    border: "#ddd6fe",
+                    icon: FaFlag,
+                  },
+                ].map((s) => (
+                  <StatBox key={s.label} {...s} />
                 ))}
-              </TabPanels>
-            </Tabs>
-          </CardBody>
-        </Card>
-      </Container>
+              </Grid>
+            </Box>
+          </Flex>
+        </Box>
 
-      <FloatingVideoAd />
+        {/* ── Details cards row ── */}
+        <Grid
+          templateColumns={{ base: "1fr", md: "repeat(3,1fr)" }}
+          gap={4}
+          mb={5}
+        >
+          {/* Timing */}
+          <Box
+            bg="white"
+            borderRadius="16px"
+            border="1px solid #e2e8f0"
+            boxShadow="0 2px 12px rgba(0,0,0,.04)"
+            p={5}
+          >
+            <Flex align="center" gap={2} mb={4}>
+              <Flex
+                w="36px"
+                h="36px"
+                bg="#eff6ff"
+                borderRadius="10px"
+                align="center"
+                justify="center"
+              >
+                <Icon as={FaClock} color="#4a72b8" fontSize="16px" />
+              </Flex>
+              <Text fontSize="14px" fontWeight={800} color="#0f172a">
+                Time Details
+              </Text>
+            </Flex>
+            <VStack align="stretch" spacing={3}>
+              <Flex justify="space-between">
+                <Text fontSize="13px" color="#64748b">
+                  Time Taken
+                </Text>
+                <Text fontSize="13px" fontWeight={700} color="#374151">
+                  {fmtTime(timeTaken)}
+                </Text>
+              </Flex>
+              {totalQuestions > 0 && timeTaken > 0 && (
+                <Flex justify="space-between">
+                  <Text fontSize="13px" color="#64748b">
+                    Per Question
+                  </Text>
+                  <Text fontSize="13px" fontWeight={700} color="#374151">
+                    {fmtTime(Math.round(timeTaken / totalQuestions))}
+                  </Text>
+                </Flex>
+              )}
+              <Flex justify="space-between">
+                <Text fontSize="13px" color="#64748b">
+                  Total Questions
+                </Text>
+                <Text fontSize="13px" fontWeight={700} color="#374151">
+                  {totalQuestions}
+                </Text>
+              </Flex>
+            </VStack>
+          </Box>
+
+          {/* Accuracy */}
+          <Box
+            bg="white"
+            borderRadius="16px"
+            border="1px solid #e2e8f0"
+            boxShadow="0 2px 12px rgba(0,0,0,.04)"
+            p={5}
+          >
+            <Flex align="center" gap={2} mb={4}>
+              <Flex
+                w="36px"
+                h="36px"
+                bg="#f0fdf4"
+                borderRadius="10px"
+                align="center"
+                justify="center"
+              >
+                <Icon as={FiTarget} color="#16a34a" fontSize="16px" />
+              </Flex>
+              <Text fontSize="14px" fontWeight={800} color="#0f172a">
+                Accuracy
+              </Text>
+            </Flex>
+            <Text
+              fontSize="36px"
+              fontWeight={900}
+              color={pctColor(accuracy)}
+              lineHeight={1}
+              mb={2}
+            >
+              {accuracy.toFixed(1)}%
+            </Text>
+            <Box bg="#f1f5f9" borderRadius="full" h="8px" mb={3}>
+              <Box
+                h="100%"
+                w={`${accuracy}%`}
+                bg={pctColor(accuracy)}
+                borderRadius="full"
+                style={{ transition: "width 1s ease" }}
+              />
+            </Box>
+            <VStack align="stretch" spacing={2}>
+              <Flex justify="space-between">
+                <Text fontSize="13px" color="#64748b">
+                  Answered
+                </Text>
+                <Text fontSize="13px" fontWeight={700} color="#374151">
+                  {answeredQuestion.length}
+                </Text>
+              </Flex>
+              <Flex justify="space-between">
+                <Text fontSize="13px" color="#64748b">
+                  Completion
+                </Text>
+                <Text fontSize="13px" fontWeight={700} color="#374151">
+                  {totalQuestions > 0
+                    ? Math.round(
+                        (answeredQuestion.length / totalQuestions) * 100,
+                      )
+                    : 0}
+                  %
+                </Text>
+              </Flex>
+            </VStack>
+          </Box>
+
+          {/* Rank / Percentile */}
+          <Box
+            bg="white"
+            borderRadius="16px"
+            border="1px solid #e2e8f0"
+            boxShadow="0 2px 12px rgba(0,0,0,.04)"
+            p={5}
+          >
+            <Flex align="center" gap={2} mb={4}>
+              <Flex
+                w="36px"
+                h="36px"
+                bg="#fefce8"
+                borderRadius="10px"
+                align="center"
+                justify="center"
+              >
+                <Icon as={FiAward} color="#d97706" fontSize="16px" />
+              </Flex>
+              <Text fontSize="14px" fontWeight={800} color="#0f172a">
+                Ranking
+              </Text>
+            </Flex>
+            {percentile !== null ? (
+              <>
+                <Text
+                  fontSize="36px"
+                  fontWeight={900}
+                  color="#d97706"
+                  lineHeight={1}
+                  mb={1}
+                >
+                  {typeof percentile === "number"
+                    ? `${percentile.toFixed(1)}%`
+                    : percentile}
+                </Text>
+                <Text fontSize="12px" color="#94a3b8" mb={3}>
+                  Percentile Score
+                </Text>
+                <Box bg="#fef9c3" borderRadius="10px" px={3} py={2}>
+                  <Text fontSize="12px" fontWeight={600} color="#92400e">
+                    🏆 You scored better than{" "}
+                    {typeof percentile === "number"
+                      ? `${percentile.toFixed(0)}%`
+                      : percentile}{" "}
+                    of all students
+                  </Text>
+                </Box>
+              </>
+            ) : (
+              <>
+                <Text fontSize="14px" color="#94a3b8" mb={3}>
+                  Percentile available after more students attempt this test.
+                </Text>
+                <Box bg={pctBg(pct)} borderRadius="10px" px={3} py={2}>
+                  <Text fontSize="12px" fontWeight={600} color={pctColor(pct)}>
+                    Your score: {pct}% — {pctLabel(pct)}
+                  </Text>
+                </Box>
+              </>
+            )}
+          </Box>
+        </Grid>
+
+        {/* ── Legend ── */}
+        <Box
+          bg="white"
+          borderRadius="14px"
+          border="1px solid #e2e8f0"
+          boxShadow="0 2px 8px rgba(0,0,0,.04)"
+          px={5}
+          py={4}
+          mb={5}
+        >
+          <Text
+            fontSize="12px"
+            fontWeight={700}
+            color="#64748b"
+            textTransform="uppercase"
+            letterSpacing=".8px"
+            mb={3}
+          >
+            Question Status Legend
+          </Text>
+          <Flex gap={3} flexWrap="wrap">
+            {[
+              { label: "Correct", color: "#16a34a", bg: "#f0fdf4" },
+              { label: "Incorrect", color: "#ef4444", bg: "#fef2f2" },
+              { label: "Marked & Ans", color: "#7c3aed", bg: "#f5f3ff" },
+              { label: "Marked (Skip)", color: "#d97706", bg: "#fffbeb" },
+              { label: "Skipped", color: "#64748b", bg: "#f8fafc" },
+              { label: "Answered", color: "#2563eb", bg: "#eff6ff" },
+            ].map((l) => (
+              <Flex
+                key={l.label}
+                align="center"
+                gap={1.5}
+                px={3}
+                py={1.5}
+                bg={l.bg}
+                borderRadius="full"
+              >
+                <Box w="8px" h="8px" bg={l.color} borderRadius="full" />
+                <Text fontSize="11px" fontWeight={600} color={l.color}>
+                  {l.label}
+                </Text>
+              </Flex>
+            ))}
+          </Flex>
+        </Box>
+
+        {/* ── Question Tabs ── */}
+        <Box
+          bg="white"
+          borderRadius="20px"
+          border="1px solid #e2e8f0"
+          boxShadow="0 4px 24px rgba(0,0,0,.06)"
+          overflow="hidden"
+        >
+          <Tabs colorScheme="blue" variant="unstyled">
+            {/* Tab headers */}
+            <Box
+              px={{ base: 3, md: 6 }}
+              pt={{ base: 4, md: 6 }}
+              borderBottom="1px solid #f1f5f9"
+            >
+              <Flex
+                gap={1}
+                overflowX="auto"
+                pb={3}
+                css={{
+                  "&::-webkit-scrollbar": { height: "3px" },
+                  "&::-webkit-scrollbar-thumb": {
+                    background: "#cbd5e1",
+                    borderRadius: "10px",
+                  },
+                }}
+              >
+                {TABS.map((t) => (
+                  <Tab
+                    key={t.label}
+                    px={4}
+                    py={2}
+                    borderRadius="10px"
+                    fontSize="12px"
+                    fontWeight={700}
+                    color="#64748b"
+                    whiteSpace="nowrap"
+                    _selected={{ bg: "#eff6ff", color: "#4a72b8" }}
+                    _hover={{ bg: "#f8fafc" }}
+                  >
+                    {t.label}
+                    <Box
+                      as="span"
+                      ml={1.5}
+                      px={2}
+                      py={0.5}
+                      bg="rgba(0,0,0,.06)"
+                      borderRadius="full"
+                      fontSize="11px"
+                    >
+                      {t.count}
+                    </Box>
+                  </Tab>
+                ))}
+              </Flex>
+            </Box>
+
+            <TabPanels>
+              {TABS.map((t) => (
+                <TabPanel key={t.label} px={{ base: 3, md: 6 }} py={5}>
+                  {t.indices.length === 0 ? (
+                    <Box textAlign="center" py={16}>
+                      <Icon
+                        as={FaChartBar}
+                        fontSize="40px"
+                        color="#e2e8f0"
+                        display="block"
+                        mx="auto"
+                        mb={3}
+                      />
+                      <Text fontSize="14px" color="#94a3b8">
+                        No questions in this category
+                      </Text>
+                    </Box>
+                  ) : (
+                    t.indices.map((idx) => (
+                      <QuestionCard
+                        key={idx}
+                        index={idx}
+                        question={questions[idx]}
+                        allAnswers={allAnswers}
+                        correctQus={correctQus}
+                        wrongansqus={wrongansqus}
+                        answeredQuestion={answeredQuestion}
+                        notAnswer={notAnswer}
+                        markedAndAnswer={markedAndAnswer}
+                        markedNotAnswer={markedNotAnswer}
+                      />
+                    ))
+                  )}
+                </TabPanel>
+              ))}
+            </TabPanels>
+          </Tabs>
+        </Box>
+
+        {/* ── Footer buttons ── */}
+        <Flex justify="center" gap={4} mt={6} flexWrap="wrap">
+          <Box
+            as="button"
+            px={6}
+            py={3}
+            bg="#0f1e3a"
+            color="white"
+            borderRadius="12px"
+            fontWeight={700}
+            fontSize="13px"
+            onClick={() => navigate("/coaching")}
+            _hover={{ opacity: 0.9 }}
+            transition="opacity .2s"
+          >
+            Browse More Tests
+          </Box>
+          <Box
+            as="button"
+            px={6}
+            py={3}
+            bg="white"
+            color="#4a72b8"
+            border="1.5px solid #4a72b8"
+            borderRadius="12px"
+            fontWeight={700}
+            fontSize="13px"
+            onClick={() => navigate("/UserTestData")}
+            _hover={{ bg: "#eff6ff" }}
+            transition="all .2s"
+          >
+            My Results
+          </Box>
+        </Flex>
+      </Box>
     </Box>
   );
-};
-
-export default ResultPage;
-
-// import {
-//   Box,
-//   Flex,
-//   Heading,
-//   Icon,
-//   Text,
-//   Badge,
-//   Progress,
-//   Container,
-//   Grid,
-//   Card,
-//   CardBody,
-//   Stat,
-//   StatLabel,
-//   StatNumber,
-//   Tabs,
-//   TabList,
-//   TabPanels,
-//   Tab,
-//   TabPanel,
-//   Divider,
-//   Circle,
-//   VStack,
-//   HStack,
-//   IconButton,
-//   useToast,
-//   Tooltip,
-// } from "@chakra-ui/react";
-// import {
-//   FiTarget,
-//   FiCheckCircle,
-//   FiXCircle,
-//   FiCircle,
-//   FiArrowLeft,
-//   FiFlag,
-//   FiAlertCircle,
-//   FiBookmark,
-// } from "react-icons/fi";
-// import { Doughnut } from "react-chartjs-2";
-// import {
-//   Chart as ChartJS,
-//   ArcElement,
-//   CategoryScale,
-//   LinearScale,
-//   PointElement,
-//   LineElement,
-//   Title,
-//   Tooltip as ChartTooltip,
-//   Legend,
-// } from "chart.js";
-// import { useEffect, useState } from "react";
-// import { getLocalStorage, setLocalStorage } from "../helpers/localStorage";
-// import { Link } from "react-router-dom";
-// import AdBanner from "./AdBanner";
-// import FloatingVideoAd from "./FloatingVideoAd";
-
-// ChartJS.register(
-//   ArcElement,
-//   CategoryScale,
-//   LinearScale,
-//   PointElement,
-//   LineElement,
-//   Title,
-//   ChartTooltip,
-//   Legend,
-// );
-
-// const ResultPage = () => {
-//   const [totalMark, setTotalMark] = useState(0);
-//   const [TotalQuestion, SetTotalQuestion] = useState([]);
-//   const [allAnswers, setAllAnswers] = useState({});
-//   const [savedQuestionIndices, setSavedQuestionIndices] = useState(new Set());
-//   const [testData, setTestData] = useState(null);
-//   const toast = useToast();
-
-//   const [answeredQuestion, setAnsweredQuestion] = useState([]);
-//   const [correctQus, setCorrectQus] = useState([]);
-//   const [wrongAnsQus, setWrongAnsQus] = useState([]);
-//   const [markedAndAnswer, setMarkedAndAnswer] = useState([]);
-//   const [markedNotAnswer, setMarkedNotAnswer] = useState([]);
-//   const [notAnswer, setNotAnswer] = useState([]);
-
-//   useEffect(() => {
-//     const savedTest = getLocalStorage("test");
-//     if (!savedTest || !savedTest[0]) return;
-
-//     const data = savedTest[0];
-//     SetTotalQuestion(data.questions || []);
-//     setTotalMark(data.score || 0);
-//     setAllAnswers(data.allAnswer || {});
-//     setTestData(data);
-//     setAnsweredQuestion(data.answeredQuestion || []);
-//     setCorrectQus(data.correctQus || []);
-//     setWrongAnsQus(data.wrongansqus || []);
-//     setMarkedAndAnswer(data.markedAndAnswer || []);
-//     setMarkedNotAnswer(data.markedNotAnswer || []);
-//     setNotAnswer(data.notAnswer || []);
-//   }, []);
-
-//   useEffect(() => {
-//     if (TotalQuestion.length > 0) loadSavedQuestions();
-//   }, [TotalQuestion]);
-
-//   const loadSavedQuestions = () => {
-//     const subject = getLocalStorage("Subject");
-//     const subjectKey = subject?.toLowerCase() || "general studies";
-//     const allSaved = getLocalStorage("savedQuestionsBySubject") || {};
-//     const savedForSubject = allSaved[subjectKey] || [];
-//     const savedTexts = new Set(savedForSubject.map((q) => q.qus));
-//     const savedIndices = new Set();
-//     TotalQuestion.forEach((q, idx) => {
-//       if (savedTexts.has(q.qus)) savedIndices.add(idx);
-//     });
-//     setSavedQuestionIndices(savedIndices);
-//   };
-
-//   const toggleSaveQuestion = (question, index) => {
-//     const subject = getLocalStorage("Subject");
-//     const subjectKey = subject?.toLowerCase() || "general studies";
-//     const allSaved = getLocalStorage("savedQuestionsBySubject") || {};
-//     const savedForSubject = allSaved[subjectKey] || [];
-//     const existingIndex = savedForSubject.findIndex(
-//       (q) => q.qus === question.qus,
-//     );
-
-//     if (existingIndex >= 0) {
-//       savedForSubject.splice(existingIndex, 1);
-//       allSaved[subjectKey] = savedForSubject;
-//       setLocalStorage("savedQuestionsBySubject", allSaved);
-//       const qusno = (getLocalStorage("qusno") || []).filter(
-//         (t) => t !== question.qus,
-//       );
-//       setLocalStorage("qusno", qusno);
-//       setSavedQuestionIndices((prev) => {
-//         const s = new Set(prev);
-//         s.delete(index);
-//         return s;
-//       });
-//       toast({
-//         title: "Question removed",
-//         status: "info",
-//         duration: 2000,
-//         isClosable: true,
-//         position: "top",
-//       });
-//     } else {
-//       savedForSubject.push(question);
-//       allSaved[subjectKey] = savedForSubject;
-//       setLocalStorage("savedQuestionsBySubject", allSaved);
-//       const qusno = getLocalStorage("qusno") || [];
-//       if (!qusno.includes(question.qus)) {
-//         qusno.push(question.qus);
-//         setLocalStorage("qusno", qusno);
-//       }
-//       setSavedQuestionIndices((prev) => new Set(prev).add(index));
-//       toast({
-//         title: "Question saved!",
-//         status: "success",
-//         duration: 2000,
-//         isClosable: true,
-//         position: "top",
-//       });
-//     }
-//   };
-
-//   const totalQ = TotalQuestion.length;
-//   const correctCount = correctQus.length;
-//   const wrongCount = wrongAnsQus.length;
-//   const answeredCount = answeredQuestion.length;
-//   const markedAndAnswerCount = markedAndAnswer.length;
-//   const markedNotAnswerCount = markedNotAnswer.length;
-//   const markedTotal = markedAndAnswerCount + markedNotAnswerCount;
-//   const notAnswerCount = notAnswer.length;
-//   const accuracy = totalQ > 0 ? (correctCount / totalQ) * 100 : 0;
-//   const completion =
-//     totalQ > 0
-//       ? Math.round(((answeredCount + markedAndAnswerCount) / totalQ) * 100)
-//       : 0;
-
-//   const getStatus = (index) => {
-//     if (correctQus.includes(index)) return "correct";
-//     if (wrongAnsQus.includes(index)) return "incorrect";
-//     if (markedAndAnswer.includes(index)) return "markedAnswered";
-//     if (markedNotAnswer.includes(index)) return "markedNotAnswered";
-//     if (notAnswer.includes(index)) return "notAnswered";
-//     if (answeredQuestion.includes(index)) return "answered";
-//     return "notVisited";
-//   };
-
-//   const STATUS_CFG = {
-//     correct: {
-//       color: "green",
-//       text: "Correct",
-//       icon: FiCheckCircle,
-//       border: "green.200",
-//     },
-//     incorrect: {
-//       color: "red",
-//       text: "Incorrect",
-//       icon: FiXCircle,
-//       border: "red.200",
-//     },
-//     markedAnswered: {
-//       color: "purple",
-//       text: "Marked & Answered",
-//       icon: FiFlag,
-//       border: "purple.200",
-//     },
-//     markedNotAnswered: {
-//       color: "orange",
-//       text: "Marked (No Answer)",
-//       icon: FiFlag,
-//       border: "orange.200",
-//     },
-//     notAnswered: {
-//       color: "gray",
-//       text: "Not Attempted",
-//       icon: FiCircle,
-//       border: "gray.100",
-//     },
-//     answered: {
-//       color: "blue",
-//       text: "Answered",
-//       icon: FiCheckCircle,
-//       border: "blue.200",
-//     },
-//     notVisited: {
-//       color: "gray",
-//       text: "Not Visited",
-//       icon: FiCircle,
-//       border: "gray.100",
-//     },
-//   };
-
-//   const doughnutData = {
-//     labels: ["Correct", "Incorrect", "Not Attempted"],
-//     datasets: [
-//       {
-//         data: [correctCount, wrongCount, notAnswerCount],
-//         backgroundColor: ["#48BB78", "#F56565", "#CBD5E0"],
-//         borderWidth: 0,
-//         cutout: "75%",
-//       },
-//     ],
-//   };
-
-//   const doughnutOptions = {
-//     responsive: true,
-//     maintainAspectRatio: false,
-//     plugins: {
-//       legend: { display: false },
-//       tooltip: {
-//         backgroundColor: "rgba(0,0,0,0.8)",
-//         padding: 12,
-//         borderRadius: 8,
-//       },
-//     },
-//   };
-
-//   const QuestionCard = ({ question, index }) => {
-//     if (!question) return null;
-//     const userAnswer = allAnswers[index] ?? allAnswers[String(index)];
-//     const correctIdx = question.answer - 1;
-//     const correctAnswerText = question.options?.[correctIdx];
-//     const status = getStatus(index);
-//     const cfg = STATUS_CFG[status] || STATUS_CFG.notVisited;
-//     const isSaved = savedQuestionIndices.has(index);
-
-//     return (
-//       <Card
-//         mb={{ base: 3, md: 4 }}
-//         bg="white"
-//         shadow="md"
-//         borderRadius={{ base: "md", md: "lg" }}
-//         border="2px"
-//         borderColor={cfg.border}
-//         width="100%"
-//       >
-//         <CardBody p={{ base: 3, sm: 4, md: 5 }}>
-//           <Flex
-//             justify="space-between"
-//             align="flex-start"
-//             mb={{ base: 3, md: 4 }}
-//             gap={2}
-//             wrap="wrap"
-//           >
-//             <HStack spacing={{ base: 1.5, sm: 2, md: 3 }} wrap="wrap" flex="1">
-//               <Circle
-//                 size={{ base: "24px", sm: "28px", md: "32px" }}
-//                 bg="gray.100"
-//                 fontWeight="bold"
-//                 fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-//                 color="gray.700"
-//               >
-//                 {index + 1}
-//               </Circle>
-//               <Badge
-//                 colorScheme={cfg.color}
-//                 px={{ base: 1.5, sm: 2, md: 3 }}
-//                 py={1}
-//                 borderRadius="full"
-//                 fontSize="2xs"
-//               >
-//                 <HStack spacing={1}>
-//                   <Icon as={cfg.icon} boxSize={{ base: 2.5, md: 3 }} />
-//                   <Text>{cfg.text}</Text>
-//                 </HStack>
-//               </Badge>
-//             </HStack>
-//             <Tooltip
-//               label={isSaved ? "Remove from saved" : "Save question"}
-//               placement="top"
-//               hasArrow
-//             >
-//               <IconButton
-//                 icon={<FiBookmark />}
-//                 size={{ base: "sm", md: "md" }}
-//                 variant={isSaved ? "solid" : "outline"}
-//                 colorScheme={isSaved ? "purple" : "gray"}
-//                 aria-label={isSaved ? "Remove bookmark" : "Bookmark question"}
-//                 onClick={() => toggleSaveQuestion(question, index)}
-//                 _hover={{ transform: "scale(1.1)", shadow: "md" }}
-//                 transition="all 0.2s"
-//               />
-//             </Tooltip>
-//           </Flex>
-
-//           <Text
-//             fontSize={{ base: "xs", sm: "sm", md: "md" }}
-//             fontWeight="semibold"
-//             color="gray.700"
-//             mb={{ base: 3, md: 4 }}
-//             lineHeight="tall"
-//           >
-//             {question.qus}
-//           </Text>
-
-//           <VStack
-//             align="stretch"
-//             spacing={{ base: 2, md: 3 }}
-//             mb={{ base: 3, md: 4 }}
-//           >
-//             {question.options?.map((option, optIndex) => {
-//               const isUserAns = userAnswer === option;
-//               const isCorrectOption = optIndex === correctIdx;
-//               const isWrongPick = isUserAns && status === "incorrect";
-
-//               let borderColor = "gray.200";
-//               let bgColor = "transparent";
-//               let circleBg = "gray.300";
-
-//               if (isCorrectOption) {
-//                 borderColor = "green.400";
-//                 bgColor = "green.50";
-//                 circleBg = "green.500";
-//               } else if (isWrongPick) {
-//                 borderColor = "red.400";
-//                 bgColor = "red.50";
-//                 circleBg = "red.500";
-//               }
-
-//               return (
-//                 <Box
-//                   key={optIndex}
-//                   p={{ base: 2, sm: 2.5, md: 3 }}
-//                   borderRadius="md"
-//                   border="2px"
-//                   borderColor={borderColor}
-//                   bg={bgColor}
-//                 >
-//                   <Flex
-//                     justify="space-between"
-//                     align="center"
-//                     gap={2}
-//                     wrap="wrap"
-//                   >
-//                     <HStack spacing={{ base: 2, md: 3 }} flex="1" minW="0">
-//                       <Circle
-//                         size={{ base: "20px", sm: "22px", md: "24px" }}
-//                         bg={circleBg}
-//                         color="white"
-//                         fontSize="2xs"
-//                         fontWeight="bold"
-//                         flexShrink={0}
-//                       >
-//                         {String.fromCharCode(65 + optIndex)}
-//                       </Circle>
-//                       <Text
-//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-//                         color="gray.700"
-//                         fontWeight={
-//                           isUserAns || isCorrectOption ? "semibold" : "normal"
-//                         }
-//                         wordBreak="break-word"
-//                       >
-//                         {option}
-//                       </Text>
-//                     </HStack>
-//                     <HStack spacing={1} flexShrink={0}>
-//                       {isCorrectOption && (
-//                         <Badge colorScheme="green" fontSize="2xs">
-//                           Correct Answer
-//                         </Badge>
-//                       )}
-//                       {isUserAns && status === "correct" && (
-//                         <Badge colorScheme="green" fontSize="2xs">
-//                           Your Answer ✓
-//                         </Badge>
-//                       )}
-//                       {isWrongPick && (
-//                         <Badge colorScheme="red" fontSize="2xs">
-//                           Your Answer ✗
-//                         </Badge>
-//                       )}
-//                       {isUserAns && status === "markedAnswered" && (
-//                         <Badge colorScheme="purple" fontSize="2xs">
-//                           Your Answer
-//                         </Badge>
-//                       )}
-//                     </HStack>
-//                   </Flex>
-//                 </Box>
-//               );
-//             })}
-//           </VStack>
-
-//           {question.explanation && (
-//             <Box
-//               p={{ base: 2.5, sm: 3, md: 4 }}
-//               bg="blue.50"
-//               borderRadius="md"
-//               borderLeft="4px"
-//               borderColor="blue.400"
-//               mb={{ base: 3, md: 4 }}
-//             >
-//               <HStack spacing={2} mb={2}>
-//                 <Icon
-//                   as={FiAlertCircle}
-//                   color="blue.500"
-//                   boxSize={{ base: 3.5, sm: 4, md: 5 }}
-//                 />
-//                 <Text
-//                   fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-//                   fontWeight="bold"
-//                   color="blue.700"
-//                 >
-//                   Explanation
-//                 </Text>
-//               </HStack>
-//               <Text
-//                 fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-//                 color="blue.800"
-//                 lineHeight="tall"
-//               >
-//                 {question.explanation}
-//               </Text>
-//             </Box>
-//           )}
-
-//           <Box pt={{ base: 3, md: 4 }} borderTop="1px" borderColor="gray.200">
-//             <Flex
-//               justify="space-between"
-//               align={{ base: "flex-start", sm: "center" }}
-//               gap={{ base: 2, md: 3 }}
-//               direction={{ base: "column", sm: "row" }}
-//             >
-//               <VStack align="start" spacing={1} flex="1">
-//                 <Text
-//                   fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-//                   color="gray.600"
-//                 >
-//                   Your Answer:{" "}
-//                   <Text
-//                     as="span"
-//                     fontWeight="bold"
-//                     color={
-//                       status === "correct"
-//                         ? "green.600"
-//                         : status === "incorrect"
-//                           ? "red.600"
-//                           : "gray.500"
-//                     }
-//                   >
-//                     {userAnswer || "Not Attempted"}
-//                   </Text>
-//                 </Text>
-//                 <Text
-//                   fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-//                   color="gray.600"
-//                 >
-//                   Correct Answer:{" "}
-//                   <Text as="span" fontWeight="bold" color="green.600">
-//                     {correctAnswerText}
-//                   </Text>
-//                 </Text>
-//               </VStack>
-//               {status === "correct" && (
-//                 <Badge colorScheme="green" px={3} py={1} fontSize="2xs">
-//                   +1 Point
-//                 </Badge>
-//               )}
-//               {status === "incorrect" && (
-//                 <Badge colorScheme="red" px={3} py={1} fontSize="2xs">
-//                   0 Points
-//                 </Badge>
-//               )}
-//               {status === "markedAnswered" && (
-//                 <Badge colorScheme="purple" px={3} py={1} fontSize="2xs">
-//                   Marked
-//                 </Badge>
-//               )}
-//               {status === "markedNotAnswered" && (
-//                 <Badge colorScheme="orange" px={3} py={1} fontSize="2xs">
-//                   Marked
-//                 </Badge>
-//               )}
-//               {(status === "notAnswered" || status === "notVisited") && (
-//                 <Badge colorScheme="gray" px={3} py={1} fontSize="2xs">
-//                   Not Attempted
-//                 </Badge>
-//               )}
-//             </Flex>
-//           </Box>
-//         </CardBody>
-//       </Card>
-//     );
-//   };
-
-//   const renderQuestions = (indices) => {
-//     if (!indices || indices.length === 0) {
-//       return (
-//         <Box textAlign="center" py={{ base: 6, md: 10 }}>
-//           <Icon
-//             as={FiAlertCircle}
-//             boxSize={{ base: 8, sm: 10, md: 12 }}
-//             color="gray.300"
-//             mb={4}
-//           />
-//           <Text color="gray.500" fontSize={{ base: "xs", sm: "sm", md: "md" }}>
-//             No questions in this category
-//           </Text>
-//         </Box>
-//       );
-//     }
-//     return indices.map((qIndex) => {
-//       const q = TotalQuestion[qIndex];
-//       if (!q) return null;
-//       return <QuestionCard key={qIndex} question={q} index={qIndex} />;
-//     });
-//   };
-
-//   const allIndices = Array.from({ length: totalQ }, (_, i) => i);
-//   const markedAllIndices = [...markedNotAnswer, ...markedAndAnswer];
-
-//   const MetricCard = ({ icon, label, value, subtext, color, bgColor }) => (
-//     <Card
-//       bg="white"
-//       shadow="sm"
-//       borderRadius={{ base: "lg", md: "xl" }}
-//       overflow="hidden"
-//       transition="all 0.3s"
-//       _hover={{ shadow: "md", transform: "translateY(-4px)" }}
-//       border="1px"
-//       borderColor="gray.100"
-//       height="100%"
-//     >
-//       <CardBody p={{ base: 3, sm: 4, md: 5 }}>
-//         <Flex
-//           align="center"
-//           justify="space-between"
-//           mb={{ base: 2, md: 3 }}
-//           direction={{ base: "column", sm: "row" }}
-//           gap={2}
-//         >
-//           <Circle size={{ base: "36px", sm: "40px", md: "48px" }} bg={bgColor}>
-//             <Icon as={icon} boxSize={{ base: 3, sm: 4, md: 5 }} color={color} />
-//           </Circle>
-//           <Badge
-//             colorScheme={color.split(".")[0]}
-//             fontSize={{ base: "2xs", md: "xs" }}
-//             px={{ base: 2, md: 3 }}
-//             py={1}
-//             borderRadius="full"
-//           >
-//             {subtext}
-//           </Badge>
-//         </Flex>
-//         <Stat>
-//           <StatLabel
-//             fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-//             color="gray.500"
-//             mb={1}
-//           >
-//             {label}
-//           </StatLabel>
-//           <StatNumber
-//             fontSize={{ base: "lg", sm: "xl", md: "2xl" }}
-//             fontWeight="bold"
-//             color="gray.700"
-//           >
-//             {value}
-//           </StatNumber>
-//         </Stat>
-//       </CardBody>
-//     </Card>
-//   );
-
-//   const ScoreItem = ({ icon, label, value, color }) => (
-//     <Flex align="center" py={{ base: 2, md: 3 }}>
-//       <Circle
-//         size={{ base: "32px", sm: "36px", md: "40px" }}
-//         bg={`${color}.50`}
-//         mr={{ base: 2, md: 3 }}
-//       >
-//         <Icon
-//           as={icon}
-//           color={`${color}.600`}
-//           boxSize={{ base: 3, sm: 4, md: 5 }}
-//         />
-//       </Circle>
-//       <Box flex="1">
-//         <Text
-//           fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-//           color="gray.600"
-//           mb={1}
-//         >
-//           {label}
-//         </Text>
-//         <Text
-//           fontSize={{ base: "sm", sm: "md", md: "lg" }}
-//           fontWeight="semibold"
-//           color="gray.700"
-//         >
-//           {value}
-//         </Text>
-//       </Box>
-//     </Flex>
-//   );
-
-//   const TABS = [
-//     {
-//       label: "All Questions",
-//       count: totalQ,
-//       indices: allIndices,
-//       headingColor: "gray.700",
-//       desc: "Every question with its status, your answer, and the correct answer.",
-//     },
-//     {
-//       label: "Answered",
-//       count: answeredCount,
-//       indices: answeredQuestion,
-//       headingColor: "blue.600",
-//       desc: "All questions you submitted an answer for (correct + incorrect).",
-//     },
-//     {
-//       label: "Correct",
-//       count: correctCount,
-//       indices: correctQus,
-//       headingColor: "green.600",
-//       desc: "Questions you answered correctly. 🎉",
-//     },
-//     {
-//       label: "Incorrect",
-//       count: wrongCount,
-//       indices: wrongAnsQus,
-//       headingColor: "red.600",
-//       desc: "Review these to improve. 💡 Bookmark them for later practice!",
-//     },
-//     {
-//       label: "Marked",
-//       count: markedTotal,
-//       indices: markedAllIndices,
-//       headingColor: "orange.600",
-//       desc: null,
-//     },
-//     {
-//       label: "Not Attempted",
-//       count: notAnswerCount,
-//       indices: notAnswer,
-//       headingColor: "gray.600",
-//       desc: "Questions you skipped entirely.",
-//     },
-//   ];
-
-//   return (
-//     <Box
-//       minH="100vh"
-//       bgGradient="linear(to-br, blue.50, purple.50)"
-//       py={{ base: 3, sm: 4, md: 6, lg: 8 }}
-//       px={{ base: 2, sm: 3, md: 6, lg: 10 }}
-//     >
-//       <Container maxW="1400px" px={{ base: 2, sm: 3, md: 4 }}>
-//         {/* Header */}
-//         <Flex align="center" mb={{ base: 4, sm: 6, md: 8 }}>
-//           <Link to="/">
-//             <Icon
-//               as={FiArrowLeft}
-//               boxSize={{ base: 4, sm: 5, md: 6 }}
-//               color="purple.600"
-//               cursor="pointer"
-//               mr={{ base: 2, sm: 3, md: 4 }}
-//               _hover={{ transform: "translateX(-4px)" }}
-//               transition="all 0.2s"
-//             />
-//           </Link>
-//           <Box>
-//             <Heading
-//               fontSize={{ base: "lg", sm: "xl", md: "2xl", lg: "3xl" }}
-//               fontWeight="bold"
-//               color="gray.700"
-//               mb={1}
-//             >
-//               Test Results
-//             </Heading>
-//             <Text
-//               color="gray.500"
-//               fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-//               display={{ base: "none", sm: "block" }}
-//             >
-//               Detailed performance analysis and insights
-//             </Text>
-//           </Box>
-//           <Box
-//             ml="auto"
-//             fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-//             fontWeight="medium"
-//             bg="blue.600"
-//             color="white"
-//             px={{ base: 2, sm: 2.5, md: 3 }}
-//             py={{ base: 1, sm: 1.5, md: 2 }}
-//             borderRadius="md"
-//             whiteSpace="nowrap"
-//           >
-//             <Link to="/Review-Test">Review Test</Link>
-//           </Box>
-//         </Flex>
-
-//         <VStack spacing={{ base: 4, md: 6 }} mb={{ base: 4, md: 6, lg: 8 }}>
-//           {/* Doughnut Chart */}
-//           <Card
-//             bg="white"
-//             shadow="lg"
-//             borderRadius={{ base: "lg", md: "2xl" }}
-//             overflow="hidden"
-//             border="1px"
-//             borderColor="gray.100"
-//             width="100%"
-//           >
-//             <CardBody p={{ base: 3, sm: 4, md: 6 }}>
-//               <Box
-//                 h={{ base: "180px", sm: "220px", md: "280px" }}
-//                 position="relative"
-//                 mb={{ base: 3, sm: 4, md: 6 }}
-//               >
-//                 <Doughnut data={doughnutData} options={doughnutOptions} />
-//                 <Flex
-//                   position="absolute"
-//                   top="50%"
-//                   left="50%"
-//                   transform="translate(-50%, -50%)"
-//                   direction="column"
-//                   align="center"
-//                 >
-//                   <Text
-//                     fontSize={{ base: "2xl", sm: "3xl", md: "4xl" }}
-//                     fontWeight="bold"
-//                     color="purple.600"
-//                   >
-//                     {totalMark}
-//                   </Text>
-//                   <Text
-//                     fontSize={{ base: "sm", sm: "md", md: "lg" }}
-//                     color="gray.500"
-//                   >
-//                     / {totalQ}
-//                   </Text>
-//                   <Text
-//                     fontSize={{ base: "2xs", md: "xs" }}
-//                     color="gray.400"
-//                     mt={1}
-//                   >
-//                     Score
-//                   </Text>
-//                 </Flex>
-//               </Box>
-
-//               <Divider mb={{ base: 3, md: 4 }} />
-
-//               <Box
-//                 display="flex"
-//                 flexDirection="row"
-//                 gap="10"
-//                 justifyContent="center"
-//               >
-//                 <ScoreItem
-//                   icon={FiCheckCircle}
-//                   label="Correct Answers"
-//                   value={correctCount}
-//                   color="green"
-//                 />
-//                 <ScoreItem
-//                   icon={FiXCircle}
-//                   label="Incorrect Answers"
-//                   value={wrongCount}
-//                   color="red"
-//                 />
-//                 <ScoreItem
-//                   icon={FiCheckCircle}
-//                   label="Answered (total)"
-//                   value={answeredCount}
-//                   color="blue"
-//                 />
-//                 <ScoreItem
-//                   icon={FiFlag}
-//                   label="Marked & Answered"
-//                   value={markedAndAnswerCount}
-//                   color="purple"
-//                 />
-//                 <ScoreItem
-//                   icon={FiFlag}
-//                   label="Marked (No Answer)"
-//                   value={markedNotAnswerCount}
-//                   color="orange"
-//                 />
-//                 <ScoreItem
-//                   icon={FiCircle}
-//                   label="Not Attempted"
-//                   value={notAnswerCount}
-//                   color="gray"
-//                 />
-//               </Box>
-//             </CardBody>
-//           </Card>
-
-//           {/* Ad Banner */}
-//           <Box w="100%">
-//             <AdBanner
-//               type="horizontal"
-//               height={{ base: "90px", md: "100px" }}
-//               width="100%"
-//               label="Sponsored"
-//             />
-//           </Box>
-
-//           {/* Metric Cards */}
-//           <Grid
-//             templateColumns={{ base: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }}
-//             gap={{ base: 2, sm: 3, md: 4 }}
-//             width="100%"
-//           >
-//             <MetricCard
-//               icon={FiTarget}
-//               label="Accuracy"
-//               value={`${accuracy.toFixed(1)}%`}
-//               subtext="Performance"
-//               color="green.600"
-//               bgColor="green.50"
-//             />
-//             <MetricCard
-//               icon={FiCheckCircle}
-//               label="Completion"
-//               value={`${completion}%`}
-//               subtext="Attempted"
-//               color="orange.600"
-//               bgColor="orange.50"
-//             />
-//             <MetricCard
-//               icon={FiFlag}
-//               label="Marked"
-//               value={markedTotal}
-//               subtext="For Review"
-//               color="purple.600"
-//               bgColor="purple.50"
-//             />
-//             <MetricCard
-//               icon={FiCircle}
-//               label="Not Attempted"
-//               value={notAnswerCount}
-//               subtext="Skipped"
-//               color="gray.600"
-//               bgColor="gray.50"
-//             />
-//           </Grid>
-
-//           {/* Progress Bar */}
-//           <Card
-//             bg="white"
-//             shadow="sm"
-//             borderRadius={{ base: "lg", md: "xl" }}
-//             border="1px"
-//             borderColor="gray.100"
-//             width="100%"
-//           >
-//             <CardBody p={{ base: 3, sm: 4, md: 6 }}>
-//               <Flex
-//                 justify="space-between"
-//                 align="center"
-//                 mb={{ base: 2, md: 3 }}
-//               >
-//                 <Text
-//                   fontSize={{ base: "xs", sm: "sm", md: "md" }}
-//                   fontWeight="semibold"
-//                   color="gray.700"
-//                 >
-//                   Overall Performance
-//                 </Text>
-//                 <Text
-//                   fontSize={{ base: "md", sm: "lg", md: "xl" }}
-//                   fontWeight="bold"
-//                   color="purple.600"
-//                 >
-//                   {accuracy.toFixed(1)}%
-//                 </Text>
-//               </Flex>
-//               <Progress
-//                 value={accuracy}
-//                 size={{ base: "sm", md: "lg" }}
-//                 borderRadius="full"
-//                 colorScheme="purple"
-//                 hasStripe
-//                 isAnimated
-//               />
-//               <Flex justify="space-between" mt={2}>
-//                 <Text fontSize="2xs" color="gray.500">
-//                   0%
-//                 </Text>
-//                 <Text fontSize="2xs" color="gray.500">
-//                   100%
-//                 </Text>
-//               </Flex>
-//             </CardBody>
-//           </Card>
-//         </VStack>
-
-//         {/* Tabs */}
-//         <Card
-//           bg="white"
-//           shadow="lg"
-//           borderRadius={{ base: "lg", md: "2xl" }}
-//           overflow="hidden"
-//           border="1px"
-//           borderColor="gray.100"
-//         >
-//           <CardBody p={0}>
-//             <Tabs colorScheme="purple" variant="soft-rounded">
-//               <Box
-//                 px={{ base: 2, sm: 3, md: 6 }}
-//                 pt={{ base: 3, sm: 4, md: 6 }}
-//               >
-//                 <Box
-//                   bg="gray.50"
-//                   p={1}
-//                   borderRadius="xl"
-//                   overflowX="auto"
-//                   css={{
-//                     "&::-webkit-scrollbar": { height: "4px" },
-//                     "&::-webkit-scrollbar-thumb": {
-//                       background: "#CBD5E0",
-//                       borderRadius: "10px",
-//                     },
-//                   }}
-//                 >
-//                   <TabList
-//                     border="none"
-//                     gap={{ base: 1, md: 2 }}
-//                     minWidth="max-content"
-//                   >
-//                     {TABS.map(({ label, count }) => (
-//                       <Tab
-//                         key={label}
-//                         fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-//                         fontWeight="medium"
-//                         px={{ base: 2, sm: 2.5, md: 3 }}
-//                         py={{ base: 1, sm: 1.5, md: 2 }}
-//                         _selected={{ bg: "purple.600", color: "white" }}
-//                         whiteSpace="nowrap"
-//                       >
-//                         {label} ({count})
-//                       </Tab>
-//                     ))}
-//                   </TabList>
-//                 </Box>
-//               </Box>
-
-//               <TabPanels>
-//                 {TABS.map(({ label, count, indices, headingColor, desc }) => (
-//                   <TabPanel key={label} p={{ base: 2, sm: 3, md: 6 }}>
-//                     <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
-//                       <Box mb={{ base: 1, sm: 2, md: 4 }}>
-//                         <Heading
-//                           size={{ base: "xs", sm: "sm", md: "md" }}
-//                           mb={{ base: 1, md: 2 }}
-//                           color={headingColor}
-//                         >
-//                           {label} ({count})
-//                         </Heading>
-//                         {label === "Marked" && (
-//                           <HStack spacing={3} mb={2} wrap="wrap">
-//                             <Badge
-//                               colorScheme="purple"
-//                               fontSize="xs"
-//                               px={2}
-//                               py={1}
-//                               borderRadius="full"
-//                             >
-//                               Marked + Answered: {markedAndAnswerCount}
-//                             </Badge>
-//                             <Badge
-//                               colorScheme="orange"
-//                               fontSize="xs"
-//                               px={2}
-//                               py={1}
-//                               borderRadius="full"
-//                             >
-//                               Marked (No Answer): {markedNotAnswerCount}
-//                             </Badge>
-//                           </HStack>
-//                         )}
-//                         {desc && (
-//                           <Text
-//                             fontSize={{ base: "2xs", sm: "xs", md: "sm" }}
-//                             color="gray.500"
-//                           >
-//                             {desc}
-//                           </Text>
-//                         )}
-//                       </Box>
-//                       {renderQuestions(indices)}
-//                     </VStack>
-//                   </TabPanel>
-//                 ))}
-//               </TabPanels>
-//             </Tabs>
-//           </CardBody>
-//         </Card>
-//       </Container>
-
-//       <FloatingVideoAd />
-//     </Box>
-//   );
-// };
-
-// export default ResultPage;
+}

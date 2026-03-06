@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { apiFetch } from "../services/api";
 import {
   Box,
   Flex,
@@ -10,22 +11,6 @@ import {
 } from "@chakra-ui/react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
-
-
-const BASE = "https://testwala-backend.onrender.com";
-// "http://localhost:80"; // change to https://testwala-backend.onrender.com for prod
-
-
-const apiFetch = async (path, opts = {}) => {
-  const res = await fetch(`${BASE}${path}`, {
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    ...opts,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.message || "Request failed");
-  return json;
-};
 
 export default function TokenTestPage() {
   const { token } = useParams();
