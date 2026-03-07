@@ -1974,44 +1974,62 @@ export default function TestDetailPage() {
       let testData = null;
 
       // ── Step 1: Load the test ────────────────────────────────────────────
-      // Strategy:
-      //   • If arrived via token link → backend already validated token,
-      //     use public slug route (optionalAuth) so guests can access too.
-      //   • Otherwise try public slug route first.
-      //     If that succeeds → great (works for everyone).
-      //     If the user is logged in and the slug route returns partial data
-      //     (e.g. no password field), try the owner route as a fallback.
-      //     Owner route 403s for non-owners — that's fine, we already have data.
+      // The URL param :id can be either a MongoDB ObjectId (24 hex chars)
+      // or a slug string depending on how the user arrived.
+      //
+      // • ObjectId  → use /tests/id/:id  (owner-auth route, has full data)
+      //               fallback to /tests/:slug won't work since backend slug
+      //               route only accepts slugs, not raw ObjectIds → 404.
+      // • Slug      → use /tests/:slug   (optionalAuth, works for everyone)
+      //               fallback to /tests/id/:id for owners if needed.
 
-      try {
-        // Public route — works for guests, students AND owners (optionalAuth)
-        // Returns full questions array, no password field
-        const res = await apiFetch(`/tests/${id}`);
-        testData = res.data;
-      } catch (publicErr) {
-        // Public route failed (e.g. private test without token)
-        // Try owner route if logged in
-        if (user?._id) {
+      const isObjectId = /^[a-f\d]{24}$/i.test(id);
+
+      if (isObjectId) {
+        // Came here via internal navigation (CoachingPage, result redirect, etc.)
+        // Use owner route first — gives full data including password for owner.
+        // If not owner / not logged in, fall back to public slug using test.slug
+        // which we get from the owner route response even for non-owners.
+        try {
           const res = await apiFetch(`/tests/id/${id}`);
           testData = res.data;
-        } else {
-          throw publicErr;
+        } catch (ownerErr) {
+          // Not authenticated or not owner — 401/403
+          // We don't have the slug yet, so we can't do slug lookup.
+          // Show "not authorized" by rethrowing.
+          throw ownerErr;
+        }
+      } else {
+        // Came via slug URL (WhatsApp link, direct share, token redirect)
+        // Public route works for guests + students + owners
+        try {
+          const res = await apiFetch(`/tests/${id}`);
+          testData = res.data;
+        } catch (publicErr) {
+          // Private test, no token — try owner route if logged in
+          if (user?._id) {
+            const res = await apiFetch(`/tests/id/${id}`);
+            testData = res.data;
+          } else {
+            throw publicErr;
+          }
         }
       }
 
       setTest(testData);
 
-      // ── Step 2: Load stats + leaderboard (owner-only, silently skip if 403) ─
+      // ── Step 2: Stats + leaderboard (use real _id, silently skip if 403) ──
+      const testId = testData._id;
       const [statsRes, lbRes] = await Promise.all([
-        apiFetch(`/tests/${id}/stats`).catch(() => ({ data: null })),
-        apiFetch(`/tests/${id}/leaderboard`).catch(() => ({ data: [] })),
+        apiFetch(`/tests/${testId}/stats`).catch(() => ({ data: null })),
+        apiFetch(`/tests/${testId}/leaderboard`).catch(() => ({ data: [] })),
       ]);
       setStats(statsRes.data);
       setLeaderboard(lbRes.data || []);
 
-      // ── Step 3: My previous result (only if logged in) ────────────────────
+      // ── Step 3: My previous result ────────────────────────────────────────
       if (user?._id) {
-        apiFetch(`/results/student/me?testId=${id}`)
+        apiFetch(`/results/student/me?testId=${testId}`)
           .then((r) => setMyResult(r.data?.[0] || null))
           .catch(() => {});
       }
@@ -2058,7 +2076,9 @@ export default function TestDetailPage() {
   const isPrivate =
     test.visibility === "private" || test.accessType === "private";
   const timeLimitMin = test.timeLimitMin || test.timeLimit || 30;
-  const shareUrl = `${window.location.origin}/tests/${id}`;
+  // Always use test.slug for share URLs — the public /tests/:slug route works
+  // for everyone. Using the MongoDB _id would hit /tests/id/:id which requires auth.
+  const shareUrl = `${window.location.origin}/tests/${test.slug || id}`;
   const tokenUrl = test.accessToken
     ? `${window.location.origin}/tests/token/${test.accessToken}`
     : shareUrl;
@@ -2115,7 +2135,7 @@ export default function TestDetailPage() {
 
   const handleDelete = async () => {
     try {
-      await apiFetch(`/tests/${id}`, { method: "DELETE" });
+      await apiFetch(`/tests/${test._id}`, { method: "DELETE" });
       toast({ title: "Test deleted", status: "success" });
       navigate(-1);
     } catch (e) {
