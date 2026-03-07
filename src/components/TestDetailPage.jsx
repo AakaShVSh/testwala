@@ -612,7 +612,7 @@ export default function TestDetailPage() {
   const load = useCallback(async () => {
     try {
       const [testRes, statsRes, lbRes] = await Promise.all([
-        apiFetch(`/tests/id/${id}`),
+        apiFetch(`/tests/${id}`),
         apiFetch(`/tests/${id}/stats`).catch(() => ({ data: null })),
         apiFetch(`/tests/${id}/leaderboard`).catch(() => ({ data: [] })),
       ]);
