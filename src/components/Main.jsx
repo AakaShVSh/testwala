@@ -34,6 +34,7 @@ import TokenTestPage from "./TokenTestPage";
 import UserTestDataList from "./UserTestDataList";
 import SavedPage from "./SavedData";
 import SaveQuestion from "./SaveQuestion";
+import AdminCoachingPage from "./AdminCoachingPage";
 
 const BASE_URL = "https://testwala-backend.onrender.com";
 
@@ -134,6 +135,8 @@ function AppShell() {
             />
           }
         />
+
+        <Route path="/admin/coaching" element={<AdminCoachingPage />} />
 
         <Route path="/tests/token/:token" element={<TokenTestPage />} />
         <Route path="/tests/:id" element={<TestDetailPage />} />
