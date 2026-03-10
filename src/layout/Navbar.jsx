@@ -619,7 +619,7 @@ import {
   FaClipboardList,
 } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
-import { NotificationBell } from "../components/RequestTestDrawer";
+// import { NotificationBell } from "../components/RequestTestDrawer";
 
 const LINKS = [
   { label: "Home", to: "/", icon: FaHome },
@@ -739,7 +739,7 @@ const Navbar = () => {
         {/* Right side */}
         <Flex align="center" gap={2}>
           {/* Notification bell — only for logged in users */}
-          {user && <NotificationBell />}
+          {/* {user && <NotificationBell />} */}
           {user ? (
             <Menu>
               <MenuButton>
