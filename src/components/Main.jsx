@@ -136,7 +136,7 @@ function AppShell() {
           }
         />
 
-        {/* <Route path="/admin/coaching" element={<AdminCoachingPage />} /> */}
+        <Route path="/admin/coaching" element={<AdminCoachingPage />} />
 
         <Route path="/tests/token/:token" element={<TokenTestPage />} />
         <Route path="/tests/:id" element={<TestDetailPage />} />

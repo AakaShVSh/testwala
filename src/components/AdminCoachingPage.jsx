@@ -155,7 +155,7 @@ export default function AdminCoachingPage() {
       const params = new URLSearchParams();
       if (statusFilter) params.set("status", statusFilter);
       if (search.trim()) params.set("search", search.trim());
-      const res = await apiFetch(`/coaching/admin/requests?${params}`);
+      const res = await apiFetch(`/admin/coaching/requests?${params}`);
       setRequests(res.data ?? []);
     } catch (err) {
       toast({ title: err.message, status: "error", duration: 3000 });
@@ -178,7 +178,7 @@ export default function AdminCoachingPage() {
     if (!selected) return;
     setActing(true);
     try {
-      await apiFetch(`/coaching/admin/${selected._id}/approve`, {
+      await apiFetch(`/admin/coaching/${selected._id}/approve`, {
         method: "PATCH",
         body: JSON.stringify({ adminNote }),
       });
@@ -208,7 +208,7 @@ export default function AdminCoachingPage() {
     }
     setActing(true);
     try {
-      await apiFetch(`/coaching/admin/${selected._id}/reject`, {
+      await apiFetch(`/admin/coaching/${selected._id}/reject`, {
         method: "PATCH",
         body: JSON.stringify({ adminNote }),
       });
