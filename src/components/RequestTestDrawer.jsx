@@ -1,3 +1,16 @@
+// ═══════════════════════════════════════════════════════════════
+// RequestTestDrawer.jsx
+//
+// DEFAULT EXPORT  → RequestTestDrawer
+//   Coaching owner fills a form + attaches files → POST /test-requests/create
+//   Admin will see this, create the test, and send it back.
+//
+// NAMED EXPORT    → MyTestRequests
+//   Panel shown inside the coaching dashboard.
+//   Lists all submitted requests with live status badges.
+//   When status = "completed" shows "View Test" → TestDetailModal.
+// ═══════════════════════════════════════════════════════════════
+
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Box,
@@ -25,40 +38,30 @@ import {
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  ModalBody,
   ModalCloseButton,
+  ModalBody,
   useDisclosure,
-  Badge,
-  Collapse,
 } from "@chakra-ui/react";
 import {
   FaPlus,
-  FaClipboardList,
+  FaTrash,
   FaUpload,
   FaFilePdf,
   FaFileImage,
   FaFileExcel,
-  FaTrash,
-  FaCheck,
-  FaClock,
-  FaTimesCircle,
-  FaCheckCircle,
-  FaHourglass,
-  FaLink,
-  FaRedo,
-  FaInfoCircle,
-  FaBell,
+  FaFileAlt,
+  FaClipboardList,
   FaEye,
+  FaLink,
+  FaWhatsapp,
+  FaExternalLinkAlt,
+  FaCheck,
   FaChevronDown,
   FaChevronUp,
-  FaExternalLinkAlt,
-  FaWhatsapp,
-  FaShareAlt,
+  FaPaperPlane,
 } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../services/api";
 import { socket } from "../services/socket";
-import { useAuth } from "../context/AuthContext";
 
 const EXAM_TYPES = [
   "SSC",
@@ -75,463 +78,338 @@ const SUBJECTS = [
   "gs",
   "vocabulary",
   "reasoning",
-  "mathtwo",
   "science",
   "history",
   "geography",
   "polity",
   "economics",
-];
-const DIFFICULTIES = [
-  { value: "easy", label: "Easy" },
-  { value: "medium", label: "Medium" },
-  { value: "hard", label: "Hard" },
-  { value: "mixed", label: "Mixed (Recommended)" },
+  "mathtwo",
 ];
 const OPTION_LABELS = ["A", "B", "C", "D"];
 
-// ── Status badge ─────────────────────────────────────────────────────────────
-const StatusBadge = ({ status }) => {
-  const cfg = {
-    pending: {
-      bg: "#fef9c3",
-      color: "#a16207",
-      icon: FaHourglass,
-      label: "Pending",
-    },
-    processing: {
-      bg: "#eff6ff",
-      color: "#1d4ed8",
-      icon: FaClock,
-      label: "Processing",
-    },
-    completed: {
-      bg: "#dcfce7",
-      color: "#15803d",
-      icon: FaCheckCircle,
-      label: "Ready",
-    },
-    rejected: {
-      bg: "#fee2e2",
-      color: "#dc2626",
-      icon: FaTimesCircle,
-      label: "Rejected",
-    },
-  };
-  const c = cfg[status] || cfg.pending;
+const STATUS_STYLE = {
+  pending: {
+    bg: "#fffbeb",
+    color: "#d97706",
+    label: "⏳ Pending",
+    border: "#fde68a",
+  },
+  processing: {
+    bg: "#eff6ff",
+    color: "#2563eb",
+    label: "🔄 Processing",
+    border: "#bfdbfe",
+  },
+  completed: {
+    bg: "#f0fdf4",
+    color: "#16a34a",
+    label: "✅ Completed",
+    border: "#bbf7d0",
+  },
+  rejected: {
+    bg: "#fef2f2",
+    color: "#dc2626",
+    label: "❌ Rejected",
+    border: "#fecaca",
+  },
+};
+
+// ── File helpers ──────────────────────────────────────────────────────────
+const detectFileType = (file) => {
+  if (file.type.includes("pdf")) return "pdf";
+  if (file.type.includes("image")) return "image";
+  if (file.name.match(/\.xlsx?$/i)) return "excel";
+  return "other";
+};
+const toBase64 = (file) =>
+  new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = (e) => res(e.target.result.split(",")[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+const FILE_ICONS = { pdf: FaFilePdf, image: FaFileImage, excel: FaFileExcel };
+const FILE_COLORS = { pdf: "#ef4444", image: "#8b5cf6", excel: "#16a34a" };
+const FileIcon = ({ type }) => {
+  const Ic = FILE_ICONS[type] || FaFileAlt;
   return (
-    <Flex
-      align="center"
-      gap={1.5}
-      bg={c.bg}
-      color={c.color}
-      px={3}
-      py="4px"
-      borderRadius="full"
-      fontSize="11px"
-      fontWeight={700}
-      w="fit-content"
-    >
-      <Icon as={c.icon} fontSize="10px" />
-      {c.label}
-    </Flex>
+    <Icon as={Ic} color={FILE_COLORS[type] || "#64748b"} fontSize="18px" />
   );
 };
 
-const FileIcon = ({ type }) => {
-  const map = { pdf: FaFilePdf, image: FaFileImage, excel: FaFileExcel };
-  const colors = { pdf: "#ef4444", image: "#8b5cf6", excel: "#16a34a" };
-  const Ic = map[type] || FaClipboardList;
-  return <Icon as={Ic} color={colors[type] || "#64748b"} fontSize="18px" />;
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// TEST DETAIL MODAL — shows full test: questions, options, answer key, share links
-// ═══════════════════════════════════════════════════════════════════
-function TestDetailModal({ isOpen, onClose, test, requestTitle }) {
+// ═══════════════════════════════════════════════════════════════
+// TEST DETAIL MODAL
+// ═══════════════════════════════════════════════════════════════
+function TestDetailModal({ test, isOpen, onClose }) {
   const toast = useToast();
-  const navigate = useNavigate();
-  const [expandedQ, setExpandedQ] = useState(null);
-  const [copied, setCopied] = useState(false);
-
+  const [expanded, setExpanded] = useState({});
   if (!test) return null;
 
-  const shareUrl = `${window.location.origin}/tests/${test.slug || test._id}`;
-  const whatsappMsg = `📚 *${test.title}*\n\n🎯 Exam: ${test.examType || ""}\n⏱ Time: ${test.timeLimitMin} minutes\n❓ Questions: ${test.questions?.length || test.totalMarks}\n\n👉 Take the test: ${shareUrl}`;
+  const shareUrl = test.accessToken
+    ? `${window.location.origin}/tests/token/${test.accessToken}`
+    : `${window.location.origin}/tests/${test.slug || test._id}`;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-      toast({ title: "Link copied!", status: "success", duration: 2000 });
-    });
+  const copy = () => {
+    navigator.clipboard.writeText(shareUrl);
+    toast({ title: "Link copied!", status: "success", duration: 2000 });
   };
-
-  const handleWhatsApp = () => {
+  const whatsapp = () =>
     window.open(
-      `https://wa.me/?text=${encodeURIComponent(whatsappMsg)}`,
+      `https://wa.me/?text=${encodeURIComponent(`📝 ${test.title}\n${shareUrl}`)}`,
       "_blank",
     );
-  };
+  const toggleQ = (i) => setExpanded((p) => ({ ...p, [i]: !p[i] }));
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="4xl" scrollBehavior="inside">
-      <ModalOverlay backdropFilter="blur(6px)" bg="rgba(0,0,0,.6)" />
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
+      <ModalOverlay backdropFilter="blur(4px)" bg="rgba(0,0,0,.5)" />
       <ModalContent
+        mx={4}
         borderRadius="20px"
+        overflow="hidden"
         fontFamily="'Sora',sans-serif"
-        mx={{ base: 2, md: 6 }}
-        my={{ base: 0, md: 6 }}
-        maxH="90vh"
       >
-        {/* Header */}
-        <Box
-          bg="linear-gradient(135deg,#0f1e3a 0%,#1e3a5f 50%,#2d5fa8 100%)"
+        <ModalCloseButton top={4} right={4} zIndex={10} color="white" />
+        <ModalHeader
           px={7}
           pt={7}
-          pb={6}
-          borderRadius="20px 20px 0 0"
+          pb={5}
+          bg="linear-gradient(135deg,#0f1e3a,#2d5fa8)"
+          color="white"
         >
-          <Flex align="flex-start" justify="space-between" gap={4}>
-            <Box flex={1} minW={0}>
-              {/* NEW badge */}
-              <Flex align="center" gap={2} mb={2}>
-                <Flex
-                  align="center"
-                  gap={1.5}
-                  bg="rgba(34,197,94,.2)"
-                  border="1px solid rgba(34,197,94,.4)"
-                  px={3}
-                  py="4px"
-                  borderRadius="full"
-                >
-                  <Icon as={FaCheckCircle} color="#4ade80" fontSize="10px" />
-                  <Text fontSize="10px" fontWeight={800} color="#4ade80">
-                    TEST READY
-                  </Text>
-                </Flex>
-              </Flex>
-              <Text
-                fontSize={{ base: "20px", md: "26px" }}
-                fontWeight={800}
-                color="white"
-                letterSpacing="-0.5px"
-                lineHeight="1.2"
-                mb={2}
-              >
-                {test.title}
-              </Text>
-              <Flex flexWrap="wrap" gap={3} align="center">
-                {test.examType && (
+          <Text fontSize="18px" fontWeight={800} lineHeight="1.2" mb={1}>
+            {test.title}
+          </Text>
+          <Flex gap={4} mt={2} flexWrap="wrap">
+            {[
+              ["📋", test.examType],
+              ["⏱", `${test.timeLimitMin || 30} min`],
+              [
+                "❓",
+                `${test.questions?.length || test.totalMarks || 0} questions`,
+              ],
+              ["🔐", test.visibility === "private" ? "Private" : "Public"],
+            ].map(
+              ([icon, val]) =>
+                val && (
                   <Text
+                    key={val}
                     fontSize="12px"
-                    color="rgba(255,255,255,.6)"
+                    color="rgba(255,255,255,.7)"
                     fontWeight={600}
                   >
-                    🎯 {test.examType}
+                    {icon} {val}
                   </Text>
-                )}
-                <Text fontSize="12px" color="rgba(255,255,255,.6)">
-                  ⏱ {test.timeLimitMin} minutes
-                </Text>
-                <Text fontSize="12px" color="rgba(255,255,255,.6)">
-                  ❓ {test.questions?.length || test.totalMarks || 0} questions
-                </Text>
-                <Flex
-                  align="center"
-                  gap={1.5}
-                  bg={
-                    test.visibility === "private"
-                      ? "rgba(239,68,68,.2)"
-                      : "rgba(34,197,94,.2)"
-                  }
-                  px={2}
-                  py="3px"
-                  borderRadius="full"
-                >
-                  <Text
-                    fontSize="10px"
-                    fontWeight={700}
-                    color={
-                      test.visibility === "private" ? "#fca5a5" : "#4ade80"
-                    }
-                  >
-                    {test.visibility === "private" ? "🔒 Private" : "🌐 Public"}
-                  </Text>
-                </Flex>
-              </Flex>
-            </Box>
-            <ModalCloseButton
-              position="static"
-              color="white"
-              _hover={{ bg: "rgba(255,255,255,.15)" }}
-              borderRadius="8px"
-              mt={1}
-            />
+                ),
+            )}
           </Flex>
+        </ModalHeader>
 
-          {/* Share row */}
-          <Box mt={5} bg="rgba(0,0,0,.3)" borderRadius="14px" p={4}>
-            <Text
-              fontSize="11px"
-              fontWeight={700}
-              color="rgba(255,255,255,.5)"
-              textTransform="uppercase"
-              letterSpacing="1px"
-              mb={3}
+        <ModalBody px={7} py={6}>
+          <Stack spacing={5}>
+            {/* Share */}
+            <Box
+              bg="#f8fafc"
+              borderRadius="14px"
+              border="1px solid #e2e8f0"
+              p={5}
             >
-              Share with students
-            </Text>
-            <Flex gap={2} flexWrap={{ base: "wrap", sm: "nowrap" }}>
+              <Text
+                fontSize="11px"
+                fontWeight={800}
+                color="#94a3b8"
+                textTransform="uppercase"
+                letterSpacing="2px"
+                mb={3}
+              >
+                Share with Students
+              </Text>
               <Box
-                flex={1}
-                bg="rgba(0,0,0,.4)"
+                bg="white"
                 borderRadius="10px"
+                border="1px solid #e2e8f0"
                 px={4}
-                py="10px"
+                py="12px"
                 fontFamily="monospace"
                 fontSize="12px"
-                color="rgba(255,255,255,.8)"
-                overflow="hidden"
-                textOverflow="ellipsis"
-                whiteSpace="nowrap"
-                minW={0}
+                color="#374151"
+                mb={3}
+                wordBreak="break-all"
               >
                 {shareUrl}
               </Box>
-              <Button
-                flexShrink={0}
-                h="40px"
-                px={4}
-                borderRadius="10px"
-                bg={copied ? "#22c55e" : "white"}
-                color={copied ? "white" : "#1e3a5f"}
-                fontWeight={700}
-                fontSize="12px"
-                leftIcon={
-                  <Icon as={copied ? FaCheck : FaLink} fontSize="11px" />
-                }
-                onClick={handleCopy}
-                _hover={{ opacity: 0.9 }}
-                transition="all .2s"
-              >
-                {copied ? "Copied!" : "Copy"}
-              </Button>
-              <Button
-                flexShrink={0}
-                h="40px"
-                px={4}
-                borderRadius="10px"
-                bg="#25d366"
-                color="white"
-                fontWeight={700}
-                fontSize="12px"
-                leftIcon={<Icon as={FaWhatsapp} fontSize="13px" />}
-                onClick={handleWhatsApp}
-                _hover={{ bg: "#1ebe5d" }}
-              >
-                WhatsApp
-              </Button>
-              <Button
-                flexShrink={0}
-                h="40px"
-                px={4}
-                borderRadius="10px"
-                bg="rgba(255,255,255,.1)"
-                color="white"
-                fontWeight={700}
-                fontSize="12px"
-                leftIcon={<Icon as={FaExternalLinkAlt} fontSize="11px" />}
-                onClick={() => navigate(`/tests/${test.slug || test._id}`)}
-                _hover={{ bg: "rgba(255,255,255,.2)" }}
-              >
-                Open
-              </Button>
-            </Flex>
-          </Box>
-        </Box>
+              <Flex gap={2} flexWrap="wrap">
+                <Button
+                  size="sm"
+                  leftIcon={<FaLink />}
+                  onClick={copy}
+                  bg="#4a72b8"
+                  color="white"
+                  borderRadius="8px"
+                  fontWeight={700}
+                >
+                  Copy Link
+                </Button>
+                <Button
+                  size="sm"
+                  leftIcon={<FaWhatsapp />}
+                  onClick={whatsapp}
+                  bg="#16a34a"
+                  color="white"
+                  borderRadius="8px"
+                  fontWeight={700}
+                >
+                  WhatsApp
+                </Button>
+                <Button
+                  size="sm"
+                  leftIcon={<FaExternalLinkAlt />}
+                  onClick={() => window.open(shareUrl, "_blank")}
+                  variant="outline"
+                  borderRadius="8px"
+                  fontWeight={700}
+                  borderColor="#e2e8f0"
+                >
+                  Open Test
+                </Button>
+              </Flex>
+            </Box>
 
-        {/* Questions */}
-        <ModalBody px={{ base: 4, md: 7 }} py={6}>
-          {test.questions && test.questions.length > 0 ? (
-            <Box>
-              <Flex align="center" justify="space-between" mb={5}>
+            {/* Questions */}
+            {test.questions?.length > 0 && (
+              <Box>
                 <Text
                   fontSize="11px"
                   fontWeight={800}
                   color="#94a3b8"
                   textTransform="uppercase"
                   letterSpacing="2px"
+                  mb={3}
                 >
-                  Questions & Answer Key ({test.questions.length})
+                  Questions ({test.questions.length})
                 </Text>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  fontSize="11px"
-                  color="#64748b"
-                  onClick={() => setExpandedQ(expandedQ !== null ? null : -1)}
-                >
-                  {expandedQ !== null ? "Collapse all" : "Expand all"}
-                </Button>
-              </Flex>
-
-              <Stack spacing={3}>
-                {test.questions.map((q, qi) => {
-                  const isOpen = expandedQ === qi || expandedQ === -1;
-                  return (
+                <Stack spacing={3}>
+                  {test.questions.map((q, i) => (
                     <Box
-                      key={qi}
-                      bg="white"
-                      borderRadius="14px"
+                      key={i}
+                      bg="#f8fafc"
+                      borderRadius="12px"
                       border="1px solid #e2e8f0"
-                      boxShadow={isOpen ? "0 2px 12px rgba(0,0,0,.06)" : "none"}
                       overflow="hidden"
-                      transition="all .2s"
                     >
-                      {/* Question header — always visible */}
                       <Flex
-                        align="flex-start"
+                        px={4}
+                        py={3}
+                        align="center"
                         gap={3}
-                        px={5}
-                        py={4}
                         cursor="pointer"
-                        onClick={() => setExpandedQ(isOpen ? null : qi)}
-                        _hover={{ bg: "#f8fafc" }}
-                        transition="bg .15s"
+                        onClick={() => toggleQ(i)}
+                        _hover={{ bg: "#f0f7ff" }}
+                        transition="background .15s"
                       >
-                        {/* Q number */}
                         <Flex
-                          w="28px"
-                          h="28px"
+                          w="24px"
+                          h="24px"
                           flexShrink={0}
-                          bg="#f1f5f9"
-                          borderRadius="8px"
+                          bg="#e2e8f0"
+                          borderRadius="6px"
                           align="center"
                           justify="center"
                           fontSize="11px"
                           fontWeight={800}
                           color="#64748b"
                         >
-                          {qi + 1}
+                          {i + 1}
                         </Flex>
                         <Text
                           flex={1}
-                          fontSize="14px"
+                          fontSize="13px"
                           fontWeight={600}
                           color="#0f172a"
-                          lineHeight={1.6}
-                          mt="2px"
+                          noOfLines={expanded[i] ? undefined : 2}
                         >
                           {q.qus}
                         </Text>
-                        {/* Correct answer pill — always visible */}
-                        <Flex
-                          align="center"
-                          gap={1.5}
-                          bg="#dcfce7"
-                          color="#15803d"
-                          px={3}
-                          py="4px"
-                          borderRadius="full"
-                          flexShrink={0}
-                          fontSize="11px"
-                          fontWeight={700}
-                        >
-                          <Icon as={FaCheckCircle} fontSize="9px" />
-                          Ans: {OPTION_LABELS[q.answer] || q.answer}
-                        </Flex>
                         <Icon
-                          as={isOpen ? FaChevronUp : FaChevronDown}
+                          as={expanded[i] ? FaChevronUp : FaChevronDown}
                           fontSize="11px"
                           color="#94a3b8"
-                          mt="6px"
                           flexShrink={0}
                         />
                       </Flex>
-
-                      {/* Options + explanation — collapsible */}
-                      <Collapse in={isOpen} animateOpacity>
-                        <Box px={5} pb={4} pt={0}>
-                          <Flex
-                            flexWrap="wrap"
-                            gap={2}
-                            mb={q.explanation ? 3 : 0}
-                          >
-                            {(q.options || []).map((opt, oi) => {
-                              const isCorrect = oi === q.answer;
-                              return (
+                      {expanded[i] && (
+                        <Box px={4} pb={4}>
+                          <Stack spacing={2} mt={2}>
+                            {q.options?.map((opt, oi) => (
+                              <Flex
+                                key={oi}
+                                align="center"
+                                gap={3}
+                                bg={q.answer === oi ? "#f0fdf4" : "white"}
+                                border="1px solid"
+                                borderColor={
+                                  q.answer === oi ? "#16a34a" : "#e2e8f0"
+                                }
+                                borderRadius="8px"
+                                px={3}
+                                py="8px"
+                              >
                                 <Flex
-                                  key={oi}
+                                  w="20px"
+                                  h="20px"
+                                  flexShrink={0}
+                                  bg={q.answer === oi ? "#dcfce7" : "#f1f5f9"}
+                                  borderRadius="5px"
                                   align="center"
-                                  gap={2}
-                                  w={{ base: "100%", sm: "calc(50% - 4px)" }}
-                                  bg={isCorrect ? "#f0fdf4" : "#f8fafc"}
-                                  border="1.5px solid"
-                                  borderColor={
-                                    isCorrect ? "#16a34a" : "#e2e8f0"
+                                  justify="center"
+                                  fontSize="10px"
+                                  fontWeight={800}
+                                  color={
+                                    q.answer === oi ? "#15803d" : "#64748b"
                                   }
-                                  borderRadius="10px"
-                                  px={3}
-                                  py="8px"
                                 >
-                                  <Flex
-                                    w="22px"
-                                    h="22px"
-                                    flexShrink={0}
-                                    align="center"
-                                    justify="center"
-                                    borderRadius="6px"
-                                    bg={isCorrect ? "#16a34a" : "#e2e8f0"}
-                                    fontSize="10px"
-                                    fontWeight={800}
-                                    color={isCorrect ? "white" : "#64748b"}
-                                  >
-                                    {OPTION_LABELS[oi]}
-                                  </Flex>
-                                  <Text
-                                    fontSize="13px"
-                                    color={isCorrect ? "#15803d" : "#374151"}
-                                    fontWeight={isCorrect ? 700 : 500}
-                                    lineHeight={1.4}
-                                  >
-                                    {opt}
-                                  </Text>
-                                  {isCorrect && (
-                                    <Icon
-                                      as={FaCheckCircle}
-                                      color="#16a34a"
-                                      fontSize="11px"
-                                      ml="auto"
-                                      flexShrink={0}
-                                    />
-                                  )}
+                                  {OPTION_LABELS[oi]}
                                 </Flex>
-                              );
-                            })}
-                          </Flex>
-
+                                <Text
+                                  fontSize="13px"
+                                  flex={1}
+                                  color={
+                                    q.answer === oi ? "#15803d" : "#374151"
+                                  }
+                                  fontWeight={q.answer === oi ? 700 : 400}
+                                >
+                                  {opt}
+                                </Text>
+                                {q.answer === oi && (
+                                  <Icon
+                                    as={FaCheck}
+                                    fontSize="11px"
+                                    color="#16a34a"
+                                  />
+                                )}
+                              </Flex>
+                            ))}
+                          </Stack>
                           {q.explanation && (
                             <Box
+                              mt={3}
                               bg="#fffbeb"
                               border="1px solid #fde68a"
-                              borderRadius="10px"
-                              px={4}
-                              py={3}
+                              borderRadius="8px"
+                              px={3}
+                              py="8px"
                             >
                               <Text
-                                fontSize="10px"
+                                fontSize="11px"
                                 fontWeight={800}
-                                color="#92400e"
-                                textTransform="uppercase"
-                                letterSpacing=".6px"
+                                color="#d97706"
                                 mb={1}
                               >
-                                Explanation
+                                EXPLANATION
                               </Text>
                               <Text
-                                fontSize="13px"
-                                color="#78350f"
+                                fontSize="12px"
+                                color="#92400e"
                                 lineHeight={1.7}
                               >
                                 {q.explanation}
@@ -539,403 +417,295 @@ function TestDetailModal({ isOpen, onClose, test, requestTitle }) {
                             </Box>
                           )}
                         </Box>
-                      </Collapse>
+                      )}
                     </Box>
-                  );
-                })}
-              </Stack>
-            </Box>
-          ) : (
-            <Flex
-              justify="center"
-              align="center"
-              py={10}
-              direction="column"
-              gap={3}
-            >
-              <Icon as={FaClipboardList} fontSize="36px" color="#e2e8f0" />
-              <Text fontSize="14px" color="#94a3b8">
-                Question details not available
-              </Text>
-              <Button
-                leftIcon={<FaExternalLinkAlt />}
-                size="sm"
-                onClick={() => navigate(`/tests/${test.slug || test._id}`)}
-                bg="#4a72b8"
-                color="white"
-                borderRadius="9px"
-                fontWeight={700}
-              >
-                View Full Test
-              </Button>
-            </Flex>
-          )}
+                  ))}
+                </Stack>
+              </Box>
+            )}
+          </Stack>
         </ModalBody>
       </ModalContent>
     </Modal>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// NOTIFICATION BELL — shows unread count, opens notification panel
-// ═══════════════════════════════════════════════════════════════════
-export function NotificationBell() {
-  const { user } = useAuth();
-  const toast = useToast();
+// ═══════════════════════════════════════════════════════════════
+// NAMED EXPORT — MyTestRequests panel
+// ═══════════════════════════════════════════════════════════════
+export function MyTestRequests({ coachingId, onRequestTest }) {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selTest, setSelTest] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [notifications, setNotifications] = useState([]);
-  const [unread, setUnread] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [selectedTest, setSelectedTest] = useState(null);
-  const {
-    isOpen: testOpen,
-    onOpen: openTest,
-    onClose: closeTest,
-  } = useDisclosure();
-  const [selectedRequestTitle, setSelectedRequestTitle] = useState("");
+  const toast = useToast();
 
-  const loadNotifications = useCallback(async () => {
-    if (!user) return;
-    try {
-      const res = await apiFetch("/notifications/mine");
-      setNotifications(res.data ?? []);
-      setUnread(res.unreadCount ?? 0);
-    } catch (_) {}
-  }, [user]);
+  const load = useCallback(() => {
+    apiFetch("/test-requests/mine")
+      .then((r) => setRequests(r.data ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
-    if (!user?._id) return;
-    loadNotifications();
+    load();
+  }, [load]);
 
-    // Join personal notification room
-    const room = `user:${user._id}`;
-    socket.emit("join-user", room);
-
-    // Listen for new notifications
-    const handleNew = ({ notification }) => {
-      setNotifications((prev) => [notification, ...prev]);
-      setUnread((prev) => prev + 1);
-      // Toast for test_ready
-      if (notification.type === "test_ready") {
-        toast({
-          title: notification.title,
-          description: notification.body,
-          status: "success",
-          duration: 8000,
-          isClosable: true,
-          position: "top-right",
-        });
-      } else if (notification.type === "request_processing") {
-        toast({
-          title: notification.title,
-          status: "info",
-          duration: 4000,
-          position: "top-right",
-        });
-      } else if (notification.type === "request_rejected") {
-        toast({
-          title: notification.title,
-          description: notification.body,
-          status: "warning",
-          duration: 6000,
-          isClosable: true,
-          position: "top-right",
-        });
-      }
+  // Live socket — when admin sends a test
+  useEffect(() => {
+    if (!coachingId) return;
+    const room = `coaching:${coachingId}`;
+    socket.emit("join-coaching", room);
+    const handler = (data) => {
+      load();
+      toast({
+        title: "🎉 Your test is ready!",
+        description:
+          data?.testTitle || "Admin has completed your test request.",
+        status: "success",
+        duration: 6000,
+        isClosable: true,
+      });
     };
-
-    socket.on("notification:new", handleNew);
+    socket.on("test:created", handler);
     return () => {
-      socket.emit("leave-user", room);
-      socket.off("notification:new", handleNew);
+      socket.off("test:created", handler);
+      socket.emit("leave-coaching", room);
     };
-  }, [user?._id, loadNotifications]);
+  }, [coachingId, load]);
 
-  const markAllRead = async () => {
-    try {
-      await apiFetch("/notifications/read-all", { method: "PATCH" });
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      setUnread(0);
-    } catch (_) {}
+  const openTest = (req) => {
+    setSelTest(req.createdTestId); // already populated by backend
+    onOpen();
   };
 
-  const markRead = async (id) => {
-    try {
-      await apiFetch(`/notifications/${id}/read`, { method: "PATCH" });
-      setNotifications((prev) =>
-        prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)),
-      );
-      setUnread((prev) => Math.max(0, prev - 1));
-    } catch (_) {}
-  };
-
-  const handleNotifClick = (notif) => {
-    if (!notif.isRead) markRead(notif._id);
-    if (notif.type === "test_ready" && notif.testId) {
-      setSelectedTest(notif.testId);
-      setSelectedRequestTitle(notif.title);
-      openTest();
-    }
-  };
-
-  const notifIcon = (type) => {
-    if (type === "test_ready")
-      return { icon: FaCheckCircle, color: "#16a34a", bg: "#dcfce7" };
-    if (type === "request_rejected")
-      return { icon: FaTimesCircle, color: "#dc2626", bg: "#fee2e2" };
-    if (type === "request_processing")
-      return { icon: FaClock, color: "#2563eb", bg: "#eff6ff" };
-    if (type === "coaching_approved")
-      return { icon: FaCheckCircle, color: "#16a34a", bg: "#dcfce7" };
-    return { icon: FaBell, color: "#4a72b8", bg: "#eff6ff" };
-  };
-
-  if (!user) return null;
+  if (loading)
+    return (
+      <Flex justify="center" py={10}>
+        <Spinner color="#4a72b8" thickness="3px" />
+      </Flex>
+    );
 
   return (
-    <>
-      {/* Bell button */}
-      <Box
-        position="relative"
-        cursor="pointer"
-        onClick={() => {
-          onOpen();
-          loadNotifications();
-        }}
-      >
-        <Flex
-          w="38px"
-          h="38px"
-          align="center"
-          justify="center"
-          borderRadius="10px"
-          bg="#f8fafc"
-          border="1px solid #e2e8f0"
-          _hover={{ bg: "#f1f5f9" }}
-          transition="all .15s"
+    <Box fontFamily="'Sora',sans-serif">
+      <Flex justify="space-between" align="center" mb={5}>
+        <Text
+          fontSize="11px"
+          fontWeight={800}
+          color="#94a3b8"
+          textTransform="uppercase"
+          letterSpacing="2px"
         >
-          <Icon as={FaBell} fontSize="15px" color="#475569" />
-        </Flex>
-        {unread > 0 && (
-          <Flex
-            position="absolute"
-            top="-6px"
-            right="-6px"
-            minW="18px"
-            h="18px"
-            bg="#ef4444"
-            borderRadius="full"
-            align="center"
-            justify="center"
-            px={1}
-            border="2px solid white"
+          My Test Requests
+        </Text>
+        <Button
+          size="sm"
+          leftIcon={<FaPlus />}
+          onClick={onRequestTest}
+          bg="#4a72b8"
+          color="white"
+          borderRadius="9px"
+          fontWeight={700}
+          fontSize="12px"
+          _hover={{ bg: "#3b5fa0" }}
+        >
+          New Request
+        </Button>
+      </Flex>
+
+      {requests.length === 0 ? (
+        <Box
+          py={14}
+          textAlign="center"
+          bg="white"
+          borderRadius="14px"
+          border="1px solid #e2e8f0"
+        >
+          <Icon
+            as={FaClipboardList}
+            fontSize="42px"
+            color="#e2e8f0"
+            display="block"
+            mx="auto"
+            mb={3}
+          />
+          <Text fontSize="14px" fontWeight={700} color="#94a3b8" mb={2}>
+            No requests yet
+          </Text>
+          <Text fontSize="13px" color="#94a3b8" mb={5} maxW="320px" mx="auto">
+            Submit a request with your reference material — admin will build the
+            test and send it back.
+          </Text>
+          <Button
+            leftIcon={<FaPaperPlane />}
+            onClick={onRequestTest}
+            bg="#4a72b8"
+            color="white"
+            borderRadius="10px"
+            fontWeight={700}
+            _hover={{ bg: "#3b5fa0" }}
           >
-            <Text fontSize="9px" fontWeight={800} color="white" lineHeight="1">
-              {unread > 9 ? "9+" : unread}
-            </Text>
+            Submit Test Request
+          </Button>
+        </Box>
+      ) : (
+        <Box
+          bg="white"
+          borderRadius="16px"
+          border="1px solid #e2e8f0"
+          overflow="hidden"
+        >
+          {/* header */}
+          <Flex px={6} py={3} bg="#f8fafc" borderBottom="1px solid #e2e8f0">
+            {[
+              ["Request Title", 3],
+              ["Exam", 1],
+              ["Questions", 1],
+              ["Status", 1.5],
+            ].map(([h, f]) => (
+              <Text
+                key={h}
+                flex={f}
+                fontSize="11px"
+                fontWeight={700}
+                color="#94a3b8"
+                textTransform="uppercase"
+                letterSpacing=".8px"
+                display={{ base: f > 1 ? "none" : "block", md: "block" }}
+              >
+                {h}
+              </Text>
+            ))}
+            <Box w="110px" />
           </Flex>
-        )}
-      </Box>
 
-      {/* Notification panel drawer */}
-      <Drawer isOpen={isOpen} onClose={onClose} placement="right" size="sm">
-        <DrawerOverlay backdropFilter="blur(2px)" bg="rgba(0,0,0,.3)" />
-        <DrawerContent fontFamily="'Sora',sans-serif">
-          <DrawerCloseButton top={4} right={4} />
-          <DrawerHeader px={6} pt={6} pb={4} borderBottom="1px solid #f1f5f9">
-            <Flex align="center" justify="space-between" pr={8}>
-              <Box>
-                <Text fontSize="16px" fontWeight={800} color="#0f172a">
-                  Notifications
-                </Text>
-                {unread > 0 && (
-                  <Text fontSize="12px" color="#64748b" mt="1px">
-                    {unread} unread
+          {requests.map((req, idx) => {
+            const s = STATUS_STYLE[req.status] || STATUS_STYLE.pending;
+            return (
+              <Flex
+                key={req._id}
+                px={6}
+                py={4}
+                align="center"
+                borderBottom={
+                  idx < requests.length - 1 ? "1px solid #f1f5f9" : "none"
+                }
+                transition="background .15s"
+                _hover={{ bg: "#f8faff" }}
+              >
+                {/* Title */}
+                <Box flex={3} minW={0}>
+                  <Text
+                    fontSize="14px"
+                    fontWeight={700}
+                    color="#0f172a"
+                    noOfLines={1}
+                  >
+                    {req.title}
                   </Text>
-                )}
-              </Box>
-              {unread > 0 && (
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  fontSize="11px"
-                  color="#4a72b8"
-                  fontWeight={700}
-                  onClick={markAllRead}
-                  borderRadius="7px"
-                  _hover={{ bg: "#eff6ff" }}
-                >
-                  Mark all read
-                </Button>
-              )}
-            </Flex>
-          </DrawerHeader>
+                  <Text fontSize="11px" color="#94a3b8" mt="1px">
+                    {new Date(req.createdAt).toLocaleDateString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                    {req.attachments?.length > 0 &&
+                      ` · ${req.attachments.length} file${req.attachments.length !== 1 ? "s" : ""} attached`}
+                  </Text>
+                  {req.status === "rejected" && req.adminNote && (
+                    <Text fontSize="11px" color="#dc2626" mt={1} noOfLines={1}>
+                      ⚠ {req.adminNote}
+                    </Text>
+                  )}
+                </Box>
 
-          <DrawerBody px={0} py={0} overflowY="auto">
-            {loading ? (
-              <Flex justify="center" py={10}>
-                <Spinner color="#4a72b8" />
-              </Flex>
-            ) : notifications.length === 0 ? (
-              <Flex direction="column" align="center" py={16} px={6} gap={3}>
-                <Flex
-                  w="56px"
-                  h="56px"
-                  bg="#f1f5f9"
-                  borderRadius="full"
-                  align="center"
-                  justify="center"
+                <Text
+                  flex={1}
+                  fontSize="13px"
+                  fontWeight={600}
+                  color="#374151"
+                  display={{ base: "none", md: "block" }}
                 >
-                  <Icon as={FaBell} fontSize="22px" color="#cbd5e1" />
-                </Flex>
-                <Text fontSize="14px" fontWeight={700} color="#94a3b8">
-                  No notifications yet
+                  {req.examType || "—"}
                 </Text>
-                <Text fontSize="12px" color="#cbd5e1" textAlign="center">
-                  You'll be notified when your test requests are ready
+
+                <Text
+                  flex={1}
+                  fontSize="13px"
+                  fontWeight={600}
+                  color="#374151"
+                  display={{ base: "none", md: "block" }}
+                >
+                  {req.totalQuestions}
                 </Text>
-              </Flex>
-            ) : (
-              <Box>
-                {notifications.map((n, idx) => {
-                  const ic = notifIcon(n.type);
-                  const isTestReady = n.type === "test_ready" && n.testId;
-                  return (
-                    <Flex
-                      key={n._id}
-                      px={5}
-                      py={4}
-                      gap={3}
-                      bg={n.isRead ? "white" : "#f8faff"}
-                      borderBottom="1px solid #f1f5f9"
-                      borderLeft={
-                        n.isRead ? "3px solid transparent" : "3px solid #4a72b8"
-                      }
-                      cursor={isTestReady ? "pointer" : "default"}
-                      onClick={() => handleNotifClick(n)}
-                      _hover={{
-                        bg: isTestReady
-                          ? "#f0f7ff"
-                          : n.isRead
-                            ? "white"
-                            : "#f8faff",
-                      }}
-                      transition="bg .15s"
-                      align="flex-start"
+
+                <Box flex={1.5}>
+                  <Box
+                    display="inline-flex"
+                    alignItems="center"
+                    bg={s.bg}
+                    color={s.color}
+                    border={`1px solid ${s.border}`}
+                    px={3}
+                    py="3px"
+                    borderRadius="full"
+                    fontSize="11px"
+                    fontWeight={700}
+                  >
+                    {s.label}
+                  </Box>
+                </Box>
+
+                <Flex w="110px" justify="flex-end" gap={2}>
+                  {req.status === "completed" && req.createdTestId && (
+                    <Button
+                      size="xs"
+                      leftIcon={<FaEye />}
+                      onClick={() => openTest(req)}
+                      bg="#4a72b8"
+                      color="white"
+                      borderRadius="7px"
+                      fontWeight={700}
+                      fontSize="11px"
+                      _hover={{ bg: "#3b5fa0" }}
                     >
-                      {/* Icon */}
-                      <Flex
-                        w="36px"
-                        h="36px"
-                        flexShrink={0}
-                        borderRadius="10px"
-                        bg={ic.bg}
-                        align="center"
-                        justify="center"
-                      >
-                        <Icon as={ic.icon} color={ic.color} fontSize="14px" />
-                      </Flex>
-
-                      {/* Content */}
-                      <Box flex={1} minW={0}>
-                        <Flex
-                          align="flex-start"
-                          justify="space-between"
-                          gap={2}
-                          mb={1}
-                        >
-                          <Text
-                            fontSize="13px"
-                            fontWeight={n.isRead ? 600 : 800}
-                            color="#0f172a"
-                            lineHeight={1.4}
-                          >
-                            {n.title}
-                          </Text>
-                          {!n.isRead && (
-                            <Box
-                              w="7px"
-                              h="7px"
-                              bg="#4a72b8"
-                              borderRadius="full"
-                              flexShrink={0}
-                              mt="4px"
-                            />
-                          )}
-                        </Flex>
-                        {n.body && (
-                          <Text
-                            fontSize="12px"
-                            color="#64748b"
-                            lineHeight={1.6}
-                            noOfLines={3}
-                            mb={2}
-                          >
-                            {n.body}
-                          </Text>
-                        )}
-                        <Flex align="center" gap={2} flexWrap="wrap">
-                          <Text fontSize="10px" color="#94a3b8">
-                            {new Date(n.createdAt).toLocaleDateString("en-IN", {
-                              day: "2-digit",
-                              month: "short",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </Text>
-                          {isTestReady && (
-                            <Flex
-                              align="center"
-                              gap={1}
-                              bg="#eff6ff"
-                              color="#2563eb"
-                              px={2}
-                              py="2px"
-                              borderRadius="full"
-                              fontSize="10px"
-                              fontWeight={700}
-                            >
-                              <Icon as={FaEye} fontSize="9px" />
-                              View test
-                            </Flex>
-                          )}
-                        </Flex>
-                      </Box>
+                      View Test
+                    </Button>
+                  )}
+                  {req.status === "processing" && (
+                    <Flex align="center" gap={1}>
+                      <Spinner size="xs" color="#2563eb" />
+                      <Text fontSize="10px" color="#2563eb" fontWeight={600}>
+                        Working…
+                      </Text>
                     </Flex>
-                  );
-                })}
-              </Box>
-            )}
-          </DrawerBody>
-        </DrawerContent>
-      </Drawer>
+                  )}
+                </Flex>
+              </Flex>
+            );
+          })}
+        </Box>
+      )}
 
-      {/* Test detail modal */}
-      <TestDetailModal
-        isOpen={testOpen}
-        onClose={closeTest}
-        test={selectedTest}
-        requestTitle={selectedRequestTitle}
-      />
-    </>
+      <TestDetailModal test={selTest} isOpen={isOpen} onClose={onClose} />
+    </Box>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// REQUEST TEST DRAWER
-// ═══════════════════════════════════════════════════════════════════
-export function RequestTestDrawer({
+// ═══════════════════════════════════════════════════════════════
+// DEFAULT EXPORT — RequestTestDrawer (submission form)
+// ═══════════════════════════════════════════════════════════════
+export default function RequestTestDrawer({
   isOpen,
   onClose,
   coachingId,
   coachingExamTypes = [],
-  onSubmitted,
+  currentUser,
 }) {
   const toast = useToast();
   const fileRef = useRef();
   const [busy, setBusy] = useState(false);
-  const [attachments, setAttachments] = useState([]);
-  const [uploading, setUploading] = useState(false);
+  const [files, setFiles] = useState([]);
   const [errs, setErrs] = useState({});
 
   const [form, setForm] = useState({
@@ -959,90 +729,76 @@ export function RequestTestDrawer({
     setErrs((p) => ({ ...p, [k]: "" }));
   };
 
-  const handleFileSelect = async (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-    setUploading(true);
-    const newAttachments = [];
-    for (const file of files) {
-      if (file.size > 10 * 1024 * 1024) {
+  // ── File upload ──────────────────────────────────────────────────────────
+  const handleFiles = async (e) => {
+    const picked = Array.from(e.target.files);
+    e.target.value = "";
+    const MAX = 10 * 1024 * 1024;
+    const result = [];
+    for (const file of picked) {
+      if (file.size > MAX) {
         toast({
-          title: `${file.name} too large (max 10MB)`,
+          title: `${file.name} exceeds 10 MB — skipped`,
           status: "warning",
           duration: 3000,
         });
         continue;
       }
-      const fileType = file.type.includes("pdf")
-        ? "pdf"
-        : file.type.includes("image")
-          ? "image"
-          : file.name.endsWith(".xlsx") || file.name.endsWith(".xls")
-            ? "excel"
-            : "other";
-      const fileData = await new Promise((resolve) => {
-        const r = new FileReader();
-        r.onload = (ev) => resolve(ev.target.result.split(",")[1]);
-        r.readAsDataURL(file);
-      });
-      newAttachments.push({
-        fileName: file.name,
-        fileType,
-        fileData,
+      const type = detectFileType(file);
+      const base64 = await toBase64(file);
+      result.push({
+        name: file.name,
+        type,
+        base64,
         size: file.size,
+        mimeType: file.type,
       });
     }
-    setAttachments((prev) => [...prev, ...newAttachments]);
-    setUploading(false);
-    e.target.value = "";
+    setFiles((p) => [...p, ...result]);
   };
 
-  const validate = () => {
-    const e = {};
-    if (!form.title.trim()) e.title = "Test title is required";
-    if (!form.examType) e.examType = "Select exam type";
-    if (form.totalQuestions < 5 || form.totalQuestions > 200)
-      e.totalQuestions = "Must be 5–200";
-    return e;
-  };
+  const removeFile = (i) => setFiles((p) => p.filter((_, j) => j !== i));
 
+  // ── Submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    const e = validate();
+    const e = {};
+    if (!form.title.trim()) e.title = "Give this request a title";
+    if (!form.examType) e.examType = "Select an exam type";
     if (Object.keys(e).length) {
       setErrs(e);
       return;
     }
+
     setBusy(true);
     try {
-      const res = await apiFetch("/test-requests/create", {
+      await apiFetch("/test-requests/create", {
         method: "POST",
         body: JSON.stringify({
           coachingId,
-          ...form,
-          totalQuestions: Number(form.totalQuestions),
-          timeLimitMin: Number(form.timeLimitMin),
-          attachments,
+          requestedBy: currentUser._id,
+          title: form.title.trim(),
+          examType: form.examType,
+          subject: form.subject || undefined,
+          totalQuestions: Number(form.totalQuestions) || 20,
+          timeLimitMin: Number(form.timeLimitMin) || 30,
+          difficulty: form.difficulty,
+          visibility: form.visibility,
+          instructions: form.instructions.trim() || undefined,
+          attachments: files.map((f) => ({
+            fileName: f.name,
+            fileType: f.type,
+            fileData: f.base64,
+          })),
         }),
       });
       toast({
-        title: "Test request submitted!",
-        description: "We'll notify you when it's ready.",
+        title: "Request sent to admin!",
+        description: "You'll be notified when your test is ready.",
         status: "success",
         duration: 5000,
       });
-      onSubmitted?.(res.data);
+      resetState();
       onClose();
-      setForm({
-        title: "",
-        examType: coachingExamTypes[0] || "",
-        subject: "",
-        totalQuestions: 20,
-        timeLimitMin: 30,
-        difficulty: "mixed",
-        visibility: "public",
-        instructions: "",
-      });
-      setAttachments([]);
     } catch (err) {
       toast({ title: err.message, status: "error", duration: 4000 });
     } finally {
@@ -1050,7 +806,27 @@ export function RequestTestDrawer({
     }
   };
 
-  const LabelStyle = {
+  const resetState = () => {
+    setForm({
+      title: "",
+      examType: coachingExamTypes[0] || "",
+      subject: "",
+      totalQuestions: 20,
+      timeLimitMin: 30,
+      difficulty: "mixed",
+      visibility: "public",
+      instructions: "",
+    });
+    setFiles([]);
+    setErrs({});
+  };
+
+  const handleClose = () => {
+    resetState();
+    onClose();
+  };
+
+  const LS = {
     fontSize: "12px",
     fontWeight: 700,
     color: "#374151",
@@ -1058,7 +834,7 @@ export function RequestTestDrawer({
     textTransform: "uppercase",
     letterSpacing: ".8px",
   };
-  const InputStyle = {
+  const IS = {
     borderRadius: "10px",
     h: "44px",
     fontSize: "14px",
@@ -1067,7 +843,7 @@ export function RequestTestDrawer({
   };
 
   return (
-    <Drawer isOpen={isOpen} onClose={onClose} placement="right" size="lg">
+    <Drawer isOpen={isOpen} onClose={handleClose} placement="right" size="lg">
       <DrawerOverlay backdropFilter="blur(4px)" bg="rgba(0,0,0,.45)" />
       <DrawerContent
         borderLeftRadius="20px"
@@ -1075,6 +851,7 @@ export function RequestTestDrawer({
         fontFamily="'Sora',sans-serif"
       >
         <DrawerCloseButton top={4} right={4} zIndex={10} color="white" />
+
         <DrawerHeader
           px={7}
           pt={7}
@@ -1091,66 +868,53 @@ export function RequestTestDrawer({
               align="center"
               justify="center"
             >
-              <Icon as={FaClipboardList} fontSize="18px" />
+              <Icon as={FaPaperPlane} fontSize="18px" />
             </Flex>
             <Box>
               <Text fontSize="18px" fontWeight={800} lineHeight="1.2">
                 Request a Test
               </Text>
               <Text fontSize="12px" color="rgba(255,255,255,.6)" mt="2px">
-                Our team will create it and notify you
+                Upload your content · Admin will build the test for you
               </Text>
             </Box>
           </Flex>
         </DrawerHeader>
+
         <DrawerBody px={7} py={6} overflowY="auto">
           <Stack spacing={5}>
+            {/* Banner */}
             <Box
               bg="#eff6ff"
               border="1px solid #bfdbfe"
               borderRadius="12px"
               p={4}
             >
-              <Flex gap={2} align="flex-start">
-                <Icon
-                  as={FaInfoCircle}
-                  color="#2563eb"
-                  mt="2px"
-                  flexShrink={0}
-                />
-                <Text fontSize="12px" color="#1e40af" lineHeight={1.7}>
-                  Upload your study material (PDF, images, Excel) and tell us
-                  what you need. You'll get a <strong>notification</strong> with
-                  the full test once it's ready.
-                </Text>
-              </Flex>
+              <Text fontSize="12px" color="#1e40af" lineHeight={1.8}>
+                📎 <strong>How it works:</strong> Fill in the details and attach
+                any reference material (PDFs, screenshots, notes, Excel files).
+                Admin will review them, create the test, and send it directly to
+                your coaching.
+              </Text>
             </Box>
 
-            <Text
-              fontSize="11px"
-              fontWeight={800}
-              color="#94a3b8"
-              textTransform="uppercase"
-              letterSpacing="2px"
-            >
-              Test Details
-            </Text>
-
+            {/* Title */}
             <FormControl isRequired isInvalid={!!errs.title}>
-              <FormLabel {...LabelStyle}>Test Title</FormLabel>
+              <FormLabel {...LS}>Request Title</FormLabel>
               <Input
                 value={form.title}
                 onChange={sf("title")}
-                placeholder="e.g. SSC CGL Quantitative Mock 1"
-                {...InputStyle}
+                placeholder="e.g. SSC CGL Mock — Reasoning + GA"
+                {...IS}
                 borderColor={errs.title ? "red.400" : "#e2e8f0"}
               />
               <FormErrorMessage>{errs.title}</FormErrorMessage>
             </FormControl>
 
+            {/* Exam + Subject */}
             <Flex gap={3} direction={{ base: "column", sm: "row" }}>
               <FormControl flex={1} isRequired isInvalid={!!errs.examType}>
-                <FormLabel {...LabelStyle}>Exam Type</FormLabel>
+                <FormLabel {...LS}>Exam Type</FormLabel>
                 <Select
                   value={form.examType}
                   onChange={sf("examType")}
@@ -1162,27 +926,28 @@ export function RequestTestDrawer({
                   <option value="">Select…</option>
                   {coachingExamTypes.length > 0 && (
                     <optgroup label="Your Coaching">
-                      {coachingExamTypes.map((e) => (
-                        <option key={e} value={e}>
-                          {e}
+                      {coachingExamTypes.map((et) => (
+                        <option key={et} value={et}>
+                          {et}
                         </option>
                       ))}
                     </optgroup>
                   )}
-                  <optgroup label="Other">
+                  <optgroup label="Others">
                     {EXAM_TYPES.filter(
-                      (e) => !coachingExamTypes.includes(e),
-                    ).map((e) => (
-                      <option key={e} value={e}>
-                        {e}
+                      (et) => !coachingExamTypes.includes(et),
+                    ).map((et) => (
+                      <option key={et} value={et}>
+                        {et}
                       </option>
                     ))}
                   </optgroup>
                 </Select>
                 <FormErrorMessage>{errs.examType}</FormErrorMessage>
               </FormControl>
+
               <FormControl flex={1}>
-                <FormLabel {...LabelStyle}>Subject</FormLabel>
+                <FormLabel {...LS}>Subject</FormLabel>
                 <Select
                   value={form.subject}
                   onChange={sf("subject")}
@@ -1201,36 +966,36 @@ export function RequestTestDrawer({
               </FormControl>
             </Flex>
 
+            {/* Questions + Time */}
             <Flex gap={3} direction={{ base: "column", sm: "row" }}>
-              <FormControl flex={1} isInvalid={!!errs.totalQuestions}>
-                <FormLabel {...LabelStyle}>No. of Questions</FormLabel>
+              <FormControl flex={1}>
+                <FormLabel {...LS}>No. of Questions</FormLabel>
                 <Input
                   type="number"
                   value={form.totalQuestions}
                   onChange={sf("totalQuestions")}
                   min={5}
                   max={200}
-                  {...InputStyle}
-                  borderColor={errs.totalQuestions ? "red.400" : "#e2e8f0"}
+                  {...IS}
                 />
-                <FormErrorMessage>{errs.totalQuestions}</FormErrorMessage>
               </FormControl>
               <FormControl flex={1}>
-                <FormLabel {...LabelStyle}>Time Limit (min)</FormLabel>
+                <FormLabel {...LS}>Time Limit (min)</FormLabel>
                 <Input
                   type="number"
                   value={form.timeLimitMin}
                   onChange={sf("timeLimitMin")}
                   min={5}
                   max={180}
-                  {...InputStyle}
+                  {...IS}
                 />
               </FormControl>
             </Flex>
 
+            {/* Difficulty + Access */}
             <Flex gap={3} direction={{ base: "column", sm: "row" }}>
               <FormControl flex={1}>
-                <FormLabel {...LabelStyle}>Difficulty</FormLabel>
+                <FormLabel {...LS}>Difficulty</FormLabel>
                 <Select
                   value={form.difficulty}
                   onChange={sf("difficulty")}
@@ -1239,15 +1004,14 @@ export function RequestTestDrawer({
                   fontSize="14px"
                   borderColor="#e2e8f0"
                 >
-                  {DIFFICULTIES.map((d) => (
-                    <option key={d.value} value={d.value}>
-                      {d.label}
-                    </option>
-                  ))}
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                  <option value="mixed">Mixed</option>
                 </Select>
               </FormControl>
               <FormControl flex={1}>
-                <FormLabel {...LabelStyle}>Access</FormLabel>
+                <FormLabel {...LS}>Test Access</FormLabel>
                 <Select
                   value={form.visibility}
                   onChange={sf("visibility")}
@@ -1262,8 +1026,9 @@ export function RequestTestDrawer({
               </FormControl>
             </Flex>
 
+            {/* Instructions */}
             <FormControl>
-              <FormLabel {...LabelStyle}>
+              <FormLabel {...LS}>
                 Instructions for Admin{" "}
                 <Text
                   as="span"
@@ -1277,7 +1042,7 @@ export function RequestTestDrawer({
               <Textarea
                 value={form.instructions}
                 onChange={sf("instructions")}
-                placeholder="Topics to cover, which pages to use, style of questions…"
+                placeholder="Topics to cover, question style, syllabus focus, difficulty split…"
                 borderRadius="10px"
                 fontSize="14px"
                 rows={3}
@@ -1292,96 +1057,109 @@ export function RequestTestDrawer({
 
             <Divider />
 
+            {/* Files */}
             <Box>
-              <Flex justify="space-between" align="center" mb={3}>
-                <Text
-                  fontSize="11px"
-                  fontWeight={800}
-                  color="#94a3b8"
-                  textTransform="uppercase"
-                  letterSpacing="2px"
-                >
-                  Study Material
+              <Flex justify="space-between" align="center" mb={1}>
+                <Text {...LS} mb={0}>
+                  Attach Reference Files
                 </Text>
                 <Text fontSize="11px" color="#94a3b8">
-                  PDF, Images, Excel • max 10MB
+                  PDF · Images · Excel · max 10 MB
                 </Text>
               </Flex>
+              <Text fontSize="12px" color="#64748b" mb={3}>
+                Upload chapter PDFs, question screenshots, handwritten notes or
+                Excel sheets. Admin will use these to create your test.
+              </Text>
+
               <input
                 ref={fileRef}
                 type="file"
                 multiple
-                accept=".pdf,.xlsx,.xls,.png,.jpg,.jpeg,.webp"
+                accept=".pdf,.xlsx,.xls,.png,.jpg,.jpeg,.webp,.gif,.doc,.docx"
                 style={{ display: "none" }}
-                onChange={handleFileSelect}
+                onChange={handleFiles}
               />
+
+              {/* Drop zone */}
               <Box
                 border="2px dashed"
-                borderColor={attachments.length ? "#4a72b8" : "#e2e8f0"}
+                borderColor={files.length ? "#4a72b8" : "#e2e8f0"}
                 borderRadius="14px"
                 p={6}
                 textAlign="center"
                 cursor="pointer"
-                bg={attachments.length ? "#f0f7ff" : "#f8fafc"}
+                bg={files.length ? "#f0f7ff" : "#f8fafc"}
                 onClick={() => fileRef.current?.click()}
                 transition="all .2s"
                 _hover={{ borderColor: "#4a72b8", bg: "#f0f7ff" }}
               >
-                {uploading ? (
-                  <Spinner color="#4a72b8" />
-                ) : (
-                  <>
-                    <Icon
-                      as={FaUpload}
-                      fontSize="28px"
-                      color="#94a3b8"
-                      display="block"
-                      mx="auto"
-                      mb={2}
-                    />
-                    <Text fontSize="14px" fontWeight={600} color="#374151">
-                      Click to upload files
-                    </Text>
-                    <Text fontSize="12px" color="#94a3b8" mt={1}>
-                      PDF chapters, question screenshots, Excel sheets
-                    </Text>
-                  </>
-                )}
+                <Icon
+                  as={FaUpload}
+                  fontSize="30px"
+                  color="#94a3b8"
+                  display="block"
+                  mx="auto"
+                  mb={2}
+                />
+                <Text fontSize="14px" fontWeight={600} color="#374151">
+                  Click to attach files
+                </Text>
+                <Text fontSize="12px" color="#94a3b8" mt={1}>
+                  PDFs · Images · Excel · Word docs
+                </Text>
               </Box>
-              {attachments.length > 0 && (
+
+              {/* File list */}
+              {files.length > 0 && (
                 <Stack mt={3} spacing={2}>
-                  {attachments.map((f, i) => (
+                  {files.map((f, i) => (
                     <Flex
                       key={i}
                       align="center"
                       gap={3}
-                      p={3}
                       bg="white"
                       borderRadius="10px"
                       border="1px solid #e2e8f0"
+                      p={3}
                     >
-                      <FileIcon type={f.fileType} />
+                      <FileIcon type={f.type} />
                       <Box flex={1} minW={0}>
                         <Text
-                          fontSize="13px"
+                          fontSize="12px"
                           fontWeight={600}
                           color="#0f172a"
                           noOfLines={1}
                         >
-                          {f.fileName}
+                          {f.name}
                         </Text>
-                        <Text fontSize="11px" color="#94a3b8">
-                          {f.fileType.toUpperCase()} •{" "}
-                          {(f.size / 1024).toFixed(0)} KB
+                        <Text fontSize="10px" color="#94a3b8">
+                          {f.type.toUpperCase()} · {(f.size / 1024).toFixed(0)}{" "}
+                          KB
                         </Text>
                       </Box>
+                      {f.type === "image" && (
+                        <Box
+                          w="48px"
+                          h="36px"
+                          borderRadius="6px"
+                          overflow="hidden"
+                          flexShrink={0}
+                        >
+                          <img
+                            src={`data:${f.mimeType};base64,${f.base64}`}
+                            alt={f.name}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                          />
+                        </Box>
+                      )}
                       <Box
                         as="button"
-                        onClick={() =>
-                          setAttachments((prev) =>
-                            prev.filter((_, j) => j !== i),
-                          )
-                        }
+                        onClick={() => removeFile(i)}
                         p={2}
                         borderRadius="6px"
                         color="#ef4444"
@@ -1391,10 +1169,22 @@ export function RequestTestDrawer({
                       </Box>
                     </Flex>
                   ))}
+                  <Button
+                    size="xs"
+                    leftIcon={<FaPlus />}
+                    variant="ghost"
+                    color="#4a72b8"
+                    fontWeight={700}
+                    alignSelf="flex-start"
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    Add More Files
+                  </Button>
                 </Stack>
               )}
             </Box>
 
+            {/* Submit */}
             <Button
               h="50px"
               borderRadius="12px"
@@ -1406,7 +1196,7 @@ export function RequestTestDrawer({
               isLoading={busy}
               loadingText="Submitting…"
               onClick={handleSubmit}
-              leftIcon={<FaPlus />}
+              leftIcon={<FaPaperPlane />}
               _hover={{
                 opacity: 0.9,
                 transform: "translateY(-1px)",
@@ -1414,477 +1204,11 @@ export function RequestTestDrawer({
               }}
               transition="all .2s"
             >
-              Submit Test Request
+              Submit Request to Admin
             </Button>
           </Stack>
         </DrawerBody>
       </DrawerContent>
     </Drawer>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// MY TEST REQUESTS — coaching dashboard panel with full test preview
-// ═══════════════════════════════════════════════════════════════════
-export function MyTestRequests({ coachingId, coachingExamTypes }) {
-  const toast = useToast();
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedTest, setSelectedTest] = useState(null);
-  const [selectedTitle, setSelectedTitle] = useState("");
-  const {
-    isOpen: testOpen,
-    onOpen: openTest,
-    onClose: closeTest,
-  } = useDisclosure();
-  const {
-    isOpen: detailOpen,
-    onOpen: openDetail,
-    onClose: closeDetail,
-  } = useDisclosure();
-  const [selectedReq, setSelectedReq] = useState(null);
-
-  const load = useCallback(() => {
-    setLoading(true);
-    apiFetch("/test-requests/mine")
-      .then((r) => setRequests(r.data ?? []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  // Real-time: when admin sends the test
-  useEffect(() => {
-    const handleTestCreated = ({ testRequestId, test }) => {
-      setRequests((prev) =>
-        prev.map((r) =>
-          r._id?.toString() === testRequestId?.toString()
-            ? { ...r, status: "completed", createdTestId: test }
-            : r,
-        ),
-      );
-    };
-    socket.on("test:created", handleTestCreated);
-    return () => socket.off("test:created", handleTestCreated);
-  }, []);
-
-  const openTestDetail = (req) => {
-    if (req.createdTestId) {
-      setSelectedTest(req.createdTestId);
-      setSelectedTitle(req.title);
-      openTest();
-    }
-  };
-
-  const copyLink = (test) => {
-    const url = `${window.location.origin}/tests/${test.slug || test._id}`;
-    navigator.clipboard
-      .writeText(url)
-      .then(() =>
-        toast({ title: "Link copied!", status: "success", duration: 2000 }),
-      );
-  };
-
-  return (
-    <Box>
-      <Flex justify="space-between" align="center" mb={5}>
-        <Box>
-          <Text
-            fontSize="11px"
-            fontWeight={800}
-            color="#94a3b8"
-            textTransform="uppercase"
-            letterSpacing="2px"
-          >
-            Test Requests
-          </Text>
-          <Text fontSize="13px" color="#64748b" mt={1}>
-            Request admin to create tests • Get notified when ready
-          </Text>
-        </Box>
-        <Flex gap={2}>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={load}
-            leftIcon={<FaRedo />}
-            borderRadius="9px"
-            fontSize="12px"
-            color="#64748b"
-          >
-            Refresh
-          </Button>
-          <Button
-            size="sm"
-            leftIcon={<FaPlus />}
-            onClick={onOpen}
-            bg="#4a72b8"
-            color="white"
-            borderRadius="9px"
-            fontWeight={700}
-            fontSize="12px"
-            _hover={{ bg: "#3b5fa0" }}
-          >
-            New Request
-          </Button>
-        </Flex>
-      </Flex>
-
-      {loading ? (
-        <Flex justify="center" py={10}>
-          <Spinner color="#4a72b8" />
-        </Flex>
-      ) : requests.length === 0 ? (
-        <Box
-          py={12}
-          textAlign="center"
-          bg="white"
-          borderRadius="14px"
-          border="1px solid #e2e8f0"
-        >
-          <Icon
-            as={FaClipboardList}
-            fontSize="40px"
-            color="#e2e8f0"
-            display="block"
-            mx="auto"
-            mb={3}
-          />
-          <Text fontSize="14px" fontWeight={700} color="#94a3b8" mb={4}>
-            No test requests yet
-          </Text>
-          <Button
-            onClick={onOpen}
-            leftIcon={<FaPlus />}
-            bg="#4a72b8"
-            color="white"
-            borderRadius="10px"
-            fontWeight={700}
-            fontSize="13px"
-            _hover={{ bg: "#3b5fa0" }}
-            size="sm"
-          >
-            Request Your First Test
-          </Button>
-        </Box>
-      ) : (
-        <Stack spacing={3}>
-          {requests.map((r) => {
-            const isReady = r.status === "completed" && r.createdTestId;
-            return (
-              <Box
-                key={r._id}
-                bg="white"
-                borderRadius="14px"
-                border="1.5px solid"
-                borderColor={isReady ? "#16a34a" : "#e2e8f0"}
-                overflow="hidden"
-                transition="all .2s"
-                boxShadow={isReady ? "0 4px 20px rgba(22,163,74,.1)" : "none"}
-              >
-                {/* Ready banner */}
-                {isReady && (
-                  <Box
-                    bg="linear-gradient(135deg,#dcfce7,#bbf7d0)"
-                    px={5}
-                    py={2}
-                    borderBottom="1px solid #86efac"
-                  >
-                    <Flex align="center" gap={2}>
-                      <Icon
-                        as={FaCheckCircle}
-                        color="#15803d"
-                        fontSize="12px"
-                      />
-                      <Text fontSize="12px" fontWeight={800} color="#15803d">
-                        Test ready! Click below to view questions and share link
-                      </Text>
-                    </Flex>
-                  </Box>
-                )}
-
-                <Flex
-                  px={5}
-                  py={4}
-                  align="center"
-                  gap={4}
-                  flexWrap={{ base: "wrap", md: "nowrap" }}
-                >
-                  <Box flex={3} minW={0}>
-                    <Text
-                      fontSize="14px"
-                      fontWeight={700}
-                      color="#0f172a"
-                      noOfLines={1}
-                    >
-                      {r.title}
-                    </Text>
-                    <Flex gap={2} mt={1} flexWrap="wrap">
-                      <Text
-                        fontSize="10px"
-                        fontWeight={700}
-                        bg="#eff6ff"
-                        color="#2563eb"
-                        px={2}
-                        py="2px"
-                        borderRadius="full"
-                      >
-                        {r.examType}
-                      </Text>
-                      {r.subject && (
-                        <Text
-                          fontSize="10px"
-                          fontWeight={700}
-                          bg="#f1f5f9"
-                          color="#475569"
-                          px={2}
-                          py="2px"
-                          borderRadius="full"
-                          textTransform="capitalize"
-                        >
-                          {r.subject}
-                        </Text>
-                      )}
-                    </Flex>
-                    <Text fontSize="11px" color="#94a3b8" mt={1}>
-                      {r.totalQuestions} questions • {r.timeLimitMin}min •{" "}
-                      {new Date(r.createdAt).toLocaleDateString("en-IN")}
-                    </Text>
-                  </Box>
-
-                  <Box flexShrink={0}>
-                    <StatusBadge status={r.status} />
-                  </Box>
-
-                  <Flex gap={2} flexShrink={0} flexWrap="wrap">
-                    {isReady ? (
-                      <>
-                        <Button
-                          size="sm"
-                          leftIcon={<FaEye />}
-                          onClick={() => openTestDetail(r)}
-                          bg="#1e3a5f"
-                          color="white"
-                          borderRadius="9px"
-                          fontWeight={700}
-                          fontSize="12px"
-                          _hover={{ bg: "#162d4a" }}
-                        >
-                          View Test
-                        </Button>
-                        <Button
-                          size="sm"
-                          leftIcon={<FaLink />}
-                          onClick={() => copyLink(r.createdTestId)}
-                          bg="#dcfce7"
-                          color="#15803d"
-                          borderRadius="9px"
-                          fontWeight={700}
-                          fontSize="12px"
-                          _hover={{ bg: "#bbf7d0" }}
-                        >
-                          Copy Link
-                        </Button>
-                      </>
-                    ) : r.status === "rejected" ? (
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          setSelectedReq(r);
-                          openDetail();
-                        }}
-                        bg="#fef2f2"
-                        color="#dc2626"
-                        borderRadius="9px"
-                        fontWeight={700}
-                        fontSize="12px"
-                        _hover={{ bg: "#fee2e2" }}
-                      >
-                        See Reason
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          setSelectedReq(r);
-                          openDetail();
-                        }}
-                        bg="#f0f7ff"
-                        color="#4a72b8"
-                        borderRadius="9px"
-                        fontWeight={700}
-                        fontSize="12px"
-                        _hover={{ bg: "#dbeafe" }}
-                      >
-                        Details
-                      </Button>
-                    )}
-                  </Flex>
-                </Flex>
-              </Box>
-            );
-          })}
-        </Stack>
-      )}
-
-      {/* Request form drawer */}
-      <RequestTestDrawer
-        isOpen={isOpen}
-        onClose={onClose}
-        coachingId={coachingId}
-        coachingExamTypes={coachingExamTypes}
-        onSubmitted={() => {
-          onClose();
-          load();
-        }}
-      />
-
-      {/* Full test detail modal */}
-      <TestDetailModal
-        isOpen={testOpen}
-        onClose={closeTest}
-        test={selectedTest}
-        requestTitle={selectedTitle}
-      />
-
-      {/* Simple request info modal for pending/processing/rejected */}
-      <Modal isOpen={detailOpen} onClose={closeDetail} isCentered size="md">
-        <ModalOverlay backdropFilter="blur(4px)" bg="rgba(0,0,0,.5)" />
-        <ModalContent borderRadius="16px" fontFamily="'Sora',sans-serif" mx={4}>
-          {selectedReq && (
-            <>
-              <ModalHeader
-                px={6}
-                pt={6}
-                pb={4}
-                fontSize="16px"
-                fontWeight={800}
-              >
-                <Flex justify="space-between" align="center">
-                  <Text noOfLines={1}>{selectedReq.title}</Text>
-                  <ModalCloseButton position="static" />
-                </Flex>
-                <Flex mt={2}>
-                  <StatusBadge status={selectedReq.status} />
-                </Flex>
-              </ModalHeader>
-              <ModalBody px={6} pb={6}>
-                <Stack spacing={3}>
-                  {[
-                    ["Exam Type", selectedReq.examType],
-                    ["Subject", selectedReq.subject || "Mixed"],
-                    ["Questions", selectedReq.totalQuestions],
-                    ["Time Limit", `${selectedReq.timeLimitMin} minutes`],
-                    ["Difficulty", selectedReq.difficulty],
-                    ["Access", selectedReq.visibility],
-                    [
-                      "Submitted",
-                      new Date(selectedReq.createdAt).toLocaleDateString(
-                        "en-IN",
-                        { day: "2-digit", month: "long", year: "numeric" },
-                      ),
-                    ],
-                  ].map(([label, val]) => (
-                    <Flex
-                      key={label}
-                      justify="space-between"
-                      py={2}
-                      borderBottom="1px solid #f1f5f9"
-                    >
-                      <Text fontSize="13px" color="#94a3b8" fontWeight={600}>
-                        {label}
-                      </Text>
-                      <Text
-                        fontSize="13px"
-                        color="#0f172a"
-                        fontWeight={700}
-                        textTransform="capitalize"
-                      >
-                        {val}
-                      </Text>
-                    </Flex>
-                  ))}
-                  {selectedReq.instructions && (
-                    <Box
-                      bg="#f8fafc"
-                      borderRadius="10px"
-                      p={3}
-                      border="1px solid #e2e8f0"
-                    >
-                      <Text
-                        fontSize="11px"
-                        fontWeight={700}
-                        color="#94a3b8"
-                        textTransform="uppercase"
-                        letterSpacing=".6px"
-                        mb={1}
-                      >
-                        Your Instructions
-                      </Text>
-                      <Text fontSize="13px" color="#374151" lineHeight={1.7}>
-                        {selectedReq.instructions}
-                      </Text>
-                    </Box>
-                  )}
-                  {selectedReq.status === "rejected" &&
-                    selectedReq.adminNote && (
-                      <Box
-                        bg="#fef2f2"
-                        border="1px solid #fecaca"
-                        borderRadius="10px"
-                        p={3}
-                      >
-                        <Text
-                          fontSize="11px"
-                          fontWeight={700}
-                          color="#dc2626"
-                          textTransform="uppercase"
-                          letterSpacing=".6px"
-                          mb={1}
-                        >
-                          Rejection Reason
-                        </Text>
-                        <Text fontSize="13px" color="#7f1d1d" lineHeight={1.7}>
-                          {selectedReq.adminNote}
-                        </Text>
-                      </Box>
-                    )}
-                  {selectedReq.status === "processing" && (
-                    <Box
-                      bg="#eff6ff"
-                      border="1px solid #bfdbfe"
-                      borderRadius="10px"
-                      p={3}
-                    >
-                      <Text fontSize="13px" color="#1e40af" lineHeight={1.7}>
-                        ⏳ Our team is currently working on your test. You'll be
-                        notified when it's ready!
-                      </Text>
-                    </Box>
-                  )}
-                  {selectedReq.status === "pending" && (
-                    <Box
-                      bg="#fffbeb"
-                      border="1px solid #fde68a"
-                      borderRadius="10px"
-                      p={3}
-                    >
-                      <Text fontSize="13px" color="#92400e" lineHeight={1.7}>
-                        📋 Your request is in the queue. Admin will start
-                        working on it soon.
-                      </Text>
-                    </Box>
-                  )}
-                </Stack>
-              </ModalBody>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
-    </Box>
   );
 }

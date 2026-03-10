@@ -7837,12 +7837,6 @@ import {
   useToast,
   Select,
   Divider,
-  AlertDialog,
-  AlertDialogOverlay,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogBody,
-  AlertDialogFooter,
   Badge,
 } from "@chakra-ui/react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -7863,22 +7857,19 @@ import {
   FaLock,
   FaUnlock,
   FaBookOpen,
-  FaTrash,
   FaLink,
   FaCheck,
   FaCrown,
-  FaDownload,
-  FaFileExcel,
-  FaWhatsapp,
-  FaBuilding,
+  FaCheckCircle,
   FaHourglass,
   FaTimesCircle,
-  FaCheckCircle,
+  FaPaperPlane,
 } from "react-icons/fa";
 import { apiFetch } from "../services/api";
 import { socket } from "../services/socket";
-import CreateTestDrawer from "./CreateTestDrawer";
+import RequestTestDrawer, { MyTestRequests } from "./RequestTestDrawer";
 
+// ── Constants ─────────────────────────────────────────────────────────────
 const EXAM_TYPES = [
   "SSC",
   "UPSC",
@@ -7896,7 +7887,6 @@ const EXAM_COLORS = {
   BANKING: { bg: "#ecfeff", color: "#0891b2" },
   RAILWAY: { bg: "#fff7ed", color: "#ea580c" },
   STATE: { bg: "#f0fdf4", color: "#16a34a" },
-  STATE_PSC: { bg: "#f0fdf4", color: "#16a34a" },
   DEFENCE: { bg: "#fef2f2", color: "#dc2626" },
   OTHER: { bg: "#f8fafc", color: "#6b7280" },
   GENERAL: { bg: "#f1f5f9", color: "#475569" },
@@ -7946,18 +7936,17 @@ const toSlug = (s) =>
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
 
-// ═══════════════════════════════════════════════
-// STATUS SCREEN — shown when coaching is pending/rejected
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// STATUS SCREEN — pending / rejected coaching
+// ═══════════════════════════════════════════════════════════════
 function CoachingStatusScreen({ coaching }) {
   const navigate = useNavigate();
   const isPending = coaching.status === "pending";
-  const isRejected = coaching.status === "rejected";
 
   return (
     <Box minH="100vh" bg="#f8fafc" fontFamily="'Sora',sans-serif">
       <Box
-        bg="linear-gradient(135deg,#0f1e3a 0%,#1e3a5f 50%,#2d5fa8 100%)"
+        bg="linear-gradient(135deg,#0f1e3a,#1e3a5f,#2d5fa8)"
         px={{ base: 4, md: 8 }}
         pt={{ base: 10, md: 16 }}
         pb={{ base: 14, md: 22 }}
@@ -7970,7 +7959,6 @@ function CoachingStatusScreen({ coaching }) {
           border="1px solid #e2e8f0"
           overflow="hidden"
         >
-          {/* Status banner */}
           <Box
             bg={isPending ? "#fffbeb" : "#fef2f2"}
             borderBottom={`3px solid ${isPending ? "#fbbf24" : "#ef4444"}`}
@@ -8000,23 +7988,12 @@ function CoachingStatusScreen({ coaching }) {
               lineHeight={1.7}
             >
               {isPending
-                ? "Our team is verifying your coaching details. You'll be notified once approved — typically within 24 hours."
+                ? "Our team is verifying your details. You'll be notified once approved — usually within 24 hours."
                 : "Unfortunately your registration was not approved. See the reason below."}
             </Text>
           </Box>
 
           <Box px={7} py={6}>
-            <Text
-              fontSize="11px"
-              fontWeight={800}
-              color="#94a3b8"
-              textTransform="uppercase"
-              letterSpacing="2px"
-              mb={4}
-            >
-              Your Submission
-            </Text>
-
             <Box
               bg="#f8fafc"
               borderRadius="12px"
@@ -8061,7 +8038,7 @@ function CoachingStatusScreen({ coaching }) {
               </Text>
             </Box>
 
-            {isRejected && coaching.adminNote && (
+            {coaching.status === "rejected" && coaching.adminNote && (
               <Box
                 bg="#fef2f2"
                 border="1px solid #fecaca"
@@ -8094,8 +8071,8 @@ function CoachingStatusScreen({ coaching }) {
                 mb={5}
               >
                 <Text fontSize="13px" color="#1e40af" lineHeight={1.7}>
-                  💡 Make sure your coaching details are accurate. If you need
-                  to make changes, contact our support team.
+                  💡 Make sure your coaching details are accurate. Contact
+                  support if needed.
                 </Text>
               </Box>
             )}
@@ -8120,9 +8097,9 @@ function CoachingStatusScreen({ coaching }) {
   );
 }
 
-// ═══════════════════════════════════════════════
-// ADD COACHING DRAWER — Full verification form
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// ADD COACHING DRAWER
+// ═══════════════════════════════════════════════════════════════
 function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
@@ -8203,7 +8180,7 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
     }
   };
 
-  const LabelStyle = {
+  const LS = {
     fontSize: "12px",
     fontWeight: 700,
     color: "#374151",
@@ -8211,7 +8188,7 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
     textTransform: "uppercase",
     letterSpacing: ".8px",
   };
-  const InputStyle = {
+  const IS = {
     borderRadius: "10px",
     h: "44px",
     fontSize: "14px",
@@ -8267,8 +8244,7 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
             >
               <Text fontSize="12px" color="#92400e" lineHeight={1.7}>
                 📋 <strong>Verification required:</strong> We manually verify
-                all coaching registrations to maintain quality. Please fill in
-                accurate details — the more info you provide, the faster we can
+                all registrations. The more info you provide, the faster we can
                 approve.
               </Text>
             </Box>
@@ -8284,19 +8260,19 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
             </Text>
 
             <FormControl isRequired isInvalid={!!errs.name}>
-              <FormLabel {...LabelStyle}>Coaching Name</FormLabel>
+              <FormLabel {...LS}>Coaching Name</FormLabel>
               <Input
                 value={form.name}
                 onChange={sf("name")}
                 placeholder="e.g. Vision IAS, Mahendra's…"
-                {...InputStyle}
+                {...IS}
                 borderColor={errs.name ? "red.400" : "#e2e8f0"}
               />
               <FormErrorMessage>{errs.name}</FormErrorMessage>
             </FormControl>
 
             <FormControl isRequired isInvalid={!!errs.examTypes}>
-              <FormLabel {...LabelStyle}>Exam Types</FormLabel>
+              <FormLabel {...LS}>Exam Types</FormLabel>
               <Box
                 border="1px solid"
                 borderColor={errs.examTypes ? "red.400" : "#e2e8f0"}
@@ -8337,13 +8313,12 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
             </FormControl>
 
             <FormControl>
-              <FormLabel {...LabelStyle}>
+              <FormLabel {...LS}>
                 About{" "}
                 <Text
                   as="span"
                   color="#94a3b8"
                   textTransform="none"
-                  letterSpacing="0"
                   fontWeight={400}
                 >
                   (optional)
@@ -8366,7 +8341,6 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
             </FormControl>
 
             <Divider />
-
             <Text
               fontSize="11px"
               fontWeight={800}
@@ -8378,7 +8352,7 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
             </Text>
 
             <FormControl isRequired isInvalid={!!errs.fullAddress}>
-              <FormLabel {...LabelStyle}>Full Street Address</FormLabel>
+              <FormLabel {...LS}>Full Street Address</FormLabel>
               <Textarea
                 value={form.fullAddress}
                 onChange={sf("fullAddress")}
@@ -8396,40 +8370,20 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
               <FormErrorMessage>{errs.fullAddress}</FormErrorMessage>
             </FormControl>
 
-            <FormControl>
-              <FormLabel {...LabelStyle}>
-                Landmark{" "}
-                <Text
-                  as="span"
-                  color="#94a3b8"
-                  textTransform="none"
-                  fontWeight={400}
-                >
-                  (optional)
-                </Text>
-              </FormLabel>
-              <Input
-                value={form.landmark}
-                onChange={sf("landmark")}
-                placeholder="Near xyz market, opposite abc school…"
-                {...InputStyle}
-              />
-            </FormControl>
-
             <Flex gap={3} direction={{ base: "column", sm: "row" }}>
               <FormControl flex={1} isRequired isInvalid={!!errs.city}>
-                <FormLabel {...LabelStyle}>City</FormLabel>
+                <FormLabel {...LS}>City</FormLabel>
                 <Input
                   value={form.city}
                   onChange={sf("city")}
                   placeholder="Delhi, Mumbai…"
-                  {...InputStyle}
+                  {...IS}
                   borderColor={errs.city ? "red.400" : "#e2e8f0"}
                 />
                 <FormErrorMessage>{errs.city}</FormErrorMessage>
               </FormControl>
               <FormControl flex={1} isRequired isInvalid={!!errs.state}>
-                <FormLabel {...LabelStyle}>State</FormLabel>
+                <FormLabel {...LS}>State</FormLabel>
                 <Select
                   value={form.state}
                   onChange={sf("state")}
@@ -8449,42 +8403,7 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
               </FormControl>
             </Flex>
 
-            <FormControl>
-              <FormLabel {...LabelStyle}>Pincode</FormLabel>
-              <Input
-                value={form.pincode}
-                onChange={sf("pincode")}
-                placeholder="110001"
-                {...InputStyle}
-                maxLength={6}
-                w="160px"
-              />
-            </FormControl>
-
-            <FormControl isInvalid={!!errs.googleMapsUrl}>
-              <FormLabel {...LabelStyle}>
-                Google Maps Link{" "}
-                <Text
-                  as="span"
-                  color="#94a3b8"
-                  textTransform="none"
-                  fontWeight={400}
-                >
-                  (optional but helpful)
-                </Text>
-              </FormLabel>
-              <Input
-                value={form.googleMapsUrl}
-                onChange={sf("googleMapsUrl")}
-                placeholder="https://maps.google.com/…"
-                {...InputStyle}
-                borderColor={errs.googleMapsUrl ? "red.400" : "#e2e8f0"}
-              />
-              <FormErrorMessage>{errs.googleMapsUrl}</FormErrorMessage>
-            </FormControl>
-
             <Divider />
-
             <Text
               fontSize="11px"
               fontWeight={800}
@@ -8497,18 +8416,18 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
 
             <Flex gap={3} direction={{ base: "column", sm: "row" }}>
               <FormControl flex={1} isRequired isInvalid={!!errs.phone}>
-                <FormLabel {...LabelStyle}>Phone</FormLabel>
+                <FormLabel {...LS}>Phone</FormLabel>
                 <Input
                   value={form.phone}
                   onChange={sf("phone")}
                   placeholder="+91 98765 43210"
-                  {...InputStyle}
+                  {...IS}
                   borderColor={errs.phone ? "red.400" : "#e2e8f0"}
                 />
                 <FormErrorMessage>{errs.phone}</FormErrorMessage>
               </FormControl>
               <FormControl flex={1}>
-                <FormLabel {...LabelStyle}>
+                <FormLabel {...LS}>
                   WhatsApp{" "}
                   <Text
                     as="span"
@@ -8523,14 +8442,14 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                   value={form.whatsapp}
                   onChange={sf("whatsapp")}
                   placeholder="+91 98765 43210"
-                  {...InputStyle}
+                  {...IS}
                 />
               </FormControl>
             </Flex>
 
             <Flex gap={3} direction={{ base: "column", sm: "row" }}>
               <FormControl flex={1} isInvalid={!!errs.email}>
-                <FormLabel {...LabelStyle}>
+                <FormLabel {...LS}>
                   Email{" "}
                   <Text
                     as="span"
@@ -8546,13 +8465,13 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                   value={form.email}
                   onChange={sf("email")}
                   placeholder="contact@coaching.com"
-                  {...InputStyle}
+                  {...IS}
                   borderColor={errs.email ? "red.400" : "#e2e8f0"}
                 />
                 <FormErrorMessage>{errs.email}</FormErrorMessage>
               </FormControl>
               <FormControl flex={1} isInvalid={!!errs.website}>
-                <FormLabel {...LabelStyle}>
+                <FormLabel {...LS}>
                   Website{" "}
                   <Text
                     as="span"
@@ -8567,7 +8486,7 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                   value={form.website}
                   onChange={sf("website")}
                   placeholder="https://coaching.com"
-                  {...InputStyle}
+                  {...IS}
                   borderColor={errs.website ? "red.400" : "#e2e8f0"}
                 />
                 <FormErrorMessage>{errs.website}</FormErrorMessage>
@@ -8575,7 +8494,6 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
             </Flex>
 
             <Divider />
-
             <Text
               fontSize="11px"
               fontWeight={800}
@@ -8585,26 +8503,22 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
             >
               Verification Details
             </Text>
-            <Text fontSize="12px" color="#64748b" mt={-3}>
-              Help us verify your coaching is real. The more you fill, the
-              faster approval.
-            </Text>
 
             <Flex gap={3} direction={{ base: "column", sm: "row" }}>
               <FormControl flex={1}>
-                <FormLabel {...LabelStyle}>Established Year</FormLabel>
+                <FormLabel {...LS}>Established Year</FormLabel>
                 <Input
                   type="number"
                   value={form.establishedYear}
                   onChange={sf("establishedYear")}
                   placeholder="e.g. 2010"
-                  {...InputStyle}
+                  {...IS}
                   min={1950}
                   max={new Date().getFullYear()}
                 />
               </FormControl>
               <FormControl flex={1}>
-                <FormLabel {...LabelStyle}>Approx. Student Count</FormLabel>
+                <FormLabel {...LS}>Approx. Students</FormLabel>
                 <Select
                   value={form.studentCount}
                   onChange={sf("studentCount")}
@@ -8629,54 +8543,6 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                 </Select>
               </FormControl>
             </Flex>
-
-            <FormControl>
-              <FormLabel {...LabelStyle}>
-                Registration / License Number{" "}
-                <Text
-                  as="span"
-                  color="#94a3b8"
-                  textTransform="none"
-                  fontWeight={400}
-                >
-                  (optional)
-                </Text>
-              </FormLabel>
-              <Input
-                value={form.registrationNumber}
-                onChange={sf("registrationNumber")}
-                placeholder="Govt. registration or license number if any"
-                {...InputStyle}
-              />
-            </FormControl>
-
-            <FormControl>
-              <FormLabel {...LabelStyle}>
-                Additional Information{" "}
-                <Text
-                  as="span"
-                  color="#94a3b8"
-                  textTransform="none"
-                  fontWeight={400}
-                >
-                  (optional)
-                </Text>
-              </FormLabel>
-              <Textarea
-                value={form.additionalInfo}
-                onChange={sf("additionalInfo")}
-                placeholder="Any other info to help us verify — social media links, photos, awards, etc."
-                borderRadius="10px"
-                fontSize="14px"
-                rows={3}
-                resize="vertical"
-                borderColor="#e2e8f0"
-                _focus={{
-                  borderColor: "#4a72b8",
-                  boxShadow: "0 0 0 1px #4a72b8",
-                }}
-              />
-            </FormControl>
 
             <Button
               h="50px"
@@ -8706,31 +8572,23 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
   );
 }
 
-// ═══════════════════════════════════════════════
-// COACHING DETAIL (approved coaching dashboard)
-// ═══════════════════════════════════════════════
-function CoachingDetail({ coaching, onDeleted }) {
+// ═══════════════════════════════════════════════════════════════
+// COACHING DETAIL — approved coaching dashboard
+// Shows: header stats, share link, "Request Test" button,
+//        MyTestRequests panel (requests + results from admin)
+// ═══════════════════════════════════════════════════════════════
+function CoachingDetail({ coaching }) {
   const navigate = useNavigate();
-  const toast = useToast();
-  const cancelRef = useRef();
   const { user } = useAuth();
+  const toast = useToast();
   const {
-    isOpen: testOpen,
-    onOpen: openTest,
-    onClose: closeTest,
-  } = useDisclosure();
-  const {
-    isOpen: delOpen,
-    onOpen: openDel,
-    onClose: closeDel,
+    isOpen: reqOpen,
+    onOpen: openReq,
+    onClose: closeReq,
   } = useDisclosure();
 
-  const [tests, setTests] = useState([]);
-  const [loadingT, setLoadingT] = useState(true);
-  const [activeTab, setActiveTab] = useState(null);
   const [copied, setCopied] = useState(false);
   const [socketConnected, setSocketConnected] = useState(socket.connected);
-  const [deletingId, setDeletingId] = useState(null);
 
   const isOwner = Boolean(
     user &&
@@ -8740,60 +8598,7 @@ function CoachingDetail({ coaching, onDeleted }) {
   );
 
   const shareUrl = `${window.location.origin}/coaching/${coaching.slug}`;
-
-  const loadTests = useCallback(() => {
-    setLoadingT(true);
-    apiFetch(`/tests?coachingId=${coaching._id}`)
-      .then((r) => {
-        setTests(r.data ?? []);
-        setActiveTab(null);
-      })
-      .catch(() => {})
-      .finally(() => setLoadingT(false));
-  }, [coaching._id]);
-
-  useEffect(() => {
-    loadTests();
-  }, [loadTests]);
-
-  useEffect(() => {
-    const roomId = coaching._id?.toString();
-    if (!roomId) return;
-    const room = `coaching:${roomId}`;
-    const joinRoom = () => {
-      socket.emit("join-coaching", room);
-    };
-    if (socket.connected) joinRoom();
-    else {
-      socket.connect();
-      socket.once("connect", joinRoom);
-    }
-    socket.on("connect", () => setSocketConnected(true));
-    socket.on("disconnect", () => setSocketConnected(false));
-    const handleTestAttempted = (data) => {
-      if (data?.coachingId?.toString() === roomId) {
-        setTests((prev) =>
-          prev.map((t) =>
-            t._id?.toString() === data.testId?.toString()
-              ? {
-                  ...t,
-                  totalAttempts:
-                    data.totalAttempts ?? (t.totalAttempts || 0) + 1,
-                }
-              : t,
-          ),
-        );
-      }
-    };
-    socket.on("test:attempted", handleTestAttempted);
-    return () => {
-      socket.off("connect", joinRoom);
-      socket.off("connect", () => setSocketConnected(true));
-      socket.off("disconnect", () => setSocketConnected(false));
-      socket.off("test:attempted", handleTestAttempted);
-      socket.emit("leave-coaching", room);
-    };
-  }, [coaching._id]);
+  const coachingExamTypes = coaching.examTypes || [];
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl).then(() => {
@@ -8802,47 +8607,21 @@ function CoachingDetail({ coaching, onDeleted }) {
     });
   };
 
-  const handleDeleteTest = async (testId) => {
-    setDeletingId(testId);
-    try {
-      await apiFetch(`/tests/${testId}`, { method: "DELETE" });
-      setTests((prev) => prev.filter((t) => t._id !== testId));
-      toast({ title: "Test deleted", status: "success", duration: 2500 });
-    } catch (err) {
-      toast({ title: err.message, status: "error", duration: 4000 });
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const onTestCreated = (test) => {
-    closeTest();
-    loadTests();
-    toast({
-      title: `"${test.title}" created!`,
-      status: "success",
-      duration: 3000,
-    });
-  };
-
-  const coachingExamTypes = coaching.examTypes || [];
-  const extraExamTypes = [
-    ...new Set(
-      tests
-        .map((t) => t.examType)
-        .filter((et) => et && !coachingExamTypes.includes(et)),
-    ),
-  ];
-  const tabs = [...coachingExamTypes, ...extraExamTypes];
-  const activeTests = activeTab
-    ? tests.filter((t) => t.examType === activeTab)
-    : tests;
-  const totalStu = tests.reduce((a, t) => a + (t.totalAttempts || 0), 0);
-  const goToTest = (t) => navigate(`/tests/${t.slug || t._id}`);
+  // Socket connect/disconnect indicator
+  useEffect(() => {
+    socket.on("connect", () => setSocketConnected(true));
+    socket.on("disconnect", () => setSocketConnected(false));
+    return () => {
+      socket.off("connect");
+      socket.off("disconnect");
+    };
+  }, []);
 
   return (
     <Box minH="100vh" bg="#f8fafc" fontFamily="'Sora',sans-serif">
-      <style>{`@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.4); } }`}</style>
+      <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}`}</style>
+
+      {/* ── Hero header ───────────────────────────────────────────────────── */}
       <Box
         bg="linear-gradient(135deg,#0f1e3a 0%,#1e3a5f 45%,#2d5fa8 100%)"
         px={{ base: 4, md: 8 }}
@@ -8861,6 +8640,7 @@ function CoachingDetail({ coaching, onDeleted }) {
           bg="rgba(255,255,255,.035)"
         />
         <Box maxW="1100px" mx="auto" position="relative" zIndex={1}>
+          {/* Back */}
           <Flex
             align="center"
             gap={2}
@@ -8901,7 +8681,7 @@ function CoachingDetail({ coaching, onDeleted }) {
             <Box flex={1} minW={0}>
               <Flex align="center" gap={3} flexWrap="wrap" mb={3}>
                 <Text
-                  fontSize={{ base: "26px", md: "42px" }}
+                  fontSize={{ base: "26px", md: "40px" }}
                   fontWeight={800}
                   color="white"
                   letterSpacing="-1.5px"
@@ -8961,18 +8741,6 @@ function CoachingDetail({ coaching, onDeleted }) {
                     </Text>
                   </Flex>
                 )}
-                {coaching.email && (
-                  <Flex align="center" gap={1.5}>
-                    <Icon
-                      as={FaEnvelope}
-                      color="rgba(255,255,255,.5)"
-                      fontSize="12px"
-                    />
-                    <Text color="rgba(255,255,255,.7)" fontSize="14px">
-                      {coaching.email}
-                    </Text>
-                  </Flex>
-                )}
                 {coaching.phone && (
                   <Flex align="center" gap={1.5}>
                     <Icon
@@ -8993,7 +8761,6 @@ function CoachingDetail({ coaching, onDeleted }) {
                     rel="noopener noreferrer"
                     align="center"
                     gap={1.5}
-                    cursor="pointer"
                     _hover={{ color: "white" }}
                   >
                     <Icon
@@ -9017,6 +8784,7 @@ function CoachingDetail({ coaching, onDeleted }) {
                   </Flex>
                 )}
               </Flex>
+
               <Flex flexWrap="wrap" gap={2}>
                 {coachingExamTypes.map((ex) => (
                   <Box
@@ -9037,6 +8805,7 @@ function CoachingDetail({ coaching, onDeleted }) {
             </Box>
           </Flex>
 
+          {/* ── Owner controls ──────────────────────────────────────────── */}
           {isOwner && (
             <Box
               mt={10}
@@ -9051,11 +8820,11 @@ function CoachingDetail({ coaching, onDeleted }) {
                 color="rgba(255,255,255,.4)"
                 textTransform="uppercase"
                 letterSpacing="2.5px"
-                mb={0}
+                mb={2}
               >
                 Owner Controls
               </Text>
-              <Flex align="center" gap={2} mb={6} mt={2}>
+              <Flex align="center" gap={2} mb={6}>
                 <Box
                   w="8px"
                   h="8px"
@@ -9078,6 +8847,8 @@ function CoachingDetail({ coaching, onDeleted }) {
                   {socketConnected ? "Live updates active" : "Connecting…"}
                 </Text>
               </Flex>
+
+              {/* Share link */}
               <Box mb={7}>
                 <Text
                   fontSize="13px"
@@ -9128,9 +8899,11 @@ function CoachingDetail({ coaching, onDeleted }) {
                   </Button>
                 </Flex>
               </Box>
+
+              {/* Request Test button */}
               <Button
-                leftIcon={<FaPlus />}
-                onClick={openTest}
+                leftIcon={<FaPaperPlane />}
+                onClick={openReq}
                 bg="white"
                 color="#0f1e3a"
                 borderRadius="12px"
@@ -9142,11 +8915,12 @@ function CoachingDetail({ coaching, onDeleted }) {
                 boxShadow="0 4px 16px rgba(0,0,0,.2)"
                 transition="all .2s"
               >
-                Create Test
+                Request a Test from Admin
               </Button>
             </Box>
           )}
 
+          {/* Stats row */}
           <Flex
             mt={10}
             gap={8}
@@ -9155,33 +8929,21 @@ function CoachingDetail({ coaching, onDeleted }) {
             flexWrap="wrap"
           >
             {[
-              {
-                icon: FaClipboardList,
-                value: tests.length,
-                label: "Total Tests",
-              },
-              { icon: FaUsers, value: totalStu, label: "Total Students" },
-              {
-                icon: FaBookOpen,
-                value: coachingExamTypes.length || 0,
-                label: "Courses",
-              },
-            ].map((s) => (
-              <Flex key={s.label} align="center" gap={3}>
-                <Icon
-                  as={s.icon}
-                  fontSize="16px"
-                  color="rgba(255,255,255,.4)"
-                />
+              [FaClipboardList, coachingExamTypes.length, "Courses"],
+              [FaBookOpen, coaching.studentCount || "—", "Student Range"],
+              [FaCheckCircle, "Verified", "Status"],
+            ].map(([Ic, val, label]) => (
+              <Flex key={label} align="center" gap={3}>
+                <Icon as={Ic} fontSize="16px" color="rgba(255,255,255,.4)" />
                 <Box>
                   <Text
-                    fontSize="28px"
+                    fontSize="22px"
                     fontWeight={800}
                     color="white"
                     lineHeight="1"
                     letterSpacing="-1px"
                   >
-                    {s.value}
+                    {val}
                   </Text>
                   <Text
                     fontSize="11px"
@@ -9190,7 +8952,7 @@ function CoachingDetail({ coaching, onDeleted }) {
                     letterSpacing=".8px"
                     mt="2px"
                   >
-                    {s.label}
+                    {label}
                   </Text>
                 </Box>
               </Flex>
@@ -9199,6 +8961,7 @@ function CoachingDetail({ coaching, onDeleted }) {
         </Box>
       </Box>
 
+      {/* ── Body ─────────────────────────────────────────────────────────── */}
       <Box maxW="1100px" mx="auto" px={{ base: 4, md: 8 }} py={8}>
         {coaching.description && (
           <Box mb={10} pb={10} borderBottom="1px solid #e2e8f0">
@@ -9218,390 +8981,61 @@ function CoachingDetail({ coaching, onDeleted }) {
           </Box>
         )}
 
-        <Box>
-          <Flex justify="space-between" align="center" mb={5}>
+        {/* My Test Requests panel — only for the owner */}
+        {isOwner ? (
+          <MyTestRequests coachingId={coaching._id} onRequestTest={openReq} />
+        ) : (
+          // Public view — just show exam types
+          <Box>
             <Text
               fontSize="11px"
               fontWeight={800}
               color="#94a3b8"
               textTransform="uppercase"
               letterSpacing="2px"
+              mb={5}
             >
-              Courses &amp; Tests
+              Courses Offered
             </Text>
-            {isOwner && (
-              <Button
-                size="sm"
-                leftIcon={<FaPlus />}
-                onClick={openTest}
-                bg="#4a72b8"
-                color="white"
-                borderRadius="9px"
-                fontWeight={700}
-                fontSize="12px"
-                _hover={{ bg: "#3b5fa0" }}
-              >
-                Create Test
-              </Button>
-            )}
-          </Flex>
-
-          {tabs.length > 0 && (
-            <Flex gap={2} mb={6} flexWrap="wrap">
-              <Box
-                px={4}
-                py="8px"
-                borderRadius="10px"
-                cursor="pointer"
-                border="1.5px solid"
-                borderColor={!activeTab ? "#4a72b8" : "#e2e8f0"}
-                bg={!activeTab ? "#eff6ff" : "white"}
-                color={!activeTab ? "#2563eb" : "#374151"}
-                fontSize="13px"
-                fontWeight={!activeTab ? 700 : 500}
-                onClick={() => setActiveTab(null)}
-                transition="all .15s"
-              >
-                All
-                <Text as="span" ml={2} fontSize="11px" opacity={0.7}>
-                  ({tests.length})
-                </Text>
-              </Box>
-              {tabs.map((tab) => {
-                const isA = activeTab === tab;
-                const cl = EXAM_COLORS[tab] || EXAM_COLORS.OTHER;
+            <Flex flexWrap="wrap" gap={3}>
+              {coachingExamTypes.map((ex) => {
+                const c = EXAM_COLORS[ex] || EXAM_COLORS.OTHER;
                 return (
                   <Box
-                    key={tab}
-                    px={4}
-                    py="8px"
-                    borderRadius="10px"
-                    cursor="pointer"
-                    border="1.5px solid"
-                    borderColor={isA ? cl.color : "#e2e8f0"}
-                    bg={isA ? cl.bg : "white"}
-                    color={isA ? cl.color : "#374151"}
-                    fontSize="13px"
-                    fontWeight={isA ? 700 : 500}
-                    transition="all .15s"
-                    _hover={{
-                      borderColor: cl.color,
-                      bg: cl.bg,
-                      color: cl.color,
-                    }}
-                    onClick={() => setActiveTab(tab)}
+                    key={ex}
+                    bg={c.bg}
+                    color={c.color}
+                    px={5}
+                    py={3}
+                    borderRadius="12px"
+                    fontSize="14px"
+                    fontWeight={700}
+                    border={`1px solid ${c.color}33`}
                   >
-                    {tab}
-                    <Text as="span" ml={2} fontSize="11px" opacity={0.7}>
-                      ({tests.filter((t) => t.examType === tab).length})
-                    </Text>
+                    {ex}
                   </Box>
                 );
               })}
             </Flex>
-          )}
-
-          {loadingT ? (
-            <Flex justify="center" py={16}>
-              <Spinner color="#4a72b8" thickness="3px" />
-            </Flex>
-          ) : activeTests.length === 0 ? (
-            <Box
-              py={16}
-              textAlign="center"
-              bg="white"
-              borderRadius="14px"
-              border="1px solid #e2e8f0"
-            >
-              <Icon
-                as={FaClipboardList}
-                fontSize="40px"
-                color="#e2e8f0"
-                display="block"
-                mx="auto"
-                mb={3}
-              />
-              <Text
-                fontSize="15px"
-                fontWeight={700}
-                color="#94a3b8"
-                mb={isOwner ? 5 : 0}
-              >
-                {isOwner
-                  ? activeTab
-                    ? `No tests yet for ${activeTab} — create one!`
-                    : "No tests yet — create your first test!"
-                  : activeTab
-                    ? `No ${activeTab} tests yet`
-                    : "No tests yet"}
-              </Text>
-              {isOwner && (
-                <Button
-                  leftIcon={<FaPlus />}
-                  onClick={openTest}
-                  bg="#4a72b8"
-                  color="white"
-                  borderRadius="10px"
-                  fontWeight={700}
-                  _hover={{ bg: "#3b5fa0" }}
-                  transition="all .2s"
-                >
-                  Create Test
-                </Button>
-              )}
-            </Box>
-          ) : (
-            <Box
-              bg="white"
-              borderRadius="16px"
-              border="1px solid #e2e8f0"
-              overflow="hidden"
-            >
-              <Flex px={6} py={3} bg="#f8fafc" borderBottom="1px solid #e2e8f0">
-                {["Test Name", "Questions", "Time", "Attempts", "Access"].map(
-                  (h, i) => (
-                    <Text
-                      key={h}
-                      flex={i === 0 ? 3 : 1}
-                      fontSize="11px"
-                      fontWeight={700}
-                      color="#94a3b8"
-                      textTransform="uppercase"
-                      letterSpacing=".8px"
-                      display={{ base: i > 2 ? "none" : "block", md: "block" }}
-                    >
-                      {h}
-                    </Text>
-                  ),
-                )}
-                <Box w={isOwner ? "110px" : "80px"} />
-              </Flex>
-              {activeTests.map((t, idx) => (
-                <Flex
-                  key={t._id}
-                  px={6}
-                  py={4}
-                  align="center"
-                  borderBottom={
-                    idx < activeTests.length - 1 ? "1px solid #f1f5f9" : "none"
-                  }
-                  transition="background .15s"
-                  _hover={{ bg: "#f8faff" }}
-                >
-                  <Box
-                    flex={3}
-                    minW={0}
-                    cursor="pointer"
-                    onClick={() => goToTest(t)}
-                  >
-                    <Text
-                      fontSize="14px"
-                      fontWeight={700}
-                      color="#0f172a"
-                      noOfLines={1}
-                    >
-                      {t.title}
-                    </Text>
-                    {t.subject && (
-                      <Text
-                        fontSize="11px"
-                        color="#94a3b8"
-                        mt="1px"
-                        textTransform="capitalize"
-                      >
-                        {t.subject}
-                      </Text>
-                    )}
-                    {t.examType && (
-                      <Badge
-                        fontSize="9px"
-                        mt={1}
-                        bg={(EXAM_COLORS[t.examType] || EXAM_COLORS.OTHER).bg}
-                        color={
-                          (EXAM_COLORS[t.examType] || EXAM_COLORS.OTHER).color
-                        }
-                        borderRadius="full"
-                        px={2}
-                      >
-                        {t.examType}
-                      </Badge>
-                    )}
-                  </Box>
-                  <Text
-                    flex={1}
-                    fontSize="14px"
-                    fontWeight={600}
-                    color="#374151"
-                    display={{ base: "none", sm: "block" }}
-                  >
-                    {t.totalMarks ?? t.questions?.length ?? "—"}
-                  </Text>
-                  <Flex
-                    flex={1}
-                    align="center"
-                    gap={1}
-                    display={{ base: "none", md: "flex" }}
-                  >
-                    <Icon as={FaClock} fontSize="11px" color="#94a3b8" />
-                    <Text fontSize="13px" color="#64748b">
-                      {t.timeLimitMin || t.timeLimit || 30}m
-                    </Text>
-                  </Flex>
-                  <Text
-                    flex={1}
-                    fontSize="14px"
-                    fontWeight={600}
-                    color="#374151"
-                    display={{ base: "none", sm: "block" }}
-                  >
-                    {t.totalAttempts ?? 0}
-                  </Text>
-                  <Box flex={1}>
-                    <Flex
-                      align="center"
-                      gap={1}
-                      w="fit-content"
-                      px={2}
-                      py="3px"
-                      borderRadius="6px"
-                      bg={
-                        (t.visibility || t.accessType) === "private"
-                          ? "#fef2f2"
-                          : "#f0fdf4"
-                      }
-                      color={
-                        (t.visibility || t.accessType) === "private"
-                          ? "#ef4444"
-                          : "#16a34a"
-                      }
-                    >
-                      <Icon
-                        as={
-                          (t.visibility || t.accessType) === "private"
-                            ? FaLock
-                            : FaUnlock
-                        }
-                        fontSize="9px"
-                      />
-                      <Text fontSize="10px" fontWeight={700}>
-                        {(t.visibility || t.accessType) === "private"
-                          ? "Private"
-                          : "Public"}
-                      </Text>
-                    </Flex>
-                  </Box>
-                  <Flex
-                    w={isOwner ? "110px" : "80px"}
-                    justify="flex-end"
-                    gap={2}
-                  >
-                    <Box
-                      px={3}
-                      py="5px"
-                      borderRadius="8px"
-                      bg="#f0f7ff"
-                      color="#4a72b8"
-                      fontSize="12px"
-                      fontWeight={700}
-                      cursor="pointer"
-                      onClick={() => goToTest(t)}
-                    >
-                      View →
-                    </Box>
-                    {isOwner && (
-                      <Box
-                        px="8px"
-                        py="5px"
-                        borderRadius="8px"
-                        bg="#fef2f2"
-                        color="#ef4444"
-                        fontSize="12px"
-                        cursor="pointer"
-                        _hover={{ bg: "#fee2e2" }}
-                        opacity={deletingId === t._id ? 0.5 : 1}
-                        onClick={() =>
-                          deletingId !== t._id && handleDeleteTest(t._id)
-                        }
-                      >
-                        {deletingId === t._id ? (
-                          "…"
-                        ) : (
-                          <Icon as={FaTrash} fontSize="11px" />
-                        )}
-                      </Box>
-                    )}
-                  </Flex>
-                </Flex>
-              ))}
-            </Box>
-          )}
-        </Box>
+          </Box>
+        )}
       </Box>
 
-      {/* ── New multi-tab CreateTestDrawer (AI + Files + Manual + Excel) ── */}
-      <CreateTestDrawer
-        isOpen={testOpen}
-        onClose={closeTest}
+      {/* Request Test Drawer */}
+      <RequestTestDrawer
+        isOpen={reqOpen}
+        onClose={closeReq}
         coachingId={coaching._id}
         coachingExamTypes={coachingExamTypes}
-        onCreated={onTestCreated}
         currentUser={user}
       />
-
-      <AlertDialog
-        isOpen={delOpen}
-        leastDestructiveRef={cancelRef}
-        onClose={closeDel}
-        isCentered
-      >
-        <AlertDialogOverlay>
-          <AlertDialogContent
-            mx={4}
-            borderRadius="16px"
-            fontFamily="'Sora',sans-serif"
-          >
-            <AlertDialogHeader fontSize="16px" fontWeight={800}>
-              Remove Coaching?
-            </AlertDialogHeader>
-            <AlertDialogBody>
-              <Text fontSize="14px" color="#475569">
-                This will remove{" "}
-                <Text as="span" fontWeight={700}>
-                  "{coaching.name}"
-                </Text>{" "}
-                from the directory.
-              </Text>
-            </AlertDialogBody>
-            <AlertDialogFooter gap={3}>
-              <Button
-                ref={cancelRef}
-                onClick={closeDel}
-                variant="ghost"
-                borderRadius="10px"
-              >
-                Cancel
-              </Button>
-              <Button
-                bg="#ef4444"
-                color="white"
-                borderRadius="10px"
-                fontWeight={700}
-                _hover={{ bg: "#dc2626" }}
-                leftIcon={<FaTrash />}
-              >
-                Yes, Remove
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
     </Box>
   );
 }
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // COACHING LIST
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 function CoachingList({ onCoachingCreated }) {
   const navigate = useNavigate();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -9643,7 +9077,7 @@ function CoachingList({ onCoachingCreated }) {
   return (
     <Box minH="100vh" bg="#f8fafc" fontFamily="'Sora',sans-serif">
       <Box
-        bg="linear-gradient(135deg,#1e3a5f 0%,#2d5fa8 55%,#4a72b8 100%)"
+        bg="linear-gradient(135deg,#1e3a5f,#2d5fa8,#4a72b8)"
         px={{ base: 4, md: 8 }}
         pt={{ base: 10, md: 14 }}
         pb={{ base: 10, md: 16 }}
@@ -9699,6 +9133,8 @@ function CoachingList({ onCoachingCreated }) {
               Add Coaching
             </Button>
           </Flex>
+
+          {/* Search bar */}
           <Flex
             gap={3}
             bg="white"
@@ -9761,11 +9197,13 @@ function CoachingList({ onCoachingCreated }) {
             ? "Loading…"
             : `${filtered.length} result${filtered.length !== 1 ? "s" : ""}`}
         </Text>
+
         {loading && (
           <Flex justify="center" py={20}>
             <Spinner size="xl" color="#4a72b8" thickness="4px" />
           </Flex>
         )}
+
         {!loading && filtered.length === 0 && (
           <Box py={20} textAlign="center">
             <Icon
@@ -9797,6 +9235,7 @@ function CoachingList({ onCoachingCreated }) {
             </Button>
           </Box>
         )}
+
         {!loading && filtered.length > 0 && (
           <Box
             bg="white"
@@ -9828,6 +9267,7 @@ function CoachingList({ onCoachingCreated }) {
               ))}
               <Box w="80px" />
             </Flex>
+
             {filtered.map((c, idx) => (
               <Flex
                 key={c._id}
@@ -9974,9 +9414,9 @@ function CoachingList({ onCoachingCreated }) {
   );
 }
 
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // ROOT
-// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 export default function CoachingPage() {
   const { slug } = useParams();
   const [myCoaching, setMyCoaching] = useState("loading");
@@ -9986,6 +9426,7 @@ export default function CoachingPage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
 
+  // Load by slug (public)
   useEffect(() => {
     if (!slug) return;
     setSlugLoading(true);
@@ -9996,9 +9437,9 @@ export default function CoachingPage() {
       .finally(() => setSlugLoading(false));
   }, [slug]);
 
+  // Load owner's coaching
   useEffect(() => {
-    if (slug) return;
-    if (authLoading) return;
+    if (slug || authLoading) return;
     if (!user?._id) {
       setMyCoaching(null);
       return;
@@ -10055,9 +9496,8 @@ export default function CoachingPage() {
       </Flex>
     );
 
-  if (myCoaching && myCoaching.status !== "approved") {
+  if (myCoaching && myCoaching.status !== "approved")
     return <CoachingStatusScreen coaching={myCoaching} />;
-  }
 
   if (myCoaching)
     return (
@@ -10067,7 +9507,5 @@ export default function CoachingPage() {
       />
     );
 
-  return (
-    <CoachingList onCoachingCreated={(coaching) => setMyCoaching(coaching)} />
-  );
+  return <CoachingList onCoachingCreated={(c) => setMyCoaching(c)} />;
 }
