@@ -692,6 +692,9 @@ export function MyTestRequests({ coachingId, onRequestTest }) {
   );
 }
 
+
+
+
 // ═══════════════════════════════════════════════════════════════
 // DEFAULT EXPORT — RequestTestDrawer (submission form)
 // ═══════════════════════════════════════════════════════════════
@@ -1212,3 +1215,352 @@ export default function RequestTestDrawer({
     </Drawer>
   );
 }
+
+
+
+
+
+// // ═══════════════════════════════════════════════════════════════════
+// // NOTIFICATION BELL — shows unread count, opens notification panel
+// // ═══════════════════════════════════════════════════════════════════
+// export function NotificationBell() {
+//   const { user } = useAuth();
+//   const toast = useToast();
+//   const { isOpen, onOpen, onClose } = useDisclosure();
+//   const [notifications, setNotifications] = useState([]);
+//   const [unread, setUnread] = useState(0);
+//   const [loading, setLoading] = useState(false);
+//   const [selectedTest, setSelectedTest] = useState(null);
+//   const {
+//     isOpen: testOpen,
+//     onOpen: openTest,
+//     onClose: closeTest,
+//   } = useDisclosure();
+//   const [selectedRequestTitle, setSelectedRequestTitle] = useState("");
+
+//   const loadNotifications = useCallback(async () => {
+//     if (!user) return;
+//     try {
+//       const res = await apiFetch("/notifications/mine");
+//       setNotifications(res.data ?? []);
+//       setUnread(res.unreadCount ?? 0);
+//     } catch (_) {}
+//   }, [user]);
+
+//   useEffect(() => {
+//     if (!user?._id) return;
+//     loadNotifications();
+
+//     // Join personal notification room
+//     const room = `user:${user._id}`;
+//     socket.emit("join-user", room);
+
+//     // Listen for new notifications
+//     const handleNew = ({ notification }) => {
+//       setNotifications((prev) => [notification, ...prev]);
+//       setUnread((prev) => prev + 1);
+//       // Toast for test_ready
+//       if (notification.type === "test_ready") {
+//         toast({
+//           title: notification.title,
+//           description: notification.body,
+//           status: "success",
+//           duration: 8000,
+//           isClosable: true,
+//           position: "top-right",
+//         });
+//       } else if (notification.type === "request_processing") {
+//         toast({
+//           title: notification.title,
+//           status: "info",
+//           duration: 4000,
+//           position: "top-right",
+//         });
+//       } else if (notification.type === "request_rejected") {
+//         toast({
+//           title: notification.title,
+//           description: notification.body,
+//           status: "warning",
+//           duration: 6000,
+//           isClosable: true,
+//           position: "top-right",
+//         });
+//       }
+//     };
+
+//     socket.on("notification:new", handleNew);
+//     return () => {
+//       socket.emit("leave-user", room);
+//       socket.off("notification:new", handleNew);
+//     };
+//   }, [user?._id, loadNotifications]);
+
+//   const markAllRead = async () => {
+//     try {
+//       await apiFetch("/notifications/read-all", { method: "PATCH" });
+//       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+//       setUnread(0);
+//     } catch (_) {}
+//   };
+
+//   const markRead = async (id) => {
+//     try {
+//       await apiFetch(`/notifications/${id}/read`, { method: "PATCH" });
+//       setNotifications((prev) =>
+//         prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)),
+//       );
+//       setUnread((prev) => Math.max(0, prev - 1));
+//     } catch (_) {}
+//   };
+
+//   const handleNotifClick = (notif) => {
+//     if (!notif.isRead) markRead(notif._id);
+//     if (notif.type === "test_ready" && notif.testId) {
+//       setSelectedTest(notif.testId);
+//       setSelectedRequestTitle(notif.title);
+//       openTest();
+//     }
+//   };
+
+//   const notifIcon = (type) => {
+//     if (type === "test_ready")
+//       return { icon: FaCheckCircle, color: "#16a34a", bg: "#dcfce7" };
+//     if (type === "request_rejected")
+//       return { icon: FaTimesCircle, color: "#dc2626", bg: "#fee2e2" };
+//     if (type === "request_processing")
+//       return { icon: FaClock, color: "#2563eb", bg: "#eff6ff" };
+//     if (type === "coaching_approved")
+//       return { icon: FaCheckCircle, color: "#16a34a", bg: "#dcfce7" };
+//     return { icon: FaBell, color: "#4a72b8", bg: "#eff6ff" };
+//   };
+
+//   if (!user) return null;
+
+//   return (
+//     <>
+//       {/* Bell button */}
+//       <Box
+//         position="relative"
+//         cursor="pointer"
+//         onClick={() => {
+//           onOpen();
+//           loadNotifications();
+//         }}
+//       >
+//         <Flex
+//           w="38px"
+//           h="38px"
+//           align="center"
+//           justify="center"
+//           borderRadius="10px"
+//           bg="#f8fafc"
+//           border="1px solid #e2e8f0"
+//           _hover={{ bg: "#f1f5f9" }}
+//           transition="all .15s"
+//         >
+//           <Icon as={FaBell} fontSize="15px" color="#475569" />
+//         </Flex>
+//         {unread > 0 && (
+//           <Flex
+//             position="absolute"
+//             top="-6px"
+//             right="-6px"
+//             minW="18px"
+//             h="18px"
+//             bg="#ef4444"
+//             borderRadius="full"
+//             align="center"
+//             justify="center"
+//             px={1}
+//             border="2px solid white"
+//           >
+//             <Text fontSize="9px" fontWeight={800} color="white" lineHeight="1">
+//               {unread > 9 ? "9+" : unread}
+//             </Text>
+//           </Flex>
+//         )}
+//       </Box>
+
+//       {/* Notification panel drawer */}
+//       <Drawer isOpen={isOpen} onClose={onClose} placement="right" size="sm">
+//         <DrawerOverlay backdropFilter="blur(2px)" bg="rgba(0,0,0,.3)" />
+//         <DrawerContent fontFamily="'Sora',sans-serif">
+//           <DrawerCloseButton top={4} right={4} />
+//           <DrawerHeader px={6} pt={6} pb={4} borderBottom="1px solid #f1f5f9">
+//             <Flex align="center" justify="space-between" pr={8}>
+//               <Box>
+//                 <Text fontSize="16px" fontWeight={800} color="#0f172a">
+//                   Notifications
+//                 </Text>
+//                 {unread > 0 && (
+//                   <Text fontSize="12px" color="#64748b" mt="1px">
+//                     {unread} unread
+//                   </Text>
+//                 )}
+//               </Box>
+//               {unread > 0 && (
+//                 <Button
+//                   size="xs"
+//                   variant="ghost"
+//                   fontSize="11px"
+//                   color="#4a72b8"
+//                   fontWeight={700}
+//                   onClick={markAllRead}
+//                   borderRadius="7px"
+//                   _hover={{ bg: "#eff6ff" }}
+//                 >
+//                   Mark all read
+//                 </Button>
+//               )}
+//             </Flex>
+//           </DrawerHeader>
+
+//           <DrawerBody px={0} py={0} overflowY="auto">
+//             {loading ? (
+//               <Flex justify="center" py={10}>
+//                 <Spinner color="#4a72b8" />
+//               </Flex>
+//             ) : notifications.length === 0 ? (
+//               <Flex direction="column" align="center" py={16} px={6} gap={3}>
+//                 <Flex
+//                   w="56px"
+//                   h="56px"
+//                   bg="#f1f5f9"
+//                   borderRadius="full"
+//                   align="center"
+//                   justify="center"
+//                 >
+//                   <Icon as={FaBell} fontSize="22px" color="#cbd5e1" />
+//                 </Flex>
+//                 <Text fontSize="14px" fontWeight={700} color="#94a3b8">
+//                   No notifications yet
+//                 </Text>
+//                 <Text fontSize="12px" color="#cbd5e1" textAlign="center">
+//                   You'll be notified when your test requests are ready
+//                 </Text>
+//               </Flex>
+//             ) : (
+//               <Box>
+//                 {notifications.map((n, idx) => {
+//                   const ic = notifIcon(n.type);
+//                   const isTestReady = n.type === "test_ready" && n.testId;
+//                   return (
+//                     <Flex
+//                       key={n._id}
+//                       px={5}
+//                       py={4}
+//                       gap={3}
+//                       bg={n.isRead ? "white" : "#f8faff"}
+//                       borderBottom="1px solid #f1f5f9"
+//                       borderLeft={
+//                         n.isRead ? "3px solid transparent" : "3px solid #4a72b8"
+//                       }
+//                       cursor={isTestReady ? "pointer" : "default"}
+//                       onClick={() => handleNotifClick(n)}
+//                       _hover={{
+//                         bg: isTestReady
+//                           ? "#f0f7ff"
+//                           : n.isRead
+//                             ? "white"
+//                             : "#f8faff",
+//                       }}
+//                       transition="bg .15s"
+//                       align="flex-start"
+//                     >
+//                       {/* Icon */}
+//                       <Flex
+//                         w="36px"
+//                         h="36px"
+//                         flexShrink={0}
+//                         borderRadius="10px"
+//                         bg={ic.bg}
+//                         align="center"
+//                         justify="center"
+//                       >
+//                         <Icon as={ic.icon} color={ic.color} fontSize="14px" />
+//                       </Flex>
+
+//                       {/* Content */}
+//                       <Box flex={1} minW={0}>
+//                         <Flex
+//                           align="flex-start"
+//                           justify="space-between"
+//                           gap={2}
+//                           mb={1}
+//                         >
+//                           <Text
+//                             fontSize="13px"
+//                             fontWeight={n.isRead ? 600 : 800}
+//                             color="#0f172a"
+//                             lineHeight={1.4}
+//                           >
+//                             {n.title}
+//                           </Text>
+//                           {!n.isRead && (
+//                             <Box
+//                               w="7px"
+//                               h="7px"
+//                               bg="#4a72b8"
+//                               borderRadius="full"
+//                               flexShrink={0}
+//                               mt="4px"
+//                             />
+//                           )}
+//                         </Flex>
+//                         {n.body && (
+//                           <Text
+//                             fontSize="12px"
+//                             color="#64748b"
+//                             lineHeight={1.6}
+//                             noOfLines={3}
+//                             mb={2}
+//                           >
+//                             {n.body}
+//                           </Text>
+//                         )}
+//                         <Flex align="center" gap={2} flexWrap="wrap">
+//                           <Text fontSize="10px" color="#94a3b8">
+//                             {new Date(n.createdAt).toLocaleDateString("en-IN", {
+//                               day: "2-digit",
+//                               month: "short",
+//                               hour: "2-digit",
+//                               minute: "2-digit",
+//                             })}
+//                           </Text>
+//                           {isTestReady && (
+//                             <Flex
+//                               align="center"
+//                               gap={1}
+//                               bg="#eff6ff"
+//                               color="#2563eb"
+//                               px={2}
+//                               py="2px"
+//                               borderRadius="full"
+//                               fontSize="10px"
+//                               fontWeight={700}
+//                             >
+//                               <Icon as={FaEye} fontSize="9px" />
+//                               View test
+//                             </Flex>
+//                           )}
+//                         </Flex>
+//                       </Box>
+//                     </Flex>
+//                   );
+//                 })}
+//               </Box>
+//             )}
+//           </DrawerBody>
+//         </DrawerContent>
+//       </Drawer>
+
+//       {/* Test detail modal */}
+//       <TestDetailModal
+//         isOpen={testOpen}
+//         onClose={closeTest}
+//         test={selectedTest}
+//         requestTitle={selectedRequestTitle}
+//       />
+//     </>
+//   );
+// }
