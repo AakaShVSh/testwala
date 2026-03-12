@@ -52,7 +52,16 @@ export default function Footer() {
                 color="rgba(255,255,255,.4)"
                 _hover={{ color: "white" }}
               >
-                Sign In
+                About Us
+              </Text>
+            </Link>{" "}
+            <Link to="/auth/signin">
+              <Text
+                fontSize="13px"
+                color="rgba(255,255,255,.4)"
+                _hover={{ color: "white" }}
+              >
+                Terms and Conditions
               </Text>
             </Link>
             <Link to="/auth/signup">
@@ -61,7 +70,7 @@ export default function Footer() {
                 color="rgba(255,255,255,.4)"
                 _hover={{ color: "white" }}
               >
-                Sign Up
+                Privacy and Policy
               </Text>
             </Link>
           </Flex>
