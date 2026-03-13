@@ -1000,16 +1000,16 @@ const Home = ({ setchoosesub }) => {
       </Box>
 
       {/* ═══ SUBJECTS ═══════════════════════════════════════════════════════ */}
-      <S bg="#f8fafc" ref={subjectsRef}>
+      {/* <S bg="#f8fafc" ref={subjectsRef}> */}
         {/* Header */}
-        <Box mb={{ base:"32px", md:"44px" }}>
+        {/* <Box mb={{ base:"32px", md:"44px" }}>
           <Lbl>Subjects</Lbl>
           <H>Pick a subject, start practising.</H>
           <P>Comprehensive question banks for SSC, UPSC, Banking and more — expert curated.</P>
-        </Box>
+        </Box> */}
 
         {/* Cards grid:  2 cols mobile → 3 tablet → 6 desktop */}
-        <Grid
+        {/* <Grid
           templateColumns={{
             base:"repeat(2,1fr)",
             sm:"repeat(3,1fr)",
@@ -1052,10 +1052,10 @@ const Home = ({ setchoosesub }) => {
                 <FaArrowRight size={8} />
               </Flex>
             </Box>
-          ))}
+          ))} */}
 
           {/* Saved Questions */}
-          <Link to="/Saved-question">
+          {/* <Link to="/Saved-question">
             <Box
               className="hv subj-card"
               bg="#fff"
@@ -1091,7 +1091,7 @@ const Home = ({ setchoosesub }) => {
             </Box>
           </Link>
         </Grid>
-      </S>
+      </S> */}
 
       {/* ═══ HOW IT WORKS ═══════════════════════════════════════════════════ */}
       <S bg="#0f172a">
