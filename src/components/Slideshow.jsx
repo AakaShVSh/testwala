@@ -14,29 +14,30 @@ const EduHeroCarousel = ({ scrollToSubjects }) => {
   const slides = [
     {
       img: "https://res.cloudinary.com/dmg0guany/image/upload/v1734874571/df7vcrrsru2etwqefmxa.jpg",
-      title: "Crack Competitive Exams Faster 🚀",
+      title:
+        "Connecting Coaching Institutes & Students for Smart Exam Practice",
       desc: [
-        "Practice with real exam-level mock tests & PYQs",
-        "Analyze performance with smart reports",
-        "Boost accuracy, speed & confidence daily",
+        "Coaching institutes can conduct online mock tests",
+        "Students get real exam-level practice anytime",
+        "One platform for tests, analysis & improvement",
       ],
     },
     {
       img: "https://res.cloudinary.com/dmg0guany/image/upload/v1734874560/csindrazgawkc3fikmme.jpg",
-      title: "Daily Practice. Real Progress.",
+      title: "Practice Tests Designed by Real Coaching Institutes",
       desc: [
-        "Solve topic-wise & section-wise questions",
-        "Identify weak areas instantly",
-        "Track improvement every single day",
+        "Attempt full-length mock tests & PYQs",
+        "Detailed performance analysis after every test",
+        "Improve speed, accuracy & confidence daily",
       ],
     },
     {
       img: "https://res.cloudinary.com/dmg0guany/image/upload/v1734874526/u8egidighnwgwgmxoo2y.jpg",
-      title: "Your Selection Journey Starts Here",
+      title: "Track Your Performance & Improve Every Day",
       desc: [
-        "Reasoning, Maths, English & General Studies",
-        "Full-length mock tests like real exams",
-        "Everything you need in one smart platform",
+        "Topic-wise & section-wise practice tests",
+        "Identify weak areas instantly",
+        "Monitor improvement with smart reports",
       ],
     },
   ];
@@ -103,7 +104,7 @@ const EduHeroCarousel = ({ scrollToSubjects }) => {
         </Text>
 
         {/* Main Heading */}
-        <Heading fontSize={{ base: "2xl", md: "4xl" }} mb={5}>
+        <Heading fontSize={{ base: "2xl", md: "4xl",lg:"xl" }} mb={5}>
           {slides[current].title}
         </Heading>
 
