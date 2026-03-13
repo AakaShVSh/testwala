@@ -1,7 +1,8 @@
 import React from "react";
-import { Box, Flex, Text, Icon } from "@chakra-ui/react";
+import { Box, Flex, Text, Icon, Image } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { FaGraduationCap, FaHeart } from "react-icons/fa";
+import logo from "../assets/logo.png";
 
 export default function Footer() {
   return (
@@ -18,15 +19,19 @@ export default function Footer() {
           flexWrap="wrap"
           gap={6}
         >
-          <Flex align="center" gap={2}>
-            <Icon as={FaGraduationCap} color="white" fontSize="18px" />
-            <Text fontSize="16px" fontWeight={800} color="white">
-              Test
-              <Text as="span" color="#4a72b8">
-                Wala
-              </Text>
-            </Text>
+          <Flex align="center">
+            <Image
+              src={logo}
+              alt="TestWala"
+              h={{ base: "40px", md: "48px", lg: "70px" }}
+              w="auto"
+              objectFit="cover"
+              transform="scale(1.6)"
+              // alignItems={}
+              transformOrigin="left center"
+            />
           </Flex>
+
           <Flex gap={5} flexWrap="wrap">
             <Link to="/">
               <Text

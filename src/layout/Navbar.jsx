@@ -606,6 +606,7 @@ import {
   DrawerBody,
   Stack,
   useDisclosure,
+  Image,
 } from "@chakra-ui/react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -620,6 +621,7 @@ import {
 } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import { NotificationBell } from "../components/RequestTestDrawer";
+import logo from "../assets/logo.png";
 
 const LINKS = [
   { label: "Home", to: "/", icon: FaHome },
@@ -652,44 +654,32 @@ const Navbar = () => {
       top={0}
       zIndex={200}
       boxShadow="0 1px 12px rgba(0,0,0,.06)"
-      fontFamily="'Sora',sans-serif"
+      fontFamily="'Poppins', sans-serif"
     >
       <Flex
-        maxW="1200px"
+        maxW="1390px"
         mx="auto"
-        px={{ base: 4, md: 6 }}
-        py={3}
+        px={{ base: 4, md: 6,lg:0 }}
+        py={0}
         align="center"
         justify="space-between"
+        h={{ base: "56px", md: "64px" }}
       >
-        {/* Logo */}
+        {/* ── Logo ── */}
         <Link to="/">
-          <Flex align="center" gap={2}>
-            <Flex
-              w="34px"
-              h="34px"
-              bg="linear-gradient(135deg,#4a72b8,#1e3a5f)"
-              borderRadius="9px"
-              align="center"
-              justify="center"
-            >
-              <Icon as={FaGraduationCap} color="white" fontSize="16px" />
-            </Flex>
-            <Text
-              fontSize="17px"
-              fontWeight={800}
-              color="#0f172a"
-              letterSpacing="-0.5px"
-            >
-              Revision{" "}
-              <Text as="span" color="#4a72b8">
-                Karlo
-              </Text>
-            </Text>
-          </Flex>
+          <Image
+            src={logo}
+            mt={4}
+            alt="logo"
+            h={{ base: "40px", md: "48px",lg:"80px" }}
+            w="auto"
+            objectFit="cover"
+            transform="scale(1.6)"
+            // alignItems={}
+            transformOrigin="left center"
+          />
         </Link>
-
-        {/* Desktop nav links */}
+        {/* ── Desktop nav links ── */}
         <Flex align="center" gap={1} display={{ base: "none", md: "flex" }}>
           {LINKS.filter((l) => !l.auth || user).map((link) => (
             <Link key={link.to} to={link.to}>
@@ -698,7 +688,7 @@ const Navbar = () => {
                 py={2}
                 borderRadius="9px"
                 fontSize="13px"
-                fontWeight={isActive(link.to) ? 700 : 500}
+                fontWeight={isActive(link.to) ? 600 : 400}
                 color={isActive(link.to) ? "#4a72b8" : "#475569"}
                 bg={isActive(link.to) ? "#eff6ff" : "transparent"}
                 _hover={{ bg: "#f1f5f9", color: "#1e3a5f" }}
@@ -719,7 +709,7 @@ const Navbar = () => {
                 py={2}
                 borderRadius="9px"
                 fontSize="13px"
-                fontWeight={isActive("/admin") ? 700 : 600}
+                fontWeight={isActive("/admin") ? 600 : 500}
                 color={isActive("/admin") ? "#7c3aed" : "#6d28d9"}
                 bg={isActive("/admin") ? "#f5f3ff" : "rgba(124,58,237,.07)"}
                 border="1px solid"
@@ -736,10 +726,10 @@ const Navbar = () => {
           )}
         </Flex>
 
-        {/* Right side */}
+        {/* ── Right side ── */}
         <Flex align="center" gap={2}>
-          {/* Notification bell — only for logged in users */}
           {user && <NotificationBell />}
+
           {user ? (
             <Menu>
               <MenuButton>
@@ -766,7 +756,7 @@ const Navbar = () => {
                   />
                   <Text
                     fontSize="13px"
-                    fontWeight={600}
+                    fontWeight={500}
                     color="#374151"
                     maxW="100px"
                     noOfLines={1}
@@ -787,7 +777,7 @@ const Navbar = () => {
                       <Icon as={FaShieldAlt} fontSize="8px" color="white" />
                       <Text
                         fontSize="9px"
-                        fontWeight={800}
+                        fontWeight={700}
                         color="white"
                         letterSpacing=".3px"
                       >
@@ -809,7 +799,7 @@ const Navbar = () => {
                 {/* User info */}
                 <Box px={4} py={2} mb={1}>
                   <Flex align="center" gap={2} mb={1}>
-                    <Text fontWeight={700} color="#0f172a" noOfLines={1}>
+                    <Text fontWeight={600} color="#0f172a" noOfLines={1}>
                       {user.Name || user.name}
                     </Text>
                     {isAdmin && (
@@ -823,7 +813,7 @@ const Navbar = () => {
                         flexShrink={0}
                       >
                         <Icon as={FaShieldAlt} fontSize="8px" color="white" />
-                        <Text fontSize="9px" fontWeight={800} color="white">
+                        <Text fontSize="9px" fontWeight={700} color="white">
                           ADMIN
                         </Text>
                       </Flex>
@@ -836,7 +826,6 @@ const Navbar = () => {
 
                 <MenuDivider />
 
-                {/* Regular nav items */}
                 {LINKS.filter((l) => l.auth).map((link) => (
                   <MenuItem
                     key={link.to}
@@ -850,14 +839,13 @@ const Navbar = () => {
                   </MenuItem>
                 ))}
 
-                {/* Admin section */}
                 {isAdmin && (
                   <>
                     <MenuDivider />
                     <Box px={4} py={1}>
                       <Text
                         fontSize="10px"
-                        fontWeight={800}
+                        fontWeight={600}
                         color="#94a3b8"
                         textTransform="uppercase"
                         letterSpacing="1.5px"
@@ -869,7 +857,7 @@ const Navbar = () => {
                       icon={<Icon as={FaShieldAlt} color="#7c3aed" />}
                       onClick={() => navigate("/admin/coaching")}
                       color="#6d28d9"
-                      fontWeight={600}
+                      fontWeight={500}
                       borderRadius="8px"
                       mx={2}
                       w="calc(100% - 16px)"
@@ -881,7 +869,7 @@ const Navbar = () => {
                       icon={<Icon as={FaClipboardList} color="#7c3aed" />}
                       onClick={() => navigate("/admin/test-requests")}
                       color="#6d28d9"
-                      fontWeight={600}
+                      fontWeight={500}
                       borderRadius="8px"
                       mx={2}
                       w="calc(100% - 16px)"
@@ -897,7 +885,7 @@ const Navbar = () => {
                   icon={<Icon as={FaSignOutAlt} color="#ef4444" />}
                   onClick={handleSignOut}
                   color="#ef4444"
-                  fontWeight={600}
+                  fontWeight={500}
                   borderRadius="8px"
                   mx={2}
                   w="calc(100% - 16px)"
@@ -912,7 +900,7 @@ const Navbar = () => {
                 <Button
                   size="sm"
                   variant="ghost"
-                  fontWeight={600}
+                  fontWeight={500}
                   color="#475569"
                   borderRadius="9px"
                   _hover={{ bg: "#f1f5f9" }}
@@ -925,7 +913,7 @@ const Navbar = () => {
                   size="sm"
                   bg="linear-gradient(135deg,#4a72b8,#1e3a5f)"
                   color="white"
-                  fontWeight={700}
+                  fontWeight={600}
                   borderRadius="9px"
                   _hover={{ opacity: 0.9 }}
                   boxShadow="0 2px 8px rgba(74,114,184,.3)"
@@ -948,21 +936,21 @@ const Navbar = () => {
         </Flex>
       </Flex>
 
-      {/* Mobile Drawer */}
+      {/* ── Mobile Drawer ── */}
       <Drawer isOpen={isOpen} onClose={onClose} placement="right" size="xs">
         <DrawerOverlay />
-        <DrawerContent fontFamily="'Sora',sans-serif">
+        <DrawerContent fontFamily="'Poppins', sans-serif">
           <DrawerCloseButton />
           <DrawerHeader
             borderBottom="1px solid #f1f5f9"
             fontSize="15px"
-            fontWeight={800}
+            fontWeight={600}
           >
             Menu
           </DrawerHeader>
           <DrawerBody py={4}>
             <Stack spacing={1}>
-              {/* User info strip (mobile) */}
+              {/* User info strip */}
               {user && (
                 <Flex
                   align="center"
@@ -981,13 +969,13 @@ const Navbar = () => {
                     bg={isAdmin ? "#7c3aed" : "#4a72b8"}
                     color="white"
                     fontSize="13px"
-                    fontWeight={800}
+                    fontWeight={700}
                   />
                   <Box flex={1} minW={0}>
                     <Flex align="center" gap={2}>
                       <Text
                         fontSize="13px"
-                        fontWeight={700}
+                        fontWeight={600}
                         color="#0f172a"
                         noOfLines={1}
                       >
@@ -1004,7 +992,7 @@ const Navbar = () => {
                           flexShrink={0}
                         >
                           <Icon as={FaShieldAlt} fontSize="8px" color="white" />
-                          <Text fontSize="9px" fontWeight={800} color="white">
+                          <Text fontSize="9px" fontWeight={700} color="white">
                             ADMIN
                           </Text>
                         </Flex>
@@ -1027,7 +1015,7 @@ const Navbar = () => {
                   py={3}
                   borderRadius="10px"
                   fontSize="14px"
-                  fontWeight={600}
+                  fontWeight={500}
                   color={isActive(link.to) ? "#4a72b8" : "#374151"}
                   bg={isActive(link.to) ? "#eff6ff" : "transparent"}
                   cursor="pointer"
@@ -1042,13 +1030,13 @@ const Navbar = () => {
                 </Flex>
               ))}
 
-              {/* Admin link (mobile) */}
+              {/* Admin links (mobile) */}
               {isAdmin && (
                 <>
                   <Box px={4} pt={3} pb={1}>
                     <Text
                       fontSize="10px"
-                      fontWeight={800}
+                      fontWeight={600}
                       color="#94a3b8"
                       textTransform="uppercase"
                       letterSpacing="1.5px"
@@ -1063,7 +1051,7 @@ const Navbar = () => {
                     py={3}
                     borderRadius="10px"
                     fontSize="14px"
-                    fontWeight={600}
+                    fontWeight={500}
                     color={isActive("/admin") ? "#7c3aed" : "#6d28d9"}
                     bg={isActive("/admin") ? "#f5f3ff" : "rgba(124,58,237,.05)"}
                     cursor="pointer"
@@ -1083,7 +1071,7 @@ const Navbar = () => {
                     py={3}
                     borderRadius="10px"
                     fontSize="14px"
-                    fontWeight={600}
+                    fontWeight={500}
                     color={
                       isActive("/admin/test-requests") ? "#7c3aed" : "#6d28d9"
                     }
@@ -1114,7 +1102,7 @@ const Navbar = () => {
                   py={3}
                   borderRadius="10px"
                   fontSize="14px"
-                  fontWeight={600}
+                  fontWeight={500}
                   color="#ef4444"
                   cursor="pointer"
                   onClick={handleSignOut}
@@ -1131,7 +1119,7 @@ const Navbar = () => {
                     py={3}
                     borderRadius="10px"
                     fontSize="14px"
-                    fontWeight={600}
+                    fontWeight={500}
                     color="#374151"
                     cursor="pointer"
                     _hover={{ bg: "#f1f5f9" }}
@@ -1147,7 +1135,7 @@ const Navbar = () => {
                     py={3}
                     borderRadius="10px"
                     fontSize="14px"
-                    fontWeight={700}
+                    fontWeight={600}
                     color="white"
                     bg="linear-gradient(135deg,#4a72b8,#1e3a5f)"
                     cursor="pointer"
