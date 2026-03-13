@@ -1465,7 +1465,7 @@ const LANGUAGES = [
 ───────────────────────────────────────────────────────────────────────────── */
 function StatCard({ icon, label, value, color = "#4a72b8", bg = "#eff6ff" }) {
   return (
-    <Box bg={bg} borderRadius="14px" p={5} flex={1} minW="120px">
+    <Box bg={bg} borderRadius="7px" p={5} flex={1} minW="120px">
       <Flex align="center" gap={2} mb={2}>
         <Flex
           w="32px"
@@ -1576,44 +1576,36 @@ function LanguageSelector({ value, onChange, hasHindi }) {
   return (
     <Box
       bg="white"
-      borderRadius="20px"
-      border="1px solid #e2e8f0"
-      p={{ base: 5, md: 6 }}
-      mb={5}
-      boxShadow="0 2px 16px rgba(0,0,0,.05)"
+      borderRadius="8px"
+      border="1px solid #E2E8F0"
+      p={{ base: "16px", md: "20px" }}
+      mb="12px"
     >
-      <Flex align="center" gap={3} mb={5}>
+      <Flex align="center" gap="10px" mb="14px">
         <Box
-          w="42px"
-          h="42px"
-          borderRadius="13px"
+          w="34px"
+          h="34px"
+          borderRadius="7px"
           flexShrink={0}
-          bg="linear-gradient(135deg,#6d28d9,#7c3aed)"
+          bg="#F5F3FF"
           display="flex"
           alignItems="center"
           justifyContent="center"
-          boxShadow="0 4px 12px rgba(109,40,217,.25)"
+          fontSize="16px"
         >
-          <Text fontSize="18px" lineHeight="1">
-            🌐
-          </Text>
+          🌐
         </Box>
         <Box>
-          <Text
-            fontSize="15px"
-            fontWeight={800}
-            color="#0f172a"
-            letterSpacing="-0.3px"
-          >
+          <Text fontSize="14px" fontWeight={700} color="#0F172A">
             Choose Test Language
           </Text>
-          <Text fontSize="12px" color="#94a3b8" mt="1px">
-            Questions will be displayed in your selected language
+          <Text fontSize="11px" color="#94A3B8" mt="1px">
+            Questions will appear in your selected language
           </Text>
         </Box>
       </Flex>
 
-      <Flex gap={3} direction={{ base: "column", sm: "row" }}>
+      <Flex gap="8px" direction={{ base: "column", sm: "row" }}>
         {LANGUAGES.map((lang) => {
           const isActive = value === lang.value;
           const isDisabled =
@@ -1624,164 +1616,100 @@ function LanguageSelector({ value, onChange, hasHindi }) {
               flex={1}
               cursor={isDisabled ? "not-allowed" : "pointer"}
               onClick={() => !isDisabled && onChange(lang.value)}
-              transition="all .2s cubic-bezier(.4,0,.2,1)"
-              transform={isActive ? "translateY(-3px)" : "none"}
-              opacity={isDisabled ? 0.4 : 1}
+              opacity={isDisabled ? 0.45 : 1}
+              transition="all .15s"
             >
-              {/* Active: full gradient header */}
-              {isActive ? (
-                <Box
-                  borderRadius="14px"
-                  overflow="hidden"
-                  boxShadow={`0 8px 24px ${lang.accent}30`}
-                >
-                  <Box bg={lang.gradient} px={4} pt={4} pb={3}>
-                    <Flex align="center" justify="space-between">
-                      <Flex align="center" gap={2}>
-                        <Text fontSize="24px" lineHeight="1">
-                          {lang.flag}
-                        </Text>
-                        <Box>
-                          <Text fontSize="14px" fontWeight={800} color="white">
-                            {lang.label}
-                          </Text>
-                          {lang.native !== lang.label && (
-                            <Text
-                              fontSize="11px"
-                              color="rgba(255,255,255,.65)"
-                              mt="-1px"
-                            >
-                              {lang.native}
-                            </Text>
-                          )}
-                        </Box>
-                      </Flex>
-                      <Flex
-                        w="22px"
-                        h="22px"
-                        borderRadius="full"
-                        bg="rgba(255,255,255,.25)"
-                        align="center"
-                        justify="center"
+              <Box
+                border="2px solid"
+                borderColor={isActive ? lang.accent : "#E2E8F0"}
+                borderRadius="8px"
+                p="12px"
+                bg={isActive ? lang.lightBg : "white"}
+                _hover={!isDisabled ? { borderColor: lang.accent } : {}}
+              >
+                <Flex align="center" justify="space-between" mb="6px">
+                  <Flex align="center" gap="8px">
+                    <Text fontSize="20px" lineHeight="1">
+                      {lang.flag}
+                    </Text>
+                    <Box>
+                      <Text
+                        fontSize="13px"
+                        fontWeight={700}
+                        color={isActive ? lang.color : "#1E293B"}
                       >
-                        <Icon as={FaCheck} fontSize="9px" color="white" />
-                      </Flex>
-                    </Flex>
-                  </Box>
+                        {lang.label}
+                      </Text>
+                      {lang.native !== lang.label && (
+                        <Text fontSize="10px" color="#94A3B8">
+                          {lang.native}
+                        </Text>
+                      )}
+                    </Box>
+                  </Flex>
                   <Box
-                    bg={lang.lightBg}
-                    px={4}
-                    py={3}
-                    border={`2px solid ${lang.accent}`}
-                    borderTop="none"
-                    borderRadius="0 0 14px 14px"
+                    w="18px"
+                    h="18px"
+                    borderRadius="full"
+                    border="2px solid"
+                    borderColor={isActive ? lang.accent : "#CBD5E1"}
+                    bg={isActive ? lang.accent : "white"}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    flexShrink={0}
                   >
-                    <Text
-                      fontSize="11px"
-                      color={lang.color}
-                      fontWeight={600}
-                      lineHeight={1.5}
-                    >
-                      {lang.desc}
+                    {isActive && (
+                      <Icon as={FaCheck} fontSize="8px" color="white" />
+                    )}
+                  </Box>
+                </Flex>
+                <Text
+                  fontSize="11px"
+                  color={isActive ? lang.color : "#94A3B8"}
+                  lineHeight="1.5"
+                >
+                  {lang.desc}
+                </Text>
+                {isDisabled && (
+                  <Box
+                    mt="6px"
+                    display="inline-block"
+                    bg="#FEF3C7"
+                    px="6px"
+                    py="2px"
+                    borderRadius="4px"
+                  >
+                    <Text fontSize="10px" fontWeight={700} color="#B45309">
+                      Not available
                     </Text>
                   </Box>
-                </Box>
-              ) : (
-                <Box
-                  border="2px solid #e2e8f0"
-                  borderRadius="14px"
-                  p={4}
-                  bg={isDisabled ? "#fafafa" : "white"}
-                  _hover={
-                    !isDisabled
-                      ? { borderColor: lang.accent, bg: lang.lightBg }
-                      : {}
-                  }
-                  transition="all .18s"
-                >
-                  <Flex align="center" justify="space-between" mb={2}>
-                    <Flex align="center" gap={2}>
-                      <Text fontSize="22px" lineHeight="1">
-                        {lang.flag}
-                      </Text>
-                      <Box>
-                        <Text fontSize="13px" fontWeight={700} color="#374151">
-                          {lang.label}
-                        </Text>
-                        {lang.native !== lang.label && (
-                          <Text fontSize="11px" color="#94a3b8" mt="-1px">
-                            {lang.native}
-                          </Text>
-                        )}
-                      </Box>
-                    </Flex>
-                    <Box
-                      w="20px"
-                      h="20px"
-                      borderRadius="full"
-                      border="2px solid #d1d5db"
-                      bg="white"
-                      flexShrink={0}
-                    />
-                  </Flex>
-                  <Text fontSize="11px" color="#94a3b8" lineHeight={1.5}>
-                    {lang.desc}
-                  </Text>
-                  {isDisabled && (
-                    <Box
-                      mt={2}
-                      display="inline-block"
-                      bg="#fef3c7"
-                      px={2}
-                      py="2px"
-                      borderRadius="5px"
-                    >
-                      <Text fontSize="10px" fontWeight={700} color="#b45309">
-                        Not available
-                      </Text>
-                    </Box>
-                  )}
-                </Box>
-              )}
+                )}
+              </Box>
             </Box>
           );
         })}
       </Flex>
 
-      {/* Confirmation line */}
-      <Flex
-        mt={4}
-        p={3}
-        align="center"
-        gap={2}
-        bg="linear-gradient(90deg,#f0fdf4,#f8fafc)"
-        borderRadius="10px"
-        border="1px solid #bbf7d0"
-      >
+      {value && (
         <Flex
-          w="20px"
-          h="20px"
-          bg="#16a34a"
-          borderRadius="full"
+          mt="10px"
+          p="8px"
           align="center"
-          justify="center"
-          flexShrink={0}
+          gap="8px"
+          bg="#F0FDF4"
+          borderRadius="6px"
+          border="1px solid #BBF7D0"
         >
-          <Icon as={FaCheck} fontSize="9px" color="white" />
-        </Flex>
-        <Text fontSize="12px" color="#15803d" fontWeight={600}>
-          Questions will be shown in{" "}
-          <Text as="span" fontWeight={800} color="#0f172a">
-            {LANGUAGES.find((l) => l.value === value)?.label}
-          </Text>
-          {value === "bilingual" && (
-            <Text as="span" color="#64748b" fontWeight={400}>
-              {" "}
-              — both languages simultaneously
+          <Icon as={FaCheck} fontSize="10px" color="#16A34A" />
+          <Text fontSize="12px" color="#15803D" fontWeight={600}>
+            Language set to{" "}
+            <Text as="span" fontWeight={800} color="#0F172A">
+              {LANGUAGES.find((l) => l.value === value)?.label}
             </Text>
-          )}
-        </Text>
-      </Flex>
+          </Text>
+        </Flex>
+      )}
     </Box>
   );
 }
@@ -1792,38 +1720,33 @@ function LanguageSelector({ value, onChange, hasHindi }) {
 function RuleCard({ number, icon, accent, bg, title, description }) {
   return (
     <Flex
-      gap={3}
-      p={4}
-      borderRadius="14px"
+      gap="12px"
+      p="14px"
+      borderRadius="8px"
       bg={bg}
       border={`1px solid ${accent}22`}
       align="flex-start"
-      transition="all .18s"
-      _hover={{
-        boxShadow: `0 4px 16px ${accent}18`,
-        transform: "translateY(-1px)",
-      }}
     >
       <Box position="relative" flexShrink={0}>
-        <Flex
-          w="38px"
-          h="38px"
+        <Box
+          w="34px"
+          h="34px"
           bg={accent}
-          borderRadius="11px"
-          align="center"
-          justify="center"
+          borderRadius="8px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
           color="white"
-          fontSize="16px"
-          boxShadow={`0 4px 10px ${accent}40`}
+          fontSize="14px"
         >
           <Icon as={icon} />
-        </Flex>
+        </Box>
         <Box
           position="absolute"
-          top="-6px"
-          right="-6px"
-          w="16px"
-          h="16px"
+          top="-5px"
+          right="-5px"
+          w="14px"
+          h="14px"
           bg="white"
           borderRadius="full"
           border={`2px solid ${accent}`}
@@ -1831,22 +1754,16 @@ function RuleCard({ number, icon, accent, bg, title, description }) {
           alignItems="center"
           justifyContent="center"
         >
-          <Text fontSize="8px" fontWeight={800} color={accent} lineHeight="1">
+          <Text fontSize="7px" fontWeight={800} color={accent}>
             {number}
           </Text>
         </Box>
       </Box>
       <Box flex={1}>
-        <Text
-          fontSize="13px"
-          fontWeight={800}
-          color="#0f172a"
-          mb={1}
-          letterSpacing="-0.2px"
-        >
+        <Text fontSize="13px" fontWeight={700} color="#0F172A" mb="3px">
           {title}
         </Text>
-        <Text fontSize="12px" color="#64748b" lineHeight={1.65}>
+        <Text fontSize="11px" color="#64748B" lineHeight="1.65">
           {description}
         </Text>
       </Box>
@@ -1944,151 +1861,114 @@ function TestInfoPage({
     },
   ];
 
-  return (
-    <Box minH="100vh" bg="#f0f4f8" fontFamily="'Sora', sans-serif">
-      {/* ── HERO HEADER ── */}
-      <Box
-        bg="linear-gradient(135deg,#0a1628 0%,#0f2444 40%,#1a3a6e 80%,#1e4d8c 100%)"
-        px={{ base: 4, md: 8, lg: 12 }}
-        pt={{ base: 10, md: 14 }}
-        pb={{ base: 20, md: 28 }}
-        position="relative"
-        overflow="hidden"
-      >
-        {/* Decorative rings */}
-        <Box
-          position="absolute"
-          right="-120px"
-          top="-120px"
-          w="420px"
-          h="420px"
-          borderRadius="full"
-          border="1px solid rgba(255,255,255,.04)"
-        />
-        <Box
-          position="absolute"
-          right="-60px"
-          top="-60px"
-          w="280px"
-          h="280px"
-          borderRadius="full"
-          border="1px solid rgba(255,255,255,.06)"
-        />
-        <Box
-          position="absolute"
-          left="-80px"
-          bottom="-80px"
-          w="320px"
-          h="320px"
-          borderRadius="full"
-          bg="rgba(30,77,140,.3)"
-        />
-        {/* Dot grid */}
-        <Box
-          position="absolute"
-          inset={0}
-          opacity={0.04}
-          backgroundImage="radial-gradient(circle, white 1px, transparent 1px)"
-          backgroundSize="28px 28px"
-        />
+  const px = { base: "16px", md: "32px", lg: "48px" };
 
-        <Box maxW="900px" mx="auto" position="relative" zIndex={1}>
+  return (
+    <Box minH="100vh" bg="#F8FAFC" fontFamily="Inter, sans-serif">
+      {/* ── HEADER ── */}
+      <Box
+        bg="#0B1120"
+        px={px}
+        pt={{ base: "40px", md: "52px" }}
+        pb={{ base: "52px", md: "68px" }}
+      >
+        <Box maxW="1200px" mx="auto">
           {/* Back */}
           <Flex
             align="center"
-            gap={2}
-            mb={8}
+            gap="8px"
+            mb="28px"
             cursor="pointer"
             w="fit-content"
             color="rgba(255,255,255,.4)"
-            _hover={{ color: "rgba(255,255,255,.9)", gap: "10px" }}
-            transition="all .2s"
+            _hover={{ color: "rgba(255,255,255,.8)" }}
+            transition="color .15s"
             onClick={() => navigate(-1)}
           >
-            <Icon as={FaArrowLeft} fontSize="12px" />
-            <Text fontSize="13px" fontWeight={600}>
+            <Icon as={FaArrowLeft} fontSize="11px" />
+            <Text fontSize="13px" fontWeight={500}>
               Back
             </Text>
           </Flex>
 
-          {/* Title block */}
+          {/* Title row */}
           <Flex
             align="flex-start"
-            gap={{ base: 4, md: 5 }}
+            gap="16px"
             flexWrap={{ base: "wrap", sm: "nowrap" }}
           >
-            <Flex
-              w={{ base: "52px", md: "70px" }}
-              h={{ base: "52px", md: "70px" }}
+            <Box
+              w={{ base: "48px", md: "56px" }}
+              h={{ base: "48px", md: "56px" }}
               flexShrink={0}
-              bg="rgba(255,255,255,.1)"
-              backdropFilter="blur(8px)"
-              border="1.5px solid rgba(255,255,255,.2)"
-              borderRadius="18px"
-              align="center"
-              justify="center"
-              fontSize={{ base: "24px", md: "32px" }}
+              bg="#1E293B"
+              borderRadius="10px"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              fontSize={{ base: "22px", md: "26px" }}
             >
               📋
-            </Flex>
+            </Box>
             <Box flex={1} minW={0}>
-              <Flex flexWrap="wrap" gap={2} mb={3} align="center">
+              <Flex flexWrap="wrap" gap="8px" mb="10px" align="center">
                 {test.examType && (
-                  <Badge
-                    px={3}
-                    py={1}
-                    borderRadius="full"
-                    bg="rgba(255,255,255,.12)"
-                    backdropFilter="blur(4px)"
-                    color="rgba(255,255,255,.85)"
+                  <Box
+                    bg="#1E3A5F"
+                    color="#93C5FD"
+                    px="10px"
+                    py="3px"
+                    borderRadius="4px"
                     fontSize="11px"
                     fontWeight={700}
-                    border="1px solid rgba(255,255,255,.15)"
+                    letterSpacing="0.8px"
                   >
                     {test.examType}
-                  </Badge>
+                  </Box>
                 )}
                 {isPrivate && (
-                  <Badge
-                    px={3}
-                    py={1}
-                    borderRadius="full"
-                    bg="rgba(239,68,68,.2)"
-                    color="#fca5a5"
+                  <Box
+                    bg="#3B1219"
+                    color="#FCA5A5"
+                    px="10px"
+                    py="3px"
+                    borderRadius="4px"
                     fontSize="11px"
                     fontWeight={700}
-                    border="1px solid rgba(239,68,68,.3)"
                   >
                     🔒 Private
-                  </Badge>
+                  </Box>
                 )}
                 {myResult && (
-                  <Badge
-                    px={3}
-                    py={1}
-                    borderRadius="full"
-                    bg="rgba(34,197,94,.15)"
-                    color="#86efac"
+                  <Box
+                    bg="#14532D"
+                    color="#86EFAC"
+                    px="10px"
+                    py="3px"
+                    borderRadius="4px"
                     fontSize="11px"
                     fontWeight={700}
-                    border="1px solid rgba(34,197,94,.25)"
                   >
                     ✓ Already attempted
-                  </Badge>
+                  </Box>
                 )}
               </Flex>
               <Text
-                fontSize={{ base: "24px", md: "40px" }}
+                fontSize={{ base: "22px", md: "34px" }}
                 fontWeight={800}
                 color="white"
-                letterSpacing={{ base: "-0.5px", md: "-1.5px" }}
-                lineHeight="1.1"
-                mb={1}
+                letterSpacing="-0.8px"
+                lineHeight="1.15"
+                mb="6px"
               >
                 {test.title}
               </Text>
               {test.subject && (
-                <Text fontSize="14px" color="rgba(255,255,255,.45)" mt={1}>
+                <Text
+                  fontSize="13px"
+                  color="rgba(255,255,255,.35)"
+                  fontWeight={500}
+                >
                   Subject:{" "}
                   {test.subject.charAt(0).toUpperCase() + test.subject.slice(1)}
                 </Text>
@@ -2096,12 +1976,12 @@ function TestInfoPage({
             </Box>
           </Flex>
 
-          {/* Quick stats strip */}
+          {/* Stats row */}
           <Flex
-            mt={8}
-            pt={6}
-            borderTop="1px solid rgba(255,255,255,.08)"
-            gap={{ base: 6, md: 10 }}
+            mt="28px"
+            pt="24px"
+            borderTop="1px solid rgba(255,255,255,.07)"
+            gap={{ base: "24px", md: "40px" }}
             flexWrap="wrap"
           >
             {[
@@ -2131,38 +2011,28 @@ function TestInfoPage({
                 label: "Avg Score",
               },
             ].map((s) => (
-              <Flex key={s.label} align="center" gap={3}>
-                <Flex
-                  w="34px"
-                  h="34px"
-                  bg="rgba(255,255,255,.08)"
-                  borderRadius="10px"
-                  align="center"
-                  justify="center"
-                  flexShrink={0}
-                >
-                  <Icon
-                    as={s.icon}
-                    fontSize="13px"
-                    color="rgba(255,255,255,.45)"
-                  />
-                </Flex>
+              <Flex key={s.label} align="center" gap="10px">
+                <Icon
+                  as={s.icon}
+                  fontSize="13px"
+                  color="rgba(255,255,255,.3)"
+                />
                 <Box>
                   <Text
-                    fontSize={{ base: "20px", md: "24px" }}
+                    fontSize={{ base: "18px", md: "22px" }}
                     fontWeight={800}
                     color="white"
                     lineHeight="1"
-                    letterSpacing="-0.8px"
+                    letterSpacing="-0.5px"
                   >
                     {s.value}
                   </Text>
                   <Text
                     fontSize="10px"
-                    color="rgba(255,255,255,.4)"
+                    color="rgba(255,255,255,.35)"
                     textTransform="uppercase"
-                    letterSpacing="1px"
-                    mt="1px"
+                    letterSpacing="0.8px"
+                    mt="2px"
                   >
                     {s.label}
                   </Text>
@@ -2173,19 +2043,19 @@ function TestInfoPage({
         </Box>
       </Box>
 
-      {/* ── BODY — overlaps hero ── */}
+      {/* ── BODY ── */}
       <Box
-        maxW="900px"
+        maxW="1200px"
         mx="auto"
-        px={{ base: 4, md: 6, lg: 8 }}
-        mt={{ base: "-40px", md: "-56px" }}
-        pb={16}
+        px={px}
+        mt="-24px"
+        pb="60px"
         position="relative"
         zIndex={1}
       >
         <Grid
           templateColumns={{ base: "1fr", lg: "1fr 300px" }}
-          gap={5}
+          gap="16px"
           alignItems="start"
         >
           {/* ── LEFT COLUMN ── */}
@@ -2194,28 +2064,28 @@ function TestInfoPage({
             {myResult && (
               <Box
                 bg="white"
-                borderRadius="20px"
-                border="1.5px solid #86efac"
-                p={5}
-                mb={5}
-                boxShadow="0 4px 20px rgba(22,163,74,.12)"
+                borderRadius="8px"
+                border="1px solid #86EFAC"
+                p="16px"
+                mb="12px"
               >
-                <Flex align="center" gap={4} flexWrap="wrap">
-                  <Flex
-                    w="52px"
-                    h="52px"
-                    bg="linear-gradient(135deg,#f0fdf4,#dcfce7)"
-                    borderRadius="14px"
-                    align="center"
-                    justify="center"
+                <Flex align="center" gap="14px" flexWrap="wrap">
+                  <Box
+                    w="44px"
+                    h="44px"
+                    bg="#F0FDF4"
+                    borderRadius="8px"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
                     flexShrink={0}
-                    border="1.5px solid #86efac"
+                    border="1px solid #86EFAC"
                   >
-                    <Icon as={FaTrophy} color="#16a34a" fontSize="20px" />
-                  </Flex>
+                    <Icon as={FaTrophy} color="#16a34a" fontSize="18px" />
+                  </Box>
                   <Box flex={1}>
                     <Text
-                      fontSize="12px"
+                      fontSize="11px"
                       fontWeight={700}
                       color="#16a34a"
                       textTransform="uppercase"
@@ -2223,13 +2093,13 @@ function TestInfoPage({
                     >
                       Your Previous Attempt
                     </Text>
-                    <Flex align="baseline" gap={2} mt={0.5}>
+                    <Flex align="baseline" gap="8px" mt="2px">
                       <Text
-                        fontSize="32px"
+                        fontSize="28px"
                         fontWeight={800}
                         color="#15803d"
                         lineHeight="1"
-                        letterSpacing="-1.5px"
+                        letterSpacing="-1px"
                       >
                         {(
                           myResult.scorePercentage ??
@@ -2238,7 +2108,7 @@ function TestInfoPage({
                         ).toFixed(0)}
                         %
                       </Text>
-                      <Text fontSize="14px" color="#16a34a" fontWeight={600}>
+                      <Text fontSize="13px" color="#16a34a" fontWeight={600}>
                         · {myResult.correct ?? myResult.correctQus?.length ?? 0}
                         /{questionCount} correct
                       </Text>
@@ -2247,8 +2117,8 @@ function TestInfoPage({
                   <Badge
                     fontSize="11px"
                     px={3}
-                    py={1.5}
-                    borderRadius="full"
+                    py={1}
+                    borderRadius="4px"
                     colorScheme={
                       (myResult.scorePercentage ?? myResult.percentage ?? 0) >=
                       40
@@ -2275,114 +2145,87 @@ function TestInfoPage({
             {/* ── TEST DETAILS GRID ── */}
             <Box
               bg="white"
-              borderRadius="20px"
-              border="1px solid #e2e8f0"
-              p={{ base: 5, md: 6 }}
-              mb={5}
-              boxShadow="0 2px 12px rgba(0,0,0,.04)"
+              borderRadius="8px"
+              border="1px solid #E2E8F0"
+              p={{ base: "16px", md: "20px" }}
+              mb="12px"
             >
-              <Flex align="center" gap={3} mb={5}>
-                <Flex
-                  w="38px"
-                  h="38px"
-                  bg="#eff6ff"
-                  borderRadius="12px"
-                  align="center"
-                  justify="center"
-                >
-                  <Icon as={FaInfoCircle} color="#2563eb" fontSize="15px" />
-                </Flex>
-                <Text
-                  fontSize="15px"
-                  fontWeight={800}
-                  color="#0f172a"
-                  letterSpacing="-0.3px"
-                >
+              <Flex align="center" gap="10px" mb="16px">
+                <Icon as={FaInfoCircle} color="#2563EB" fontSize="14px" />
+                <Text fontSize="14px" fontWeight={700} color="#0F172A">
                   Test Details
                 </Text>
               </Flex>
               <Grid
                 templateColumns={{ base: "1fr 1fr", md: "repeat(3,1fr)" }}
-                gap={3}
+                gap="10px"
               >
                 {[
                   {
                     label: "Questions",
                     value: questionCount,
-                    accent: "#2563eb",
-                    bg: "#eff6ff",
+                    accent: "#2563EB",
                   },
                   {
                     label: "Duration",
                     value: `${timeLimitMin} min`,
-                    accent: "#d97706",
-                    bg: "#fffbeb",
+                    accent: "#D97706",
                   },
                   {
                     label: "Per Question",
                     value: `~${secsPerQ} sec`,
-                    accent: "#16a34a",
-                    bg: "#f0fdf4",
+                    accent: "#16A34A",
                   },
                   {
                     label: "Total Marks",
                     value: `${questionCount}`,
-                    accent: "#7c3aed",
-                    bg: "#f5f3ff",
+                    accent: "#7C3AED",
                   },
-                  {
-                    label: "Pass Mark",
-                    value: "40%",
-                    accent: "#e11d48",
-                    bg: "#fff1f2",
-                  },
+                  { label: "Pass Mark", value: "40%", accent: "#DC2626" },
                   {
                     label: "Subject",
                     value: test.subject
                       ? test.subject.charAt(0).toUpperCase() +
                         test.subject.slice(1)
                       : "General",
-                    accent: "#0891b2",
-                    bg: "#ecfeff",
+                    accent: "#0891B2",
                   },
                   {
                     label: "Exam Type",
                     value: test.examType || "General",
-                    accent: "#ea580c",
-                    bg: "#fff7ed",
+                    accent: "#EA580C",
                   },
                   {
                     label: "Language",
                     value:
                       LANGUAGES.find((l) => l.value === selectedLang)?.label ||
                       "English",
-                    accent: "#6d28d9",
-                    bg: "#f5f3ff",
+                    accent: "#6D28D9",
                   },
                   {
                     label: "Access",
                     value: isPrivate ? "🔒 Private" : "🌐 Public",
                     accent: "#374151",
-                    bg: "#f8fafc",
                   },
-                ].map(({ label, value, accent, bg }) => (
-                  <Box key={label} bg={bg} borderRadius="12px" p={3.5}>
+                ].map(({ label, value, accent }) => (
+                  <Box
+                    key={label}
+                    bg="#F8FAFC"
+                    borderRadius="6px"
+                    p="12px"
+                    border="1px solid #F1F5F9"
+                  >
                     <Text
                       fontSize="10px"
                       fontWeight={700}
-                      color="#94a3b8"
+                      color="#94A3B8"
                       textTransform="uppercase"
                       letterSpacing=".8px"
-                      mb={1.5}
+                      mb="4px"
                     >
                       {label}
                     </Text>
-                    <Text
-                      fontSize="14px"
-                      fontWeight={800}
-                      color={accent}
-                      letterSpacing="-0.3px"
-                    >
+                    <Text fontSize="14px" fontWeight={800} color={accent}>
                       {value}
                     </Text>
                   </Box>
@@ -2393,39 +2236,23 @@ function TestInfoPage({
             {/* ── INSTRUCTIONS ── */}
             <Box
               bg="white"
-              borderRadius="20px"
-              border="1px solid #e2e8f0"
-              p={{ base: 5, md: 6 }}
-              mb={5}
-              boxShadow="0 2px 12px rgba(0,0,0,.04)"
+              borderRadius="8px"
+              border="1px solid #E2E8F0"
+              p={{ base: "16px", md: "20px" }}
+              mb="12px"
             >
-              <Flex align="center" gap={3} mb={5}>
-                <Flex
-                  w="38px"
-                  h="38px"
-                  bg="#fffbeb"
-                  borderRadius="12px"
-                  align="center"
-                  justify="center"
-                >
-                  <Icon as={FaShieldAlt} color="#d97706" fontSize="15px" />
-                </Flex>
+              <Flex align="center" gap="10px" mb="16px">
+                <Icon as={FaShieldAlt} color="#D97706" fontSize="14px" />
                 <Box>
-                  <Text
-                    fontSize="15px"
-                    fontWeight={800}
-                    color="#0f172a"
-                    letterSpacing="-0.3px"
-                  >
+                  <Text fontSize="14px" fontWeight={700} color="#0F172A">
                     Instructions
                   </Text>
-                  <Text fontSize="12px" color="#94a3b8" mt="1px">
-                    Read all rules before starting
+                  <Text fontSize="11px" color="#94A3B8" mt="1px">
+                    Read carefully before starting
                   </Text>
                 </Box>
               </Flex>
-
-              <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={3}>
+              <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap="8px">
                 {RULES.map((rule, i) => (
                   <RuleCard
                     key={i}
@@ -2442,23 +2269,23 @@ function TestInfoPage({
 
             {/* ── WARNING STRIP ── */}
             <Box
-              bg="linear-gradient(135deg,#fffbeb,#fef9c3)"
-              border="1.5px solid #fde68a"
-              borderRadius="16px"
-              p={5}
-              mb={5}
+              bg="#FFFBEB"
+              border="1px solid #FDE68A"
+              borderRadius="8px"
+              p="16px"
+              mb="12px"
             >
-              <Flex align="center" gap={2} mb={3}>
+              <Flex align="center" gap="8px" mb="10px">
                 <Icon
                   as={FaExclamationTriangle}
-                  color="#d97706"
-                  fontSize="15px"
+                  color="#D97706"
+                  fontSize="13px"
                 />
-                <Text fontSize="14px" fontWeight={800} color="#92400e">
+                <Text fontSize="13px" fontWeight={700} color="#92400E">
                   Before You Start
                 </Text>
               </Flex>
-              <Flex direction="column" gap={2}>
+              <Flex direction="column" gap="6px">
                 {[
                   `Once started, the ${timeLimitMin}-minute timer cannot be paused or reset`,
                   "Ensure your device is fully charged or connected to power",
@@ -2466,23 +2293,23 @@ function TestInfoPage({
                   "Use a laptop or desktop for the best test-taking experience",
                   "Refreshing the page mid-test is safe — your progress is auto-saved",
                 ].map((w, i) => (
-                  <Flex key={i} align="flex-start" gap={2.5}>
+                  <Flex key={i} align="flex-start" gap="8px">
                     <Box
-                      w="20px"
-                      h="20px"
-                      bg="#fde68a"
-                      borderRadius="full"
+                      w="18px"
+                      h="18px"
+                      bg="#FDE68A"
+                      borderRadius="4px"
                       display="flex"
                       alignItems="center"
                       justifyContent="center"
                       flexShrink={0}
                       mt="1px"
                     >
-                      <Text fontSize="10px" fontWeight={800} color="#92400e">
+                      <Text fontSize="9px" fontWeight={800} color="#92400E">
                         {i + 1}
                       </Text>
                     </Box>
-                    <Text fontSize="13px" color="#78350f" lineHeight={1.6}>
+                    <Text fontSize="12px" color="#78350F" lineHeight="1.65">
                       {w}
                     </Text>
                   </Flex>
@@ -2491,126 +2318,82 @@ function TestInfoPage({
             </Box>
           </Box>
 
-          {/* ── RIGHT COLUMN — sticky start card ── */}
+          {/* ── RIGHT COLUMN ── */}
           <Box position={{ base: "static", lg: "sticky" }} top={{ lg: "20px" }}>
-            {/* ── START CARD ── */}
+            {/* Start card */}
             <Box
               bg="white"
-              borderRadius="20px"
-              border="1px solid #e2e8f0"
+              borderRadius="8px"
+              border="1px solid #E2E8F0"
               overflow="hidden"
-              boxShadow="0 8px 32px rgba(0,0,0,.08)"
-              mb={4}
+              mb="12px"
             >
-              {/* Card top — gradient */}
+              {/* Top bar */}
               <Box
-                bg="linear-gradient(135deg,#0a1628 0%,#1a3a6e 100%)"
-                px={6}
-                pt={6}
-                pb={8}
+                bg="#0B1120"
+                px="20px"
+                pt="20px"
+                pb="28px"
                 textAlign="center"
-                position="relative"
-                overflow="hidden"
               >
-                <Box
-                  position="absolute"
-                  right="-30px"
-                  top="-30px"
-                  w="120px"
-                  h="120px"
-                  borderRadius="full"
-                  bg="rgba(255,255,255,.04)"
-                />
-                <Box
-                  position="absolute"
-                  left="-20px"
-                  bottom="-20px"
-                  w="90px"
-                  h="90px"
-                  borderRadius="full"
-                  bg="rgba(99,102,241,.08)"
-                />
-                <Box
-                  w="70px"
-                  h="70px"
-                  mx="auto"
-                  mb={3}
-                  bg="rgba(255,255,255,.1)"
-                  backdropFilter="blur(4px)"
-                  borderRadius="20px"
-                  border="1.5px solid rgba(255,255,255,.2)"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  fontSize="30px"
-                >
+                <Box fontSize="28px" mb="8px">
                   🎯
                 </Box>
-                <Text
-                  fontSize="17px"
-                  fontWeight={800}
-                  color="white"
-                  letterSpacing="-0.3px"
-                >
+                <Text fontSize="15px" fontWeight={800} color="white">
                   {myResult ? "Retake the Test" : "Ready to Begin?"}
                 </Text>
-                <Text fontSize="12px" color="rgba(255,255,255,.5)" mt={1}>
+                <Text fontSize="12px" color="rgba(255,255,255,.4)" mt="4px">
                   {questionCount} questions · {timeLimitMin} min ·{" "}
                   {LANGUAGES.find((l) => l.value === selectedLang)?.label}
                 </Text>
               </Box>
 
-              {/* Card body */}
-              <Box px={5} pt={5} pb={6}>
-                {/* ── TIME BREAKDOWN — visual clock display ── */}
+              <Box px="16px" pt="16px" pb="20px">
+                {/* Time display */}
                 <Box
-                  mb={4}
-                  borderRadius="16px"
+                  mb="12px"
+                  bg="#F8FAFC"
+                  borderRadius="8px"
+                  border="1px solid #E2E8F0"
                   overflow="hidden"
-                  border="1px solid #f1f5f9"
                 >
-                  {/* Header */}
                   <Flex
                     align="center"
-                    gap={2}
-                    bg="#fafafa"
-                    px={4}
-                    py={3}
-                    borderBottom="1px solid #f1f5f9"
+                    gap="8px"
+                    px="14px"
+                    py="10px"
+                    borderBottom="1px solid #F1F5F9"
+                    bg="white"
                   >
-                    <Icon as={FaClock} color="#d97706" fontSize="13px" />
+                    <Icon as={FaClock} color="#D97706" fontSize="12px" />
                     <Text fontSize="12px" fontWeight={700} color="#374151">
                       Time Allowed
                     </Text>
                   </Flex>
-
-                  {/* Big clock face */}
                   <Box
-                    bg="linear-gradient(135deg,#fffbeb,#fef9c3)"
-                    px={4}
-                    py={4}
-                    borderBottom="1px solid #fde68a"
+                    bg="#FFFBEB"
+                    px="14px"
+                    py="14px"
+                    borderBottom="1px solid #FDE68A"
                   >
-                    <Flex align="center" justify="center" gap={2}>
-                      {/* Hours (if >= 60 min) */}
+                    <Flex align="center" justify="center" gap="6px">
                       {timeLimitMin >= 60 && (
                         <>
                           <Box textAlign="center">
                             <Box
                               bg="white"
-                              borderRadius="10px"
-                              px={3}
-                              py={2}
-                              border="1.5px solid #fde68a"
-                              minW="50px"
-                              boxShadow="0 2px 8px rgba(0,0,0,.06)"
+                              borderRadius="6px"
+                              px="10px"
+                              py="8px"
+                              border="1px solid #FDE68A"
+                              minW="46px"
                             >
                               <Text
-                                fontSize="28px"
+                                fontSize="26px"
                                 fontWeight={800}
-                                color="#92400e"
+                                color="#92400E"
                                 lineHeight="1"
-                                letterSpacing="-2px"
+                                letterSpacing="-1.5px"
                               >
                                 {Math.floor(timeLimitMin / 60)
                                   .toString()
@@ -2619,149 +2402,145 @@ function TestInfoPage({
                             </Box>
                             <Text
                               fontSize="9px"
-                              color="#b45309"
+                              color="#B45309"
                               fontWeight={700}
                               textTransform="uppercase"
                               letterSpacing=".8px"
-                              mt={1}
+                              mt="4px"
                             >
                               HRS
                             </Text>
                           </Box>
                           <Text
-                            fontSize="28px"
+                            fontSize="24px"
                             fontWeight={800}
-                            color="#d97706"
-                            mb={4}
+                            color="#D97706"
+                            mb="12px"
                           >
                             :
                           </Text>
                         </>
                       )}
-                      {/* Minutes */}
                       <Box textAlign="center">
                         <Box
                           bg="white"
-                          borderRadius="10px"
-                          px={3}
-                          py={2}
-                          border="1.5px solid #fde68a"
-                          minW="50px"
-                          boxShadow="0 2px 8px rgba(0,0,0,.06)"
+                          borderRadius="6px"
+                          px="10px"
+                          py="8px"
+                          border="1px solid #FDE68A"
+                          minW="46px"
                         >
                           <Text
-                            fontSize="28px"
+                            fontSize="26px"
                             fontWeight={800}
-                            color="#92400e"
+                            color="#92400E"
                             lineHeight="1"
-                            letterSpacing="-2px"
+                            letterSpacing="-1.5px"
                           >
                             {(timeLimitMin % 60).toString().padStart(2, "0")}
                           </Text>
                         </Box>
                         <Text
                           fontSize="9px"
-                          color="#b45309"
+                          color="#B45309"
                           fontWeight={700}
                           textTransform="uppercase"
                           letterSpacing=".8px"
-                          mt={1}
+                          mt="4px"
                         >
                           MIN
                         </Text>
                       </Box>
                       <Text
-                        fontSize="28px"
+                        fontSize="24px"
                         fontWeight={800}
-                        color="#d97706"
-                        mb={4}
+                        color="#D97706"
+                        mb="12px"
                       >
                         :
                       </Text>
-                      {/* Seconds */}
                       <Box textAlign="center">
                         <Box
                           bg="white"
-                          borderRadius="10px"
-                          px={3}
-                          py={2}
-                          border="1.5px solid #fde68a"
-                          minW="50px"
-                          boxShadow="0 2px 8px rgba(0,0,0,.06)"
+                          borderRadius="6px"
+                          px="10px"
+                          py="8px"
+                          border="1px solid #FDE68A"
+                          minW="46px"
                         >
                           <Text
-                            fontSize="28px"
+                            fontSize="26px"
                             fontWeight={800}
-                            color="#b45309"
+                            color="#B45309"
                             lineHeight="1"
-                            letterSpacing="-2px"
+                            letterSpacing="-1.5px"
                           >
                             00
                           </Text>
                         </Box>
                         <Text
                           fontSize="9px"
-                          color="#b45309"
+                          color="#B45309"
                           fontWeight={700}
                           textTransform="uppercase"
                           letterSpacing=".8px"
-                          mt={1}
+                          mt="4px"
                         >
                           SEC
                         </Text>
                       </Box>
                     </Flex>
                   </Box>
-
-                  {/* Per-question chip */}
-                  <Flex px={4} py={3} align="center" justify="space-between">
-                    <Text fontSize="12px" color="#64748b">
-                      ~time per question
+                  <Flex
+                    px="14px"
+                    py="10px"
+                    align="center"
+                    justify="space-between"
+                  >
+                    <Text fontSize="12px" color="#64748B">
+                      ~per question
                     </Text>
                     <Box
-                      bg="#f0fdf4"
-                      border="1px solid #bbf7d0"
-                      px={3}
-                      py={1}
-                      borderRadius="full"
+                      bg="#F0FDF4"
+                      border="1px solid #BBF7D0"
+                      px="10px"
+                      py="3px"
+                      borderRadius="4px"
                     >
-                      <Text fontSize="12px" fontWeight={800} color="#15803d">
+                      <Text fontSize="12px" fontWeight={800} color="#15803D">
                         ⚡ ~{secsPerQ}s
                       </Text>
                     </Box>
                   </Flex>
                 </Box>
 
-                {/* ── AGREEMENT CHECKBOX ── */}
+                {/* Agreement checkbox */}
                 <Box
                   border="2px solid"
-                  mb={4}
-                  borderColor={agreed ? "#2563eb" : "#e2e8f0"}
-                  borderRadius="14px"
-                  bg={agreed ? "#f0f7ff" : "white"}
+                  mb="12px"
+                  borderColor={agreed ? "#2563EB" : "#E2E8F0"}
+                  borderRadius="8px"
+                  bg={agreed ? "#EFF6FF" : "white"}
                   cursor="pointer"
-                  transition="all .18s"
-                  _hover={{ borderColor: "#2563eb", bg: "#f8fbff" }}
+                  transition="all .15s"
+                  _hover={{ borderColor: "#2563EB" }}
                   onClick={() => setAgreed((p) => !p)}
-                  p={4}
+                  p="12px"
                 >
-                  <Flex align="flex-start" gap={3}>
+                  <Flex align="flex-start" gap="10px">
                     <Box
                       flexShrink={0}
                       mt="1px"
-                      w="22px"
-                      h="22px"
-                      borderRadius="7px"
-                      bg={agreed ? "#2563eb" : "white"}
+                      w="20px"
+                      h="20px"
+                      borderRadius="5px"
+                      bg={agreed ? "#2563EB" : "white"}
                       border="2px solid"
-                      borderColor={agreed ? "#2563eb" : "#cbd5e1"}
+                      borderColor={agreed ? "#2563EB" : "#CBD5E1"}
                       display="flex"
                       alignItems="center"
                       justifyContent="center"
                       transition="all .15s"
-                      boxShadow={
-                        agreed ? "0 2px 8px rgba(37,99,235,.3)" : "none"
-                      }
                     >
                       {agreed && (
                         <Icon as={FaCheck} fontSize="9px" color="white" />
@@ -2769,13 +2548,11 @@ function TestInfoPage({
                     </Box>
                     <Text
                       fontSize="12px"
-                      color={agreed ? "#1e40af" : "#64748b"}
-                      lineHeight={1.7}
+                      color={agreed ? "#1E40AF" : "#64748B"}
+                      lineHeight={1.65}
                       fontWeight={agreed ? 600 : 400}
                     >
                       I have read all instructions and agree to the test rules.
-                      I understand that switching tabs or unfair means may
-                      result in disqualification.
                     </Text>
                   </Flex>
                 </Box>
@@ -2785,32 +2562,28 @@ function TestInfoPage({
                   <>
                     <Button
                       w="full"
-                      h="50px"
-                      borderRadius="12px"
-                      mb={2}
-                      bg="linear-gradient(135deg,#1a3a6e,#0a1628)"
+                      h="46px"
+                      borderRadius="7px"
+                      mb="8px"
+                      bg="#0B1120"
                       color="white"
-                      fontWeight={800}
-                      fontSize="15px"
+                      fontWeight={700}
+                      fontSize="14px"
                       leftIcon={<FaPlay />}
                       onClick={onStart}
-                      _hover={{
-                        opacity: 0.9,
-                        transform: "translateY(-2px)",
-                        boxShadow: "0 8px 24px rgba(26,58,110,.4)",
-                      }}
-                      transition="all .2s"
+                      _hover={{ bg: "#1E293B" }}
+                      transition="all .15s"
                     >
                       Sign In to Start
                     </Button>
                     <Button
                       w="full"
-                      h="42px"
-                      borderRadius="12px"
+                      h="40px"
+                      borderRadius="7px"
                       variant="outline"
-                      borderColor="#e2e8f0"
+                      borderColor="#E2E8F0"
                       color="#374151"
-                      fontWeight={700}
+                      fontWeight={600}
                       fontSize="13px"
                       onClick={() => {
                         const rp = location.pathname + location.search;
@@ -2818,7 +2591,7 @@ function TestInfoPage({
                           `/auth/signup?redirect=${encodeURIComponent(rp)}`,
                         );
                       }}
-                      _hover={{ bg: "#f8fafc" }}
+                      _hover={{ bg: "#F8FAFC" }}
                     >
                       Create Account
                     </Button>
@@ -2827,49 +2600,36 @@ function TestInfoPage({
                   <>
                     <Button
                       w="full"
-                      h="54px"
-                      borderRadius="13px"
-                      bg={
-                        agreed
-                          ? "linear-gradient(135deg,#1a3a6e,#0a1628)"
-                          : "#f1f5f9"
-                      }
-                      color={agreed ? "white" : "#94a3b8"}
-                      fontWeight={800}
-                      fontSize="16px"
-                      leftIcon={
-                        <Icon as={FaPlay} fontSize={agreed ? "14px" : "12px"} />
-                      }
+                      h="48px"
+                      borderRadius="7px"
+                      bg={agreed ? "#1D4ED8" : "#F1F5F9"}
+                      color={agreed ? "white" : "#94A3B8"}
+                      fontWeight={700}
+                      fontSize="15px"
+                      leftIcon={<Icon as={FaPlay} fontSize="12px" />}
                       cursor={agreed ? "pointer" : "not-allowed"}
                       onClick={agreed ? onStart : undefined}
-                      boxShadow={
-                        agreed ? "0 4px 16px rgba(26,58,110,.25)" : "none"
-                      }
-                      _hover={
-                        agreed
-                          ? {
-                              opacity: 0.9,
-                              transform: "translateY(-2px)",
-                              boxShadow: "0 8px 24px rgba(26,58,110,.4)",
-                            }
-                          : {}
-                      }
-                      transition="all .2s"
+                      _hover={agreed ? { bg: "#1E40AF" } : {}}
+                      transition="all .15s"
                     >
                       {myResult ? "Retake Test" : "Start Test"}
                     </Button>
                     {!agreed && (
-                      <Flex align="center" gap={1.5} justify="center" mt={2}>
-                        <Text fontSize="11px" color="#f59e0b" fontWeight={700}>
-                          ☝️ Check the box above to start
-                        </Text>
-                      </Flex>
+                      <Text
+                        fontSize="11px"
+                        color="#F59E0B"
+                        textAlign="center"
+                        mt="8px"
+                        fontWeight={600}
+                      >
+                        ☝️ Check the box above to start
+                      </Text>
                     )}
                     <Text
                       fontSize="11px"
-                      color="#94a3b8"
+                      color="#94A3B8"
                       textAlign="center"
-                      mt={2}
+                      mt="8px"
                     >
                       as {user.Name || user.Email}
                     </Text>
@@ -2878,22 +2638,21 @@ function TestInfoPage({
               </Box>
             </Box>
 
-            {/* Community stats mini-card */}
+            {/* Community stats */}
             {stats && stats.totalAttempts > 0 && (
               <Box
                 bg="white"
-                borderRadius="16px"
-                border="1px solid #e2e8f0"
-                p={5}
-                boxShadow="0 2px 12px rgba(0,0,0,.04)"
+                borderRadius="8px"
+                border="1px solid #E2E8F0"
+                p="16px"
               >
                 <Text
                   fontSize="11px"
-                  fontWeight={800}
-                  color="#94a3b8"
+                  fontWeight={700}
+                  color="#94A3B8"
                   textTransform="uppercase"
                   letterSpacing=".8px"
-                  mb={4}
+                  mb="14px"
                 >
                   Community Stats
                 </Text>
@@ -2901,38 +2660,38 @@ function TestInfoPage({
                   {
                     label: "Attempts",
                     value: stats.totalAttempts,
-                    color: "#2563eb",
+                    color: "#2563EB",
                   },
                   {
                     label: "Pass Rate",
                     value: `${stats.passRate}%`,
-                    color: "#16a34a",
+                    color: "#16A34A",
                   },
                   {
                     label: "Avg Score",
                     value: `${stats.avgPercentage}%`,
-                    color: "#7c3aed",
+                    color: "#7C3AED",
                   },
                   {
                     label: "Top Score",
                     value: `${stats.highestScore}%`,
-                    color: "#ea580c",
+                    color: "#EA580C",
                   },
                 ].map(({ label, value, color }, i, arr) => (
                   <Flex
                     key={label}
                     justify="space-between"
                     align="center"
-                    pb={i < arr.length - 1 ? 3 : 0}
-                    mb={i < arr.length - 1 ? 3 : 0}
+                    pb={i < arr.length - 1 ? "10px" : 0}
+                    mb={i < arr.length - 1 ? "10px" : 0}
                     borderBottom={
-                      i < arr.length - 1 ? "1px solid #f8fafc" : "none"
+                      i < arr.length - 1 ? "1px solid #F8FAFC" : "none"
                     }
                   >
-                    <Text fontSize="13px" color="#64748b">
+                    <Text fontSize="13px" color="#64748B">
                       {label}
                     </Text>
-                    <Text fontSize="15px" fontWeight={800} color={color}>
+                    <Text fontSize="14px" fontWeight={800} color={color}>
                       {value}
                     </Text>
                   </Flex>
@@ -3039,7 +2798,7 @@ export default function TestDetailPage() {
 
   if (!test)
     return (
-      <Box textAlign="center" py={20} fontFamily="'Sora',sans-serif">
+      <Box textAlign="center" py={20} fontFamily="Inter,sans-serif">
         <Text fontSize="18px" fontWeight={700} color="#374151">
           Test not found
         </Text>
@@ -3139,11 +2898,7 @@ export default function TestDetailPage() {
         />
         <Modal isOpen={pwOpen} onClose={() => setPwOpen(false)} isCentered>
           <ModalOverlay backdropFilter="blur(4px)" />
-          <ModalContent
-            borderRadius="16px"
-            fontFamily="'Sora',sans-serif"
-            mx={4}
-          >
+          <ModalContent borderRadius="8px" fontFamily="Inter,sans-serif" mx={4}>
             <ModalHeader>
               <Flex align="center" gap={2}>
                 <Icon as={FaLock} color="#4a72b8" />
@@ -3200,7 +2955,7 @@ export default function TestDetailPage() {
   const TABS = ["overview", "leaderboard", "questions"];
 
   return (
-    <Box minH="100vh" bg="#f8fafc" fontFamily="'Sora',sans-serif">
+    <Box minH="100vh" bg="#f8fafc" fontFamily="Inter,sans-serif">
       {/* ── OWNER HERO ── */}
       <Box
         bg="linear-gradient(135deg,#0f1e3a 0%,#1e3a5f 50%,#2d5fa8 100%)"
@@ -3388,7 +3143,7 @@ export default function TestDetailPage() {
             mt={8}
             bg="rgba(255,255,255,.08)"
             border="1px solid rgba(255,255,255,.14)"
-            borderRadius="16px"
+            borderRadius="8px"
             p={{ base: 4, md: 6 }}
           >
             <Text
@@ -3534,7 +3289,7 @@ export default function TestDetailPage() {
         {tab === "leaderboard" && (
           <Box
             bg="white"
-            borderRadius="16px"
+            borderRadius="8px"
             border="1px solid #e2e8f0"
             overflow="hidden"
           >
@@ -3589,7 +3344,7 @@ export default function TestDetailPage() {
         {tab === "questions" && (
           <Box
             bg="white"
-            borderRadius="16px"
+            borderRadius="8px"
             border="1px solid #e2e8f0"
             overflow="hidden"
           >
@@ -3652,7 +3407,7 @@ export default function TestDetailPage() {
       {/* Password Modal */}
       <Modal isOpen={pwOpen} onClose={() => setPwOpen(false)} isCentered>
         <ModalOverlay backdropFilter="blur(4px)" />
-        <ModalContent borderRadius="16px" fontFamily="'Sora',sans-serif" mx={4}>
+        <ModalContent borderRadius="8px" fontFamily="Inter,sans-serif" mx={4}>
           <ModalHeader>
             <Flex align="center" gap={2}>
               <Icon as={FaLock} color="#4a72b8" />
@@ -3712,8 +3467,8 @@ export default function TestDetailPage() {
         <AlertDialogOverlay>
           <AlertDialogContent
             mx={4}
-            borderRadius="16px"
-            fontFamily="'Sora',sans-serif"
+            borderRadius="8px"
+            fontFamily="Inter,sans-serif"
           >
             <AlertDialogHeader fontSize="16px" fontWeight={800}>
               Delete Test?
