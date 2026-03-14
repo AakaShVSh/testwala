@@ -143,9 +143,11 @@ function TestDetailModal({ test, isOpen, onClose }) {
   const [expanded, setExpanded] = useState({});
   if (!test) return null;
 
-  const shareUrl = test.accessToken
-    ? `${window.location.origin}/tests/token/${test.accessToken}`
-    : `${window.location.origin}/tests/${test.slug || test._id}`;
+  // const shareUrl = test.accessToken
+  //   ? `${window.location.origin}/tests/token/${test.accessToken}`
+  //   : `${window.location.origin}/tests/${test.slug || test._id}`;
+
+  const shareUrl =  `${window.location.origin}/tests/${test.slug || test._id}`;
 
   const copy = () => {
     navigator.clipboard.writeText(shareUrl);
