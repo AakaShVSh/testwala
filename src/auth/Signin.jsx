@@ -29,9 +29,10 @@ export default function Signin() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState(false);
 
+  // If already logged in, redirect immediately
   useEffect(() => {
     if (user) navigate(params.get("redirect") || "/", { replace: true });
-  }, [user]);
+  }, [user, navigate, params]);
 
   const set = (k) => (e) => {
     setForm((p) => ({ ...p, [k]: e.target.value }));
@@ -47,14 +48,14 @@ export default function Signin() {
       setError("Valid email daalen");
       return;
     }
+
     setLoading(true);
     try {
+      // signIn → signInApi → saveUser() → "sessionchange" event →
+      // AuthContext listener → setUser() → Navbar re-renders instantly
       await signIn(form);
       setOk(true);
-      setTimeout(
-        () => navigate(params.get("redirect") || "/", { replace: true }),
-        700,
-      );
+      navigate(params.get("redirect") || "/", { replace: true });
     } catch (err) {
       setError(err.message || "Sign in failed");
     } finally {
