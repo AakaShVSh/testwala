@@ -1224,7 +1224,7 @@ const TakeTest = ({ handleFullScreen }) => {
   const [reversemin, setreversemin] = useState(() => Math.floor((totalTimeInSeconds % 3600) / 60));
   const [reversesec, setreversesec] = useState(() => totalTimeInSeconds % 60);
 
-  const [isFullscreenActive, setIsFullscreenActive] = useState(false);
+  const [isFullscreenActive, setIsFullscreenActive] = useState(true);
   const [hasExitedFullscreen, setHasExitedFullscreen] = useState(false);
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
   const cancelSubmitRef = useRef();
