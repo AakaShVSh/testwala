@@ -8806,7 +8806,11 @@ function StudentTestsSection({ coachingId }) {
                   boxShadow: "0 4px 14px rgba(74,114,184,.35)",
                 }}
                 transition="all .2s"
-                onClick={() => navigate(`/tests/${test._id}/attempt`)}
+                onClick={() =>
+                  navigate(`/tests/${test._id}`, {
+                    state: { scrollToInstructions: true },
+                  })
+                }
               >
                 Start
               </Button>
