@@ -14,12 +14,13 @@ import {
   IconButton,
   Icon,
 } from "@chakra-ui/react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { FaEye, FaEyeSlash, FaGraduationCap } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 
 export default function Signup() {
   const navigate = useNavigate();
+  const [params] = useSearchParams(); // ← read ?redirect=
   const { user, signUp } = useAuth();
 
   const [form, setForm] = useState({
@@ -34,10 +35,10 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState(false);
 
-  // Already logged in → redirect
+  // Already logged in → respect redirect param, else go home
   useEffect(() => {
-    if (user) navigate("/", { replace: true });
-  }, [user, navigate]);
+    if (user) navigate(params.get("redirect") || "/", { replace: true });
+  }, [user, navigate, params]);
 
   const set = (k) => (e) => {
     setForm((p) => ({ ...p, [k]: e.target.value }));
@@ -65,12 +66,10 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      // signUp → signUpApi → saveUser() → "sessionchange" →
-      // AuthContext listener → setUser() → Navbar updates instantly →
-      // useEffect above fires → navigate("/")
       await signUp({ Name, Email, Password });
       setOk(true);
-      navigate("/", { replace: true });
+      // ← respect redirect param (e.g. back to test detail page)
+      navigate(params.get("redirect") || "/", { replace: true });
     } catch (err) {
       setError(err.message || "Registration failed");
       setLoading(false);
