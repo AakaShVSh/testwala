@@ -8592,7 +8592,15 @@ function StudentTestsSection({ coachingId }) {
     setLoading(true);
     setError(false);
     apiFetch(`/tests?coaching=${coachingId}&status=published`)
-      .then((r) => setTests(r.data ?? []))
+      .then((r) => {
+        const all = r.data ?? [];
+        // Guard: keep only tests that actually belong to this coaching
+        const filtered = all.filter((t) => {
+          const tCoaching = t.coaching?._id ?? t.coaching ?? t.coachingId;
+          return String(tCoaching) === String(coachingId);
+        });
+        setTests(filtered);
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [coachingId]);
