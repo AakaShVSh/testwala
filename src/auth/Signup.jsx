@@ -16,12 +16,12 @@ import {
 } from "@chakra-ui/react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash, FaGraduationCap } from "react-icons/fa";
-import { authAPI } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signUp } = useAuth();
+
   const [form, setForm] = useState({
     Name: "",
     Email: "",
@@ -34,9 +34,10 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [ok, setOk] = useState(false);
 
+  // Already logged in → redirect
   useEffect(() => {
     if (user) navigate("/", { replace: true });
-  }, [user]);
+  }, [user, navigate]);
 
   const set = (k) => (e) => {
     setForm((p) => ({ ...p, [k]: e.target.value }));
@@ -61,14 +62,17 @@ export default function Signup() {
       setError("Passwords match nahi karte");
       return;
     }
+
     setLoading(true);
     try {
-      await authAPI.signUp({ Name, Email, Password });
+      // signUp → signUpApi → saveUser() → "sessionchange" →
+      // AuthContext listener → setUser() → Navbar updates instantly →
+      // useEffect above fires → navigate("/")
+      await signUp({ Name, Email, Password });
       setOk(true);
-      setTimeout(() => navigate("/auth/signin", { replace: true }), 1200);
+      navigate("/", { replace: true });
     } catch (err) {
       setError(err.message || "Registration failed");
-    } finally {
       setLoading(false);
     }
   };
