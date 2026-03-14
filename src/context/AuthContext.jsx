@@ -1,19 +1,11 @@
 /**
  * src/context/AuthContext.jsx
  *
- * ARCHITECTURE
- * ─────────────────────────────────────────────────────────────────
- * Backend uses httpOnly cookies — no token ever in the response body.
- * auth.js stores the user in sessionStorage and fires "sessionchange".
- *
- * This context:
- *   1. Reads user from sessionStorage on mount
- *   2. Calls /auth/me on mount to restore session after a page refresh
- *   3. Listens to the "sessionchange" event fired by auth.js so that
- *      signIn / signOut / signUp → Navbar updates in the same React paint
- *
- * Components call signIn / signOut from this context (not from auth.js directly)
- * so the React state always stays in sync.
+ * FIXES:
+ * - joinUserRoom() called on login → socket persists personal notifications
+ * - leaveUserRoom() called on logout → clean disconnect
+ * - Re-joins room on every auth hydration (page refresh) so socket room
+ *   stays in sync even after browser reloads
  */
 import React, {
   createContext,
@@ -28,63 +20,68 @@ import {
   signOutApi,
   checkSession,
   getCurrentUser,
-} from "../apis/auth"; // ← your existing auth.js file
+} from "../apis/auth";
+import { joinUserRoom, leaveUserRoom } from "../services/socket";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  // Seed from sessionStorage immediately (avoids flicker on refresh)
   const [user, setUser] = useState(() => getCurrentUser());
   const [loading, setLoading] = useState(true);
 
-  // ── Sync React state whenever auth.js fires "sessionchange" ──────────────
+  // ── Bridge: sessionStorage "sessionchange" event → React state ──────────
   // auth.js calls saveUser() / clearUser() which dispatch this event.
-  // This is the bridge: sessionStorage change → React re-render → Navbar updates.
   useEffect(() => {
     const onSessionChange = () => {
-      setUser(getCurrentUser()); // re-read sessionStorage → triggers re-render
+      const u = getCurrentUser();
+      setUser(u);
+      if (u?._id) {
+        joinUserRoom(u._id); // ← join personal socket room
+      }
     };
     window.addEventListener("sessionchange", onSessionChange);
     return () => window.removeEventListener("sessionchange", onSessionChange);
   }, []);
 
   // ── Restore session from cookie on page load ─────────────────────────────
-  // If the browser has a valid httpOnly cookie, /auth/me will succeed
-  // and auth.js's checkSession() will call saveUser() → fires "sessionchange"
-  // → the listener above picks it up → setUser → Navbar updates.
   useEffect(() => {
-    checkSession().finally(() => setLoading(false));
+    checkSession()
+      .then((u) => {
+        if (u?._id) joinUserRoom(u._id); // ← re-join after page refresh
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  // ── signIn ───────────────────────────────────────────────────────────────
-  // Wraps signInApi so components don't import from auth.js directly.
-  // signInApi calls saveUser() on success → "sessionchange" fires →
-  // listener calls setUser() → Navbar re-renders immediately.
+  // ── signIn ────────────────────────────────────────────────────────────────
   const signIn = useCallback(async (credentials) => {
-    // signInApi(data, setMessage) — we capture message via a local setter
     let message = "";
     const ok = await signInApi(credentials, (msg) => {
       message = msg;
     });
     if (!ok) throw new Error(message || "Sign in failed");
-    // user state is already updated via the "sessionchange" listener above
-    return getCurrentUser();
+    const u = getCurrentUser();
+    if (u?._id) joinUserRoom(u._id); // ← join room immediately
+    return u;
   }, []);
 
-  // ── signOut ──────────────────────────────────────────────────────────────
+  // ── signOut ───────────────────────────────────────────────────────────────
   const signOut = useCallback(async () => {
-    await signOutApi(); // calls clearUser() → fires "sessionchange" → setUser(null)
+    const u = getCurrentUser();
+    if (u?._id) leaveUserRoom(u._id);
+    await signOutApi();
+    // signOutApi calls clearUser() → fires "sessionchange" → setUser(null)
   }, []);
 
-  // ── signUp ───────────────────────────────────────────────────────────────
-  // signUpApi already calls saveUser() on success (auto sign-in after signup)
+  // ── signUp (auto-signs in) ────────────────────────────────────────────────
   const signUp = useCallback(async (data) => {
     let message = "";
     const ok = await signUpApi(data, null, (msg) => {
       message = msg;
     });
     if (!ok) throw new Error(message || "Registration failed");
-    return getCurrentUser();
+    const u = getCurrentUser();
+    if (u?._id) joinUserRoom(u._id);
+    return u;
   }, []);
 
   return (
