@@ -1358,7 +1358,6 @@
 //     </Box>
 //   );
 // }
-
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   Box,
@@ -1417,10 +1416,8 @@ import {
 } from "react-icons/fa";
 import { apiFetch } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { socket } from "../services/socket";
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   LANGUAGE CONFIG
-───────────────────────────────────────────────────────────────────────────── */
 const LANGUAGES = [
   {
     value: "english",
@@ -1460,9 +1457,6 @@ const LANGUAGES = [
   },
 ];
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   STAT CARD (used by owner dashboard)
-───────────────────────────────────────────────────────────────────────────── */
 function StatCard({ icon, label, value, color = "#4a72b8", bg = "#eff6ff" }) {
   return (
     <Box bg={bg} borderRadius="7px" p={5} flex={1} minW="120px">
@@ -1500,9 +1494,6 @@ function StatCard({ icon, label, value, color = "#4a72b8", bg = "#eff6ff" }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   LEADERBOARD ROW
-───────────────────────────────────────────────────────────────────────────── */
 function LeaderRow({ rank, result, currentUserId }) {
   const name = result.studentId?.Name || result.studentId?.Email || "Student";
   const pct = result.scorePercentage ?? result.percentage ?? 0;
@@ -1569,9 +1560,6 @@ function LeaderRow({ rank, result, currentUserId }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   LANGUAGE SELECTOR
-───────────────────────────────────────────────────────────────────────────── */
 function LanguageSelector({ value, onChange, hasHindi }) {
   return (
     <Box
@@ -1604,7 +1592,6 @@ function LanguageSelector({ value, onChange, hasHindi }) {
           </Text>
         </Box>
       </Flex>
-
       <Flex gap="8px" direction={{ base: "column", sm: "row" }}>
         {LANGUAGES.map((lang) => {
           const isActive = value === lang.value;
@@ -1690,7 +1677,6 @@ function LanguageSelector({ value, onChange, hasHindi }) {
           );
         })}
       </Flex>
-
       {value && (
         <Flex
           mt="10px"
@@ -1714,9 +1700,6 @@ function LanguageSelector({ value, onChange, hasHindi }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   RULE CARD
-───────────────────────────────────────────────────────────────────────────── */
 function RuleCard({ number, icon, accent, bg, title, description }) {
   return (
     <Flex
@@ -1771,9 +1754,6 @@ function RuleCard({ number, icon, accent, bg, title, description }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   TEST INFO / INSTRUCTION PAGE  (students & guests)
-───────────────────────────────────────────────────────────────────────────── */
 function TestInfoPage({
   test,
   stats,
@@ -1786,7 +1766,6 @@ function TestInfoPage({
   const navigate = useNavigate();
   const location = useLocation();
   const [agreed, setAgreed] = useState(false);
-
   const timeLimitMin = test.timeLimitMin || test.timeLimit || 30;
   const isPrivate =
     test.visibility === "private" || test.accessType === "private";
@@ -1865,7 +1844,6 @@ function TestInfoPage({
 
   return (
     <Box minH="100vh" bg="#F8FAFC" fontFamily="Inter, sans-serif">
-      {/* ── HEADER ── */}
       <Box
         bg="#0B1120"
         px={px}
@@ -1873,7 +1851,6 @@ function TestInfoPage({
         pb={{ base: "52px", md: "68px" }}
       >
         <Box maxW="1200px" mx="auto">
-          {/* Back */}
           <Flex
             align="center"
             gap="8px"
@@ -1890,8 +1867,6 @@ function TestInfoPage({
               Back
             </Text>
           </Flex>
-
-          {/* Title row */}
           <Flex
             align="flex-start"
             gap="16px"
@@ -1975,8 +1950,6 @@ function TestInfoPage({
               )}
             </Box>
           </Flex>
-
-          {/* Stats row */}
           <Flex
             mt="28px"
             pt="24px"
@@ -2043,7 +2016,6 @@ function TestInfoPage({
         </Box>
       </Box>
 
-      {/* ── BODY ── */}
       <Box
         maxW="1200px"
         mx="auto"
@@ -2058,9 +2030,7 @@ function TestInfoPage({
           gap="16px"
           alignItems="start"
         >
-          {/* ── LEFT COLUMN ── */}
           <Box>
-            {/* Previous result banner */}
             {myResult && (
               <Box
                 bg="white"
@@ -2135,14 +2105,12 @@ function TestInfoPage({
               </Box>
             )}
 
-            {/* ── LANGUAGE SELECTOR ── */}
             <LanguageSelector
               value={selectedLang}
               onChange={onLangChange}
               hasHindi={hasHindi}
             />
 
-            {/* ── TEST DETAILS GRID ── */}
             <Box
               bg="white"
               borderRadius="8px"
@@ -2233,7 +2201,6 @@ function TestInfoPage({
               </Grid>
             </Box>
 
-            {/* ── INSTRUCTIONS ── */}
             <Box
               bg="white"
               borderRadius="8px"
@@ -2267,7 +2234,6 @@ function TestInfoPage({
               </Grid>
             </Box>
 
-            {/* ── WARNING STRIP ── */}
             <Box
               bg="#FFFBEB"
               border="1px solid #FDE68A"
@@ -2318,9 +2284,7 @@ function TestInfoPage({
             </Box>
           </Box>
 
-          {/* ── RIGHT COLUMN ── */}
           <Box position={{ base: "static", lg: "sticky" }} top={{ lg: "20px" }}>
-            {/* Start card */}
             <Box
               bg="white"
               borderRadius="8px"
@@ -2328,7 +2292,6 @@ function TestInfoPage({
               overflow="hidden"
               mb="12px"
             >
-              {/* Top bar */}
               <Box
                 bg="#0B1120"
                 px="20px"
@@ -2347,9 +2310,7 @@ function TestInfoPage({
                   {LANGUAGES.find((l) => l.value === selectedLang)?.label}
                 </Text>
               </Box>
-
               <Box px="16px" pt="16px" pb="20px">
-                {/* Time display */}
                 <Box
                   mb="12px"
                   bg="#F8FAFC"
@@ -2514,7 +2475,6 @@ function TestInfoPage({
                   </Flex>
                 </Box>
 
-                {/* Agreement checkbox */}
                 <Box
                   border="2px solid"
                   mb="12px"
@@ -2557,7 +2517,6 @@ function TestInfoPage({
                   </Flex>
                 </Box>
 
-                {/* Start button */}
                 {!user ? (
                   <>
                     <Button
@@ -2638,7 +2597,6 @@ function TestInfoPage({
               </Box>
             </Box>
 
-            {/* Community stats */}
             {stats && stats.totalAttempts > 0 && (
               <Box
                 bg="white"
@@ -2705,9 +2663,6 @@ function TestInfoPage({
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   MAIN PAGE
-═══════════════════════════════════════════════════════════════════ */
 export default function TestDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -2721,7 +2676,8 @@ export default function TestDetailPage() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [myResult, setMyResult] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState("info");
+  // ── FIX: default tab is "overview" ──────────────────────────────
+  const [tab, setTab] = useState("overview");
   const [copied, setCopied] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
   const [pwInput, setPwInput] = useState("");
@@ -2735,36 +2691,29 @@ export default function TestDetailPage() {
     try {
       let testData = null;
       const isObjectId = /^[a-f\d]{24}$/i.test(id);
-
       if (isObjectId) {
         try {
           const res = await apiFetch(`/tests/id/${id}`);
           testData = res.data;
-        } catch (ownerErr) {
-          throw ownerErr;
+        } catch (e) {
+          throw e;
         }
       } else {
         try {
           const res = await apiFetch(`/tests/${id}`);
           testData = res.data;
-        } catch (publicErr) {
+        } catch (e) {
           if (user?._id) {
             const res = await apiFetch(`/tests/id/${id}`);
             testData = res.data;
-          } else {
-            throw publicErr;
-          }
+          } else throw e;
         }
       }
-
       setTest(testData);
-
-      // Auto-select English if test has no hindi questions
       const hasHindi = testData.questions?.some(
         (q) => q.qush && String(q.qush).trim().length > 0,
       );
       if (!hasHindi) setSelectedLang("english");
-
       const testId = testData._id;
       const [statsRes, lbRes] = await Promise.all([
         apiFetch(`/tests/${testId}/stats`).catch(() => ({ data: null })),
@@ -2772,7 +2721,6 @@ export default function TestDetailPage() {
       ]);
       setStats(statsRes.data);
       setLeaderboard(lbRes.data || []);
-
       if (user?._id) {
         apiFetch(`/results/student/me?testId=${testId}`)
           .then((r) => setMyResult(r.data?.[0] || null))
@@ -2789,13 +2737,33 @@ export default function TestDetailPage() {
     load();
   }, [load]);
 
+  // ── FIX: Listen for test:submitted to refresh stats + leaderboard live ──
+  useEffect(() => {
+    if (!test?._id) return;
+    const onSubmitted = ({ testId }) => {
+      if (String(testId) === String(test._id)) {
+        // Re-fetch just the stats and leaderboard without full page reload
+        Promise.all([
+          apiFetch(`/tests/${test._id}/stats`).catch(() => ({ data: null })),
+          apiFetch(`/tests/${test._id}/leaderboard`).catch(() => ({
+            data: [],
+          })),
+        ]).then(([sRes, lbRes]) => {
+          setStats(sRes.data);
+          setLeaderboard(lbRes.data || []);
+        });
+      }
+    };
+    socket.on("test:submitted", onSubmitted);
+    return () => socket.off("test:submitted", onSubmitted);
+  }, [test?._id]);
+
   if (loading)
     return (
       <Flex minH="80vh" align="center" justify="center">
         <Spinner size="xl" color="#4a72b8" thickness="4px" />
       </Flex>
     );
-
   if (!test)
     return (
       <Box textAlign="center" py={20} fontFamily="Inter,sans-serif">
@@ -2840,7 +2808,7 @@ export default function TestDetailPage() {
     navigate("/test", {
       state: {
         quest: test.questions,
-        testLanguage: selectedLang, // ← passed through to TakeTest
+        testLanguage: selectedLang,
         testMeta: {
           subject: test.subject || "general",
           category: test.examType || test.title,
@@ -2883,7 +2851,6 @@ export default function TestDetailPage() {
     }
   };
 
-  // ── Non-owner → instruction page ────────────────────────────────
   if (!isOwner) {
     return (
       <>
@@ -2951,12 +2918,11 @@ export default function TestDetailPage() {
     );
   }
 
-  // ── Owner dashboard ──────────────────────────────────────────────
+  // ── Owner dashboard ───────────────────────────────────────────────────────
   const TABS = ["overview", "leaderboard", "questions"];
 
   return (
     <Box minH="100vh" bg="#f8fafc" fontFamily="Inter,sans-serif">
-      {/* ── OWNER HERO ── */}
       <Box
         bg="linear-gradient(135deg,#0f1e3a 0%,#1e3a5f 50%,#2d5fa8 100%)"
         px={{ base: 4, md: 8 }}
@@ -3079,6 +3045,7 @@ export default function TestDetailPage() {
                   </Text>
                 </Flex>
               </Flex>
+              {/* ── OWNER HERO STATS: only Attempts + Pass Rate ── */}
               <Flex
                 gap={8}
                 borderTop="1px solid rgba(255,255,255,.1)"
@@ -3095,16 +3062,6 @@ export default function TestDetailPage() {
                     icon: FaCheckCircle,
                     v: stats ? `${stats.passRate}%` : "—",
                     l: "Pass Rate",
-                  },
-                  {
-                    icon: FaChartBar,
-                    v: stats ? `${stats.avgPercentage}%` : "—",
-                    l: "Avg Score",
-                  },
-                  {
-                    icon: FaTrophy,
-                    v: stats?.highestScore ? `${stats.highestScore}%` : "—",
-                    l: "Top Score",
                   },
                 ].map((s) => (
                   <Flex key={s.l} align="center" gap={3}>
@@ -3138,7 +3095,6 @@ export default function TestDetailPage() {
             </Box>
           </Flex>
 
-          {/* Share panel */}
           <Box
             mt={8}
             bg="rgba(255,255,255,.08)"
@@ -3220,7 +3176,6 @@ export default function TestDetailPage() {
         </Box>
       </Box>
 
-      {/* ── TABS ── */}
       <Box maxW="1100px" mx="auto" px={{ base: 4, md: 8 }} py={8}>
         <Flex gap={2} mb={6} flexWrap="wrap">
           {TABS.map((t) => (
@@ -3248,6 +3203,7 @@ export default function TestDetailPage() {
           ))}
         </Flex>
 
+        {/* ── Overview: show all 4 stat cards ── */}
         {tab === "overview" && (
           <Grid
             templateColumns={{
@@ -3404,7 +3360,6 @@ export default function TestDetailPage() {
         )}
       </Box>
 
-      {/* Password Modal */}
       <Modal isOpen={pwOpen} onClose={() => setPwOpen(false)} isCentered>
         <ModalOverlay backdropFilter="blur(4px)" />
         <ModalContent borderRadius="8px" fontFamily="Inter,sans-serif" mx={4}>
@@ -3457,7 +3412,6 @@ export default function TestDetailPage() {
         </ModalContent>
       </Modal>
 
-      {/* Delete Dialog */}
       <AlertDialog
         isOpen={delOpen}
         leastDestructiveRef={cancelRef}
