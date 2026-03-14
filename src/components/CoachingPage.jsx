@@ -8807,7 +8807,7 @@ function StudentTestsSection({ coachingId }) {
                 }}
                 transition="all .2s"
                 onClick={() =>
-                  navigate(`/tests/${test._id}`, {
+                  navigate(`/tests/${test.slug}`, {
                     state: { scrollToInstructions: true },
                   })
                 }
