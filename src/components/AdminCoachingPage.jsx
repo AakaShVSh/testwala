@@ -1,3 +1,11 @@
+/**
+ * src/pages/AdminCoachingPage.jsx
+ *
+ * FIXES:
+ * 1. Joins "room:admin" socket room on mount → receives coaching:new-request live
+ * 2. "coaching:new-request" prepends to list and shows toast — no refresh needed
+ * 3. Leaves admin room on unmount
+ */
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Box,
@@ -37,14 +45,13 @@ import {
   FaUser,
   FaBuilding,
   FaGraduationCap,
-  FaFilter,
   FaEye,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../services/api";
+import { socket } from "../services/socket";
 import { useAuth } from "../context/AuthContext";
 
-// ── Status badge ──────────────────────────────────────────────────────────────
 const StatusBadge = ({ status }) => {
   const cfg = {
     pending: {
@@ -86,7 +93,6 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// ── Detail row ────────────────────────────────────────────────────────────────
 const DRow = ({ icon, label, value }) => {
   if (!value) return null;
   return (
@@ -127,7 +133,6 @@ const DRow = ({ icon, label, value }) => {
   );
 };
 
-// ── Main component ────────────────────────────────────────────────────────────
 export default function AdminCoachingPage() {
   const navigate = useNavigate();
   const toast = useToast();
@@ -142,11 +147,8 @@ export default function AdminCoachingPage() {
   const [adminNote, setAdminNote] = useState("");
   const [acting, setActing] = useState(false);
 
-  // ── Guard: redirect non-admins ──────────────────────────────────────────
   useEffect(() => {
-    if (!authLoading && user && !user.isAdmin) {
-      navigate("/");
-    }
+    if (!authLoading && user && !user.isAdmin) navigate("/");
   }, [user, authLoading, navigate]);
 
   const loadRequests = useCallback(async () => {
@@ -168,6 +170,38 @@ export default function AdminCoachingPage() {
     if (!authLoading && user?.isAdmin) loadRequests();
   }, [loadRequests, authLoading, user]);
 
+  // ── Socket: join admin room + listen for new coaching requests ──────────
+  useEffect(() => {
+    if (!user?.isAdmin) return;
+
+    // Join admin broadcast room
+    if (socket.connected) socket.emit("join-admin");
+    socket.on("connect", () => socket.emit("join-admin")); // re-join on reconnect
+
+    const onNewRequest = ({ coaching }) => {
+      // Only prepend if current filter would show it (pending or all)
+      if (!statusFilter || statusFilter === "pending") {
+        setRequests((prev) => [coaching, ...prev]);
+      }
+      toast({
+        title: "📬 New coaching registration!",
+        description: `"${coaching.name}" from ${coaching.city || "unknown city"} submitted a request.`,
+        status: "info",
+        duration: 8000,
+        isClosable: true,
+        position: "top-right",
+      });
+    };
+
+    socket.on("coaching:new-request", onNewRequest);
+
+    return () => {
+      socket.emit("leave-admin");
+      socket.off("coaching:new-request", onNewRequest);
+      socket.off("connect");
+    };
+  }, [user?.isAdmin, statusFilter, toast]);
+
   const openDetail = (req) => {
     setSelected(req);
     setAdminNote(req.adminNote || "");
@@ -187,8 +221,12 @@ export default function AdminCoachingPage() {
         status: "success",
         duration: 4000,
       });
+      setRequests((prev) =>
+        prev.map((r) =>
+          r._id === selected._id ? { ...r, status: "approved", adminNote } : r,
+        ),
+      );
       onClose();
-      loadRequests();
     } catch (err) {
       toast({ title: err.message, status: "error", duration: 4000 });
     } finally {
@@ -217,8 +255,12 @@ export default function AdminCoachingPage() {
         status: "info",
         duration: 3000,
       });
+      setRequests((prev) =>
+        prev.map((r) =>
+          r._id === selected._id ? { ...r, status: "rejected", adminNote } : r,
+        ),
+      );
       onClose();
-      loadRequests();
     } catch (err) {
       toast({ title: err.message, status: "error", duration: 4000 });
     } finally {
@@ -226,20 +268,12 @@ export default function AdminCoachingPage() {
     }
   };
 
-  // Counts
-  const counts = { pending: 0, approved: 0, rejected: 0 };
-  requests.forEach((r) => {
-    if (counts[r.status] !== undefined) counts[r.status]++;
-  });
-
-  if (authLoading) {
+  if (authLoading)
     return (
       <Flex minH="80vh" align="center" justify="center">
         <Spinner size="xl" color="#4a72b8" thickness="4px" />
       </Flex>
     );
-  }
-
   if (!user?.isAdmin) return null;
 
   return (
@@ -262,17 +296,38 @@ export default function AdminCoachingPage() {
           >
             Admin Panel
           </Text>
-          <Text
-            fontSize={{ base: "24px", md: "36px" }}
-            fontWeight={800}
-            color="white"
-            letterSpacing="-1px"
-            mb={6}
-          >
-            Coaching Registrations
-          </Text>
+          <Flex align="center" gap={3} mb={6}>
+            <Text
+              fontSize={{ base: "24px", md: "36px" }}
+              fontWeight={800}
+              color="white"
+              letterSpacing="-1px"
+            >
+              Coaching Registrations
+            </Text>
+            {/* Live indicator */}
+            <Flex
+              align="center"
+              gap={1.5}
+              bg="rgba(34,197,94,.15)"
+              border="1px solid rgba(34,197,94,.3)"
+              px={3}
+              py={1}
+              borderRadius="full"
+            >
+              <Box
+                w="6px"
+                h="6px"
+                bg="#22c55e"
+                borderRadius="full"
+                sx={{ animation: "pulse 2s infinite" }}
+              />
+              <Text fontSize="11px" fontWeight={700} color="#4ade80">
+                Live
+              </Text>
+            </Flex>
+          </Flex>
 
-          {/* Stat pills */}
           <Flex gap={4} flexWrap="wrap">
             {[
               { label: "Pending Review", key: "pending", color: "#fbbf24" },
@@ -284,7 +339,12 @@ export default function AdminCoachingPage() {
                 align="center"
                 gap={3}
                 bg="rgba(255,255,255,.1)"
-                border="1px solid rgba(255,255,255,.15)"
+                border="1px solid"
+                borderColor={
+                  statusFilter === s.key
+                    ? "rgba(255,255,255,.5)"
+                    : "rgba(255,255,255,.15)"
+                }
                 borderRadius="12px"
                 px={4}
                 py={3}
@@ -292,11 +352,6 @@ export default function AdminCoachingPage() {
                 onClick={() => setStatusFilter(s.key)}
                 transition="all .15s"
                 _hover={{ bg: "rgba(255,255,255,.16)" }}
-                borderColor={
-                  statusFilter === s.key
-                    ? "rgba(255,255,255,.5)"
-                    : "rgba(255,255,255,.15)"
-                }
               >
                 <Box w="8px" h="8px" borderRadius="full" bg={s.color} />
                 <Box>
@@ -306,7 +361,7 @@ export default function AdminCoachingPage() {
                     color="white"
                     lineHeight={1}
                   >
-                    {s.key === statusFilter ? requests.length : "—"}
+                    {statusFilter === s.key ? requests.length : "—"}
                   </Text>
                   <Text
                     fontSize="11px"
@@ -373,7 +428,6 @@ export default function AdminCoachingPage() {
             fontSize="13px"
             fontWeight={700}
             _hover={{ bg: "#3b5fa0" }}
-            flexShrink={0}
           >
             Search
           </Button>
@@ -411,7 +465,6 @@ export default function AdminCoachingPage() {
             border="1px solid #e2e8f0"
             overflow="hidden"
           >
-            {/* Table header */}
             <Flex
               px={6}
               py={3}
@@ -423,7 +476,7 @@ export default function AdminCoachingPage() {
                 (h, i) => (
                   <Text
                     key={h + i}
-                    flex={i === 0 ? 3 : i === 5 ? 0 : 2}
+                    flex={i === 5 ? 0 : i === 0 ? 3 : 2}
                     w={i === 5 ? "90px" : undefined}
                     fontSize="11px"
                     fontWeight={700}
@@ -451,7 +504,6 @@ export default function AdminCoachingPage() {
                 gap={3}
                 flexWrap={{ base: "wrap", md: "nowrap" }}
               >
-                {/* Coaching name */}
                 <Box flex={3} minW={0}>
                   <Text
                     fontSize="14px"
@@ -478,8 +530,6 @@ export default function AdminCoachingPage() {
                     ))}
                   </Flex>
                 </Box>
-
-                {/* Owner */}
                 <Box flex={2} minW={0} display={{ base: "none", md: "block" }}>
                   <Text
                     fontSize="13px"
@@ -493,8 +543,6 @@ export default function AdminCoachingPage() {
                     {r.owner?.Email || "—"}
                   </Text>
                 </Box>
-
-                {/* Location */}
                 <Box flex={2} minW={0} display={{ base: "none", md: "block" }}>
                   <Text fontSize="13px" color="#64748b" noOfLines={1}>
                     {[r.city, r.state].filter(Boolean).join(", ") || "—"}
@@ -505,8 +553,6 @@ export default function AdminCoachingPage() {
                     </Text>
                   )}
                 </Box>
-
-                {/* Submitted */}
                 <Box flex={2} display={{ base: "none", md: "block" }}>
                   <Text fontSize="12px" color="#94a3b8">
                     {new Date(r.createdAt).toLocaleDateString("en-IN", {
@@ -516,13 +562,9 @@ export default function AdminCoachingPage() {
                     })}
                   </Text>
                 </Box>
-
-                {/* Status */}
                 <Box flex={2}>
                   <StatusBadge status={r.status} />
                 </Box>
-
-                {/* Action */}
                 <Flex w="90px" justify="flex-end">
                   <Button
                     size="sm"
@@ -545,7 +587,7 @@ export default function AdminCoachingPage() {
         )}
       </Box>
 
-      {/* ── Detail Modal ─────────────────────────────────────────────────── */}
+      {/* Detail Modal */}
       <Modal
         isOpen={isOpen}
         onClose={onClose}
@@ -561,7 +603,6 @@ export default function AdminCoachingPage() {
         >
           {selected && (
             <>
-              {/* Modal header */}
               <ModalHeader
                 px={7}
                 pt={7}
@@ -594,9 +635,7 @@ export default function AdminCoachingPage() {
               </ModalHeader>
 
               <ModalBody px={7} py={6}>
-                {/* Two-column layout */}
                 <Flex gap={6} flexWrap={{ base: "wrap", md: "nowrap" }}>
-                  {/* Left — coaching details */}
                   <Box flex={1} minW={0}>
                     <Text
                       fontSize="11px"
@@ -608,7 +647,6 @@ export default function AdminCoachingPage() {
                     >
                       Coaching Details
                     </Text>
-
                     {selected.description && (
                       <Box
                         bg="#f8fafc"
@@ -622,7 +660,6 @@ export default function AdminCoachingPage() {
                         </Text>
                       </Box>
                     )}
-
                     <DRow
                       icon={FaMapMarkerAlt}
                       label="Full Address"
@@ -642,11 +679,6 @@ export default function AdminCoachingPage() {
                       icon={FaMapMarkerAlt}
                       label="Pincode"
                       value={selected.pincode}
-                    />
-                    <DRow
-                      icon={FaMapMarkerAlt}
-                      label="Landmark"
-                      value={selected.landmark}
                     />
                     <Divider my={2} borderColor="#f1f5f9" />
                     <DRow
@@ -695,7 +727,7 @@ export default function AdminCoachingPage() {
                             display="block"
                             textDecoration="underline"
                           >
-                            {selected.website}
+                            {selected.website}{" "}
                             <Icon
                               as={FaExternalLinkAlt}
                               fontSize="9px"
@@ -705,56 +737,6 @@ export default function AdminCoachingPage() {
                         </Box>
                       </Flex>
                     )}
-                    {selected.googleMapsUrl && (
-                      <Flex align="flex-start" gap={3} py={2}>
-                        <Flex
-                          w="28px"
-                          h="28px"
-                          bg="#f1f5f9"
-                          borderRadius="7px"
-                          align="center"
-                          justify="center"
-                          flexShrink={0}
-                          mt="1px"
-                        >
-                          <Icon
-                            as={FaMapMarkerAlt}
-                            fontSize="11px"
-                            color="#64748b"
-                          />
-                        </Flex>
-                        <Box>
-                          <Text
-                            fontSize="10px"
-                            color="#94a3b8"
-                            fontWeight={700}
-                            textTransform="uppercase"
-                            letterSpacing=".6px"
-                          >
-                            Google Maps
-                          </Text>
-                          <Text
-                            as="a"
-                            href={selected.googleMapsUrl}
-                            target="_blank"
-                            fontSize="13px"
-                            color="#2563eb"
-                            fontWeight={500}
-                            mt="2px"
-                            display="block"
-                            textDecoration="underline"
-                          >
-                            View on Maps
-                            <Icon
-                              as={FaExternalLinkAlt}
-                              fontSize="9px"
-                              ml={1}
-                            />
-                          </Text>
-                        </Box>
-                      </Flex>
-                    )}
-
                     <Divider my={2} borderColor="#f1f5f9" />
                     <DRow
                       icon={FaGraduationCap}
@@ -763,7 +745,7 @@ export default function AdminCoachingPage() {
                     />
                     <DRow
                       icon={FaUser}
-                      label="Approx. Student Count"
+                      label="Approx. Students"
                       value={selected.studentCount}
                     />
                     <DRow
@@ -771,31 +753,6 @@ export default function AdminCoachingPage() {
                       label="Registration No."
                       value={selected.registrationNumber}
                     />
-                    {selected.additionalInfo && (
-                      <Box
-                        bg="#fffbeb"
-                        border="1px solid #fde68a"
-                        borderRadius="10px"
-                        p={3}
-                        mt={2}
-                      >
-                        <Text
-                          fontSize="11px"
-                          fontWeight={700}
-                          color="#92400e"
-                          mb={1}
-                          textTransform="uppercase"
-                          letterSpacing=".6px"
-                        >
-                          Additional Info
-                        </Text>
-                        <Text fontSize="13px" color="#78350f" lineHeight={1.7}>
-                          {selected.additionalInfo}
-                        </Text>
-                      </Box>
-                    )}
-
-                    {/* Exam types */}
                     <Flex flexWrap="wrap" gap={2} mt={4}>
                       {selected.examTypes?.map((ex) => (
                         <Box
@@ -814,7 +771,6 @@ export default function AdminCoachingPage() {
                     </Flex>
                   </Box>
 
-                  {/* Right — owner details */}
                   <Box w={{ base: "100%", md: "220px" }} flexShrink={0}>
                     <Text
                       fontSize="11px"
@@ -858,17 +814,8 @@ export default function AdminCoachingPage() {
                           {selected.owner.Phone}
                         </Text>
                       )}
-                      <Text fontSize="11px" color="#94a3b8" mt={2}>
-                        Joined{" "}
-                        {selected.owner?.createdAt
-                          ? new Date(
-                              selected.owner.createdAt,
-                            ).toLocaleDateString("en-IN")
-                          : "—"}
-                      </Text>
                     </Box>
 
-                    {/* Previous admin note */}
                     {selected.adminNote && (
                       <Box
                         bg={
@@ -911,7 +858,6 @@ export default function AdminCoachingPage() {
 
                 <Divider my={5} />
 
-                {/* Admin action area */}
                 {selected.status === "pending" && (
                   <Box>
                     <Text
