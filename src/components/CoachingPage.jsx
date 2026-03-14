@@ -7864,6 +7864,10 @@ import {
   FaHourglass,
   FaTimesCircle,
   FaPaperPlane,
+  FaPlay,
+  FaCalendarAlt,
+  FaTag,
+  FaListAlt,
 } from "react-icons/fa";
 import { apiFetch } from "../services/api";
 import { socket } from "../services/socket";
@@ -8573,9 +8577,243 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// STUDENT TESTS SECTION
+// Shown to any visitor (non-owner) on the coaching detail page.
+// Fetches published tests for this coaching and displays them.
+// ═══════════════════════════════════════════════════════════════
+function StudentTestsSection({ coachingId }) {
+  const navigate = useNavigate();
+  const [tests, setTests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!coachingId) return;
+    setLoading(true);
+    setError(false);
+    apiFetch(`/tests?coaching=${coachingId}&status=published`)
+      .then((r) => setTests(r.data ?? []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [coachingId]);
+
+  /* ── Section header label ──────────────────────────────────── */
+  const SectionLabel = ({ children }) => (
+    <Text
+      fontSize="11px"
+      fontWeight={800}
+      color="#94a3b8"
+      textTransform="uppercase"
+      letterSpacing="2px"
+      mb={5}
+    >
+      {children}
+    </Text>
+  );
+
+  /* ── Loading skeleton ───────────────────────────────────────── */
+  if (loading)
+    return (
+      <Box>
+        <SectionLabel>Available Tests</SectionLabel>
+        <Flex justify="center" py={12}>
+          <Spinner size="lg" color="#4a72b8" thickness="3px" />
+        </Flex>
+      </Box>
+    );
+
+  /* ── Error ──────────────────────────────────────────────────── */
+  if (error)
+    return (
+      <Box>
+        <SectionLabel>Available Tests</SectionLabel>
+        <Box
+          bg="#fef2f2"
+          border="1px solid #fecaca"
+          borderRadius="12px"
+          px={5}
+          py={4}
+        >
+          <Text fontSize="13px" color="#b91c1c">
+            Could not load tests. Please refresh and try again.
+          </Text>
+        </Box>
+      </Box>
+    );
+
+  /* ── Empty state ────────────────────────────────────────────── */
+  if (tests.length === 0)
+    return (
+      <Box>
+        <SectionLabel>Available Tests</SectionLabel>
+        <Box
+          bg="white"
+          border="1px solid #e2e8f0"
+          borderRadius="16px"
+          py={14}
+          textAlign="center"
+        >
+          <Icon
+            as={FaListAlt}
+            fontSize="44px"
+            color="#e2e8f0"
+            display="block"
+            mx="auto"
+            mb={4}
+          />
+          <Text fontSize="15px" fontWeight={700} color="#475569" mb={1}>
+            No tests available yet
+          </Text>
+          <Text fontSize="13px" color="#94a3b8">
+            Check back later — this coaching will publish tests here.
+          </Text>
+        </Box>
+      </Box>
+    );
+
+  /* ── Test cards ─────────────────────────────────────────────── */
+  return (
+    <Box>
+      <Flex align="center" justify="space-between" mb={5}>
+        <SectionLabel>Available Tests</SectionLabel>
+        <Text fontSize="12px" color="#94a3b8" fontWeight={600}>
+          {tests.length} test{tests.length !== 1 ? "s" : ""}
+        </Text>
+      </Flex>
+
+      <Box
+        bg="white"
+        border="1px solid #e2e8f0"
+        borderRadius="16px"
+        overflow="hidden"
+      >
+        {tests.map((test, idx) => {
+          const examColor = EXAM_COLORS[test.examType] || EXAM_COLORS.OTHER;
+          const createdDate = test.createdAt
+            ? new Date(test.createdAt).toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            : null;
+
+          return (
+            <Flex
+              key={test._id}
+              px={6}
+              py={5}
+              align="center"
+              gap={4}
+              borderBottom={
+                idx < tests.length - 1 ? "1px solid #f1f5f9" : "none"
+              }
+              flexWrap={{ base: "wrap", sm: "nowrap" }}
+            >
+              {/* Icon */}
+              <Flex
+                w="44px"
+                h="44px"
+                flexShrink={0}
+                bg={examColor.bg}
+                borderRadius="12px"
+                align="center"
+                justify="center"
+              >
+                <Icon
+                  as={FaClipboardList}
+                  fontSize="16px"
+                  color={examColor.color}
+                />
+              </Flex>
+
+              {/* Title + meta */}
+              <Box flex={1} minW={0}>
+                <Text
+                  fontSize="14px"
+                  fontWeight={700}
+                  color="#0f172a"
+                  noOfLines={1}
+                  mb="3px"
+                >
+                  {test.title || "Untitled Test"}
+                </Text>
+                <Flex align="center" flexWrap="wrap" gap={3}>
+                  {test.examType && (
+                    <Flex align="center" gap={1}>
+                      <Icon as={FaTag} fontSize="10px" color="#94a3b8" />
+                      <Text
+                        fontSize="11px"
+                        fontWeight={700}
+                        color={examColor.color}
+                      >
+                        {test.examType}
+                      </Text>
+                    </Flex>
+                  )}
+                  {test.questionsCount != null && (
+                    <Flex align="center" gap={1}>
+                      <Icon as={FaListAlt} fontSize="10px" color="#94a3b8" />
+                      <Text fontSize="11px" color="#64748b" fontWeight={600}>
+                        {test.questionsCount} Q
+                      </Text>
+                    </Flex>
+                  )}
+                  {test.duration != null && (
+                    <Flex align="center" gap={1}>
+                      <Icon as={FaClock} fontSize="10px" color="#94a3b8" />
+                      <Text fontSize="11px" color="#64748b" fontWeight={600}>
+                        {test.duration} min
+                      </Text>
+                    </Flex>
+                  )}
+                  {createdDate && (
+                    <Flex align="center" gap={1}>
+                      <Icon
+                        as={FaCalendarAlt}
+                        fontSize="10px"
+                        color="#94a3b8"
+                      />
+                      <Text fontSize="11px" color="#94a3b8" fontWeight={500}>
+                        {createdDate}
+                      </Text>
+                    </Flex>
+                  )}
+                </Flex>
+              </Box>
+
+              {/* Start button */}
+              <Button
+                flexShrink={0}
+                h="36px"
+                px={4}
+                borderRadius="9px"
+                bg="linear-gradient(135deg,#4a72b8,#1e3a5f)"
+                color="white"
+                fontWeight={700}
+                fontSize="12px"
+                leftIcon={<Icon as={FaPlay} fontSize="9px" />}
+                _hover={{
+                  opacity: 0.88,
+                  transform: "translateY(-1px)",
+                  boxShadow: "0 4px 14px rgba(74,114,184,.35)",
+                }}
+                transition="all .2s"
+                onClick={() => navigate(`/tests/${test._id}/attempt`)}
+              >
+                Start
+              </Button>
+            </Flex>
+          );
+        })}
+      </Box>
+    </Box>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
 // COACHING DETAIL — approved coaching dashboard
 // Shows: header stats, share link, "Request Test" button,
-//        MyTestRequests panel (requests + results from admin)
+//        MyTestRequests panel (owner) OR StudentTestsSection (student)
 // ═══════════════════════════════════════════════════════════════
 function CoachingDetail({ coaching }) {
   const navigate = useNavigate();
@@ -8607,7 +8845,6 @@ function CoachingDetail({ coaching }) {
     });
   };
 
-  // Socket connect/disconnect indicator
   useEffect(() => {
     socket.on("connect", () => setSocketConnected(true));
     socket.on("disconnect", () => setSocketConnected(false));
@@ -8981,42 +9218,48 @@ function CoachingDetail({ coaching }) {
           </Box>
         )}
 
-        {/* My Test Requests panel — only for the owner */}
         {isOwner ? (
+          /* ── Owner: test-request management panel ─────────────────────── */
           <MyTestRequests coachingId={coaching._id} onRequestTest={openReq} />
         ) : (
-          // Public view — just show exam types
+          /* ── Student / visitor: exam types + available tests ─────────── */
           <Box>
-            <Text
-              fontSize="11px"
-              fontWeight={800}
-              color="#94a3b8"
-              textTransform="uppercase"
-              letterSpacing="2px"
-              mb={5}
-            >
-              Courses Offered
-            </Text>
-            <Flex flexWrap="wrap" gap={3}>
-              {coachingExamTypes.map((ex) => {
-                const c = EXAM_COLORS[ex] || EXAM_COLORS.OTHER;
-                return (
-                  <Box
-                    key={ex}
-                    bg={c.bg}
-                    color={c.color}
-                    px={5}
-                    py={3}
-                    borderRadius="12px"
-                    fontSize="14px"
-                    fontWeight={700}
-                    border={`1px solid ${c.color}33`}
-                  >
-                    {ex}
-                  </Box>
-                );
-              })}
-            </Flex>
+            {/* Courses offered */}
+            <Box mb={10} pb={10} borderBottom="1px solid #e2e8f0">
+              <Text
+                fontSize="11px"
+                fontWeight={800}
+                color="#94a3b8"
+                textTransform="uppercase"
+                letterSpacing="2px"
+                mb={5}
+              >
+                Courses Offered
+              </Text>
+              <Flex flexWrap="wrap" gap={3}>
+                {coachingExamTypes.map((ex) => {
+                  const c = EXAM_COLORS[ex] || EXAM_COLORS.OTHER;
+                  return (
+                    <Box
+                      key={ex}
+                      bg={c.bg}
+                      color={c.color}
+                      px={5}
+                      py={3}
+                      borderRadius="12px"
+                      fontSize="14px"
+                      fontWeight={700}
+                      border={`1px solid ${c.color}33`}
+                    >
+                      {ex}
+                    </Box>
+                  );
+                })}
+              </Flex>
+            </Box>
+
+            {/* Published tests */}
+            <StudentTestsSection coachingId={coaching._id} />
           </Box>
         )}
       </Box>
