@@ -1060,7 +1060,19 @@
  * state.studentId + state.testId →  used to fetch all attempts
  * state.resultId                →  the currently shown attempt (_id)
  */
-import React, { useEffect, useState } from "react";
+/**
+ * ResultPage.jsx
+ *
+ * Student view  — unchanged UX
+ * Owner view    — extra banner + "All Attempts" panel listing every retake
+ *                 Each retake row is clickable and reloads this page with
+ *                 that attempt's full data.
+ *
+ * state.viewingAs === "owner"  →  owner mode
+ * state.studentId + state.testId →  used to fetch all attempts
+ * state.resultId                →  the currently shown attempt (_id)
+ */
+import React, { useState } from "react";
 import {
   Box, Flex, Text, Badge, Progress, Icon, Grid,
   Tabs, TabList, TabPanels, Tab, TabPanel, VStack, Spinner,
@@ -1221,42 +1233,42 @@ function StatBox({ label, value, sub, color, bg, border, icon }) {
 // Fetches GET /results/student/:studentId/test/:testId — all attempts
 // The leaderboard-entry (first attempt) is shown on page load.
 // Clicking another attempt row replaces the page state with that attempt.
-function AllAttemptsPanel({ studentId, testId, currentResultId, questions, navigate, testTitle }) {
-  const [attempts, setAttempts] = useState([]);
-  const [loading, setLoading]   = useState(true);
+// ── AllAttemptsPanel ─────────────────────────────────────────────────────────
+// Receives allAttempts directly from location.state — no extra API call.
+// Only rendered by the parent when allAttempts.length > 1.
+function AllAttemptsPanel({ allAttempts, currentResultId, questions, navigate,
+  testTitle, studentName, studentId, testId }) {
   const [loadingId, setLoadingId] = useState(null);
+  const attempts = allAttempts || [];
 
-  useEffect(() => {
-    if (!studentId || !testId) return;
-    apiFetch(`/results/student/${studentId}/test/${testId}`)
-      .then((r) => setAttempts(r.data || []))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [studentId, testId]);
+  // Guard — parent should already check this, but be safe
+  if (attempts.length <= 1) return null;
 
-  const handleSelectAttempt = async (resultId) => {
-    if (resultId === currentResultId) return;
-    setLoadingId(resultId);
+  const handleSelectAttempt = async (attempt) => {
+    if (String(attempt._id) === String(currentResultId)) return;
+    setLoadingId(attempt._id);
     try {
-      const res = await apiFetch(`/results/${resultId}`);
+      const res = await apiFetch(`/results/${attempt._id}`);
       const r = res.data || res;
-      const studentName = r.studentId?.Name || r.studentId?.Email || "Student";
-      const sId = r.studentId?._id || r.studentId;
+      const qs = r.testId?.questions || questions || [];
 
       navigate("/test-result", {
+        replace: true,
         state: {
           viewingAs: "owner",
           studentName,
-          studentId: String(sId),
-          resultId: String(resultId),
-          testId: String(testId),
+          studentId,
+          testId,
           testTitle,
-          score: r.score ?? r.correct ?? r.correctQus?.length ?? 0,
-          totalQuestions: questions.length || r.totalQuestions || 0,
+          allAttempts,                              // keep the full list so switching still works
+          currentAttemptId: String(attempt._id),
+          resultId: String(attempt._id),
+          score: r.correct ?? r.correctQus?.length ?? 0,
+          totalQuestions: qs.length || r.totalQuestions || 0,
           scorePercentage: r.scorePercentage ?? r.percentage ?? 0,
           percentile: r.percentile ?? null,
           timeTaken: r.timeTakenSec ?? r.timeTaken ?? 0,
-          questions,
+          questions: qs,
           allAnswers: r.allAnswers || {},
           questionTimes: r.questionTimes || r.qTimes || {},
           correctQus: r.correctQus || [],
@@ -1266,26 +1278,13 @@ function AllAttemptsPanel({ studentId, testId, currentResultId, questions, navig
           markedAndAnswer: r.markedAndAnswer || r.markedAndAnswered || [],
           markedNotAnswer: r.markedNotAnswer || r.markedNotAnswered || [],
         },
-        replace: true,   // replace so back-button goes to leaderboard
       });
     } catch {
-      // silently ignore — user stays on current attempt
+      // stay on current attempt silently
     } finally {
       setLoadingId(null);
     }
   };
-
-  if (loading) return (
-    <Box bg="white" borderRadius="14px" border="1px solid #e2e8f0" p={5} mt={5}>
-      <Flex align="center" gap={2} mb={4}>
-        <Icon as={FaRedoAlt} color="#4a72b8" fontSize="13px" />
-        <Text fontSize="14px" fontWeight={800} color="#0f172a">All Attempts</Text>
-      </Flex>
-      <Flex justify="center" py={8}><Spinner color="#4a72b8" /></Flex>
-    </Box>
-  );
-
-  if (!attempts.length) return null;
 
   return (
     <Box bg="white" borderRadius="14px" border="1px solid #e2e8f0" overflow="hidden" mt={5}>
@@ -1304,10 +1303,10 @@ function AllAttemptsPanel({ studentId, testId, currentResultId, questions, navig
       </Flex>
 
       {attempts.map((attempt, idx) => {
-        const pct = attempt.scorePercentage ?? attempt.percentage ?? 0;
+        const pct = attempt.scorePercentage ?? 0;
         const isCurrent = String(attempt._id) === String(currentResultId);
         const isFirst   = idx === 0;
-        const isLoading = loadingId === attempt._id;
+        const isLoading = String(loadingId) === String(attempt._id);
         const date = attempt.createdAt
           ? new Date(attempt.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
           : null;
@@ -1325,7 +1324,7 @@ function AllAttemptsPanel({ studentId, testId, currentResultId, questions, navig
             cursor={isCurrent ? "default" : "pointer"}
             _hover={!isCurrent ? { bg: "#f8faff" } : {}}
             transition="background .15s"
-            onClick={() => !isCurrent && !isLoading && handleSelectAttempt(attempt._id)}
+            onClick={() => !isCurrent && !isLoading && handleSelectAttempt(attempt)}
             opacity={isLoading ? 0.7 : 1}
             flexWrap={{ base: "wrap", sm: "nowrap" }}
           >
@@ -1380,7 +1379,11 @@ export default function ResultPage() {
   const studentName  = s.studentName || null;
   const studentId    = s.studentId   || null;
   const testId       = s.testId      || null;
-  const currentResultId = s.resultId || null;
+  const currentResultId = s.currentAttemptId || s.resultId || null;
+  // allAttempts is pre-built by TestDetailPage and passed in state.
+  // It's an array of {_id, attemptNumber, createdAt, scorePercentage, timeTakenSec, correct, totalQuestions}.
+  // Only populated when the student has given this test more than once.
+  const allAttempts  = s.allAttempts || [];
 
   const testTitle     = s.testTitle || s.category || s.subject || "Test";
   const score         = s.score ?? 0;
@@ -1583,15 +1586,17 @@ export default function ResultPage() {
           </Box>
         </Grid>
 
-        {/* ── All Attempts (owner only) ─────────────────────────────────────── */}
-        {isOwnerView && studentId && testId && (
+        {/* ── All Attempts (owner only, only when student has retaken the test) ── */}
+        {isOwnerView && allAttempts.length > 1 && (
           <AllAttemptsPanel
-            studentId={studentId}
-            testId={testId}
+            allAttempts={allAttempts}
             currentResultId={currentResultId}
             questions={questions}
             navigate={navigate}
             testTitle={testTitle}
+            studentName={studentName}
+            studentId={studentId}
+            testId={testId}
           />
         )}
 
