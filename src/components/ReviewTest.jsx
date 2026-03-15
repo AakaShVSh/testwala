@@ -993,58 +993,6 @@ function QuestionCard({ question, index, allAnswers, sa, questionTimes }) {
           })}
         </VStack>
 
-        {/* answer summary */}
-        <Flex
-          bg="#f9fafb"
-          borderRadius="8px"
-          border="1px solid #f3f4f6"
-          overflow="hidden"
-          mb={question.explanation ? 3 : 0}
-        >
-          <Box flex={1} px={4} py={3} borderRight="1px solid #f3f4f6">
-            <Text
-              fontSize="10px"
-              color="#9ca3af"
-              fontWeight={700}
-              textTransform="uppercase"
-              letterSpacing=".7px"
-              mb={1}
-            >
-              Your Answer
-            </Text>
-            <Text
-              fontSize="14px"
-              fontWeight={700}
-              color={
-                st === "correct"
-                  ? "#15803d"
-                  : st === "incorrect"
-                    ? "#b91c1c"
-                    : "#9ca3af"
-              }
-            >
-              {uid !== undefined && uid !== null
-                ? question.options?.[uid] || "—"
-                : "Not Attempted"}
-            </Text>
-          </Box>
-          <Box flex={1} px={4} py={3}>
-            <Text
-              fontSize="10px"
-              color="#9ca3af"
-              fontWeight={700}
-              textTransform="uppercase"
-              letterSpacing=".7px"
-              mb={1}
-            >
-              Correct Answer
-            </Text>
-            <Text fontSize="14px" fontWeight={700} color="#15803d">
-              {question.options?.[cid] || "—"}
-            </Text>
-          </Box>
-        </Flex>
-
         {/* explanation */}
         {question.explanation && (
           <Box
@@ -1378,7 +1326,7 @@ export default function ReviewTest() {
                 Prev
               </Button>
 
-              <Flex align="center" gap={1.5} flex={1} justify="center">
+              <Flex align="center" gap={1.5} justify="center" flex={1}>
                 {dots.map((i) => {
                   const s = getStatus(i, sa);
                   const c = STATUS_MAP[s];
@@ -1410,6 +1358,22 @@ export default function ReviewTest() {
                   );
                 })}
               </Flex>
+
+              <Button
+                onClick={() => navigate(-1)}
+                bg="#f3f4f6"
+                color="#374151"
+                borderRadius="8px"
+                fontWeight={700}
+                fontSize="13px"
+                h="38px"
+                px={4}
+                border="1px solid #e5e7eb"
+                _hover={{ bg: "#e9eaec" }}
+                transition="all .12s"
+              >
+                Results
+              </Button>
 
               <Button
                 rightIcon={<Icon as={FaArrowRight} fontSize="10px" />}
