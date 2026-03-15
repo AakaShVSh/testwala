@@ -44,11 +44,12 @@ hello guys i am aakash vishwakarma and this website i made is for you all who lo
 
 mark and ans, ansed, mark, skip
 private test
-coaching page result check 
+coaching page result check --> Done 
 mailjet
 googleought
 save test
 report question
+first attempt should only come in leaderboard
 
 later
 join button in coaching page
