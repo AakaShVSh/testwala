@@ -109,7 +109,7 @@
 //     return () => obs.disconnect();
 //   }, [loading]);
 
-//   const n1 = UseCounter(50000, 2200, statsOn);
+//   const n1 = UseCounter(5000, 2200, statsOn);
 //   const n2 = UseCounter(1200,  2000, statsOn);
 //   const n3 = UseCounter(98,    1800, statsOn);
 //   const n4 = UseCounter(500,   2000, statsOn);
@@ -152,7 +152,7 @@
 //   ];
 
 //   const stats = [
-//     { icon: <FaUsers />,       val: n1.toLocaleString() + "+", label: "Active Students",    note: "Across India" },
+//     { icon: <FaUsers />,       val: n1.toLocaleString) + "+", label: "Active Students",    note: "Across India" },
 //     { icon: <FaClipboardList />, val: n2.toLocaleString() + "+", label: "Questions Bank",   note: "Expert Curated" },
 //     { icon: <FaStar />,         val: n3 + "%",                   label: "Satisfaction Rate", note: "Student Rated" },
 //     { icon: <FaFire />,         val: n4 + "+",                   label: "Mock Tests Taken",  note: "This Month" },
@@ -232,7 +232,7 @@
 //             gap={{ base: 8, md: 0 }}
 //           >
 //             {[
-//               { icon: <FaUsers />,         val: n1.toLocaleString() + "+", label: "Students Registered", note: "Across India",   color: "#2563eb" },
+//               { icon: <FaUsers />,         val: n1.toLocaleString) + "+", label: "Students Registered", note: "Across India",   color: "#2563eb" },
 //               { icon: <FaClipboardList />, val: n2.toLocaleString() + "+", label: "Questions Available", note: "Expert Curated", color: "#16a34a" },
 //               { icon: <FaStar />,          val: n3 + "%",                   label: "Satisfaction Rate",  note: "Student Rated",  color: "#f59e0b" },
 //               { icon: <FaFire />,          val: n4 + "+",                   label: "Mock Tests Taken",   note: "This Month",     color: "#ef4444" },
@@ -813,9 +813,9 @@ const Home = ({ setchoosesub }) => {
     return () => io.disconnect();
   }, [loading]);
 
-  const n1 = useCounter(50000, 2000, statsOn);
-  const n2 = useCounter(1200, 1800, statsOn);
-  const n3 = useCounter(98,   1600, statsOn);
+  const n1 = useCounter(5000, 2000, statsOn);
+  const n2 = useCounter(1000, 1800, statsOn);
+  const n3 = useCounter(100,   1600, statsOn);
   const n4 = useCounter(500,  1800, statsOn);
 
   const go = (key) => { setchoosesub(key); navigate("/questionList"); };
@@ -902,35 +902,40 @@ const Home = ({ setchoosesub }) => {
       `}</style>
 
       {/* ═══ HERO ═══════════════════════════════════════════════════════════ */}
-      <Slideshow scrollToSubjects={() => subjectsRef.current?.scrollIntoView({ behavior:"smooth" })} />
+      <Slideshow
+        scrollToSubjects={() =>
+          subjectsRef.current?.scrollIntoView({ behavior: "smooth" })
+        }
+      />
 
       {/* ═══ TRUST STRIP ════════════════════════════════════════════════════ */}
       <Box
         bg="#0f172a"
-        py={{ base:"10px", md:"12px" }}
-        px={{ base:"16px", md:"24px", lg:"40px" }}
+        py={{ base: "10px", md: "12px" }}
+        px={{ base: "16px", md: "24px", lg: "40px" }}
         borderBottom="1px solid rgba(255,255,255,0.06)"
         overflowX="auto"
       >
         <Flex
-          maxW="1100px" mx="auto"
-          justify={{ base:"flex-start", md:"center" }}
+          maxW="1100px"
+          mx="auto"
+          justify={{ base: "flex-start", md: "center" }}
           align="center"
-          gap={{ base:"20px", md:"32px", lg:"40px" }}
+          gap={{ base: "20px", md: "32px", lg: "40px" }}
           minW="max-content"
-          px={{ base:"0", md:"0" }}
+          px={{ base: "0", md: "0" }}
         >
           {[
-            "50,000+ Students",
+            "5000+ Students",
             "Free Forever",
-            "1200+ Questions",
+            "100+ Questions",
             "Coaching Trusted",
-          ].map(t => (
+          ].map((t) => (
             <Flex key={t} align="center" gap="7px" flexShrink={0}>
               <Box w="5px" h="5px" borderRadius="full" bg="#22c55e" />
               <Text
                 fontFamily="'Roboto',sans-serif"
-                fontSize={{ base:"11px", md:"12px" }}
+                fontSize={{ base: "11px", md: "12px" }}
                 fontWeight="400"
                 color="rgba(255,255,255,0.38)"
                 whiteSpace="nowrap"
@@ -947,38 +952,71 @@ const Home = ({ setchoosesub }) => {
         ref={statsRef}
         bg="#fff"
         borderBottom="1px solid #f1f5f9"
-        px={{ base:"16px", md:"24px", lg:"40px" }}
+        px={{ base: "16px", md: "24px", lg: "40px" }}
       >
         <Box maxW="1100px" mx="auto">
           <Grid
-            templateColumns={{ base:"repeat(2,1fr)", md:"repeat(4,1fr)" }}
+            templateColumns={{ base: "repeat(2,1fr)", md: "repeat(4,1fr)" }}
           >
             {[
-              { val: n1.toLocaleString()+"+", label:"Students Registered", icon:<FaUsers />,       note:"Across India",  color:"#3b82f6" },
-              { val: n2.toLocaleString()+"+", label:"Questions Available",  icon:<FaClipboardList />, note:"Expert Curated",color:"#22c55e" },
-              { val: n3+"%",                  label:"Satisfaction Rate",    icon:<FaStar />,          note:"Student Rated", color:"#f59e0b" },
-              { val: n4+"+",                  label:"Tests / Month",        icon:<FaFire />,          note:"This Month",    color:"#ef4444" },
+              {
+                val: n1.toLocaleString() + "+",
+                label: "Students Registered",
+                icon: <FaUsers />,
+                note: "Across India",
+                color: "#3b82f6",
+              },
+              {
+                val: n2.toLocaleString() + "+",
+                label: "Questions Available",
+                icon: <FaClipboardList />,
+                note: "Expert Curated",
+                color: "#22c55e",
+              },
+              {
+                val: n3 + "%",
+                label: "Satisfaction Rate",
+                icon: <FaStar />,
+                note: "Student Rated",
+                color: "#f59e0b",
+              },
+              {
+                val: n4 + "+",
+                label: "Tests / Month",
+                icon: <FaFire />,
+                note: "This Month",
+                color: "#ef4444",
+              },
             ].map(({ val, label, icon, note, color }, i) => (
               <Box
                 key={label}
-                py={{ base:"28px", md:"40px" }}
-                px={{ base:"8px", md:"20px" }}
+                py={{ base: "28px", md: "40px" }}
+                px={{ base: "8px", md: "20px" }}
                 textAlign="center"
                 borderRight={{ md: i < 3 ? "1px solid #f1f5f9" : "none" }}
-                borderBottom={{ base: i < 2 ? "1px solid #f1f5f9" : "none", md:"none" }}
+                borderBottom={{
+                  base: i < 2 ? "1px solid #f1f5f9" : "none",
+                  md: "none",
+                }}
               >
                 <Box
-                  w={{ base:"36px", md:"40px" }} h={{ base:"36px", md:"40px" }}
-                  bg={`${color}10`} borderRadius="10px"
-                  display="flex" alignItems="center" justifyContent="center"
-                  color={color} fontSize={{ base:"14px", md:"16px" }}
-                  mx="auto" mb={{ base:"10px", md:"14px" }}
+                  w={{ base: "36px", md: "40px" }}
+                  h={{ base: "36px", md: "40px" }}
+                  bg={`${color}10`}
+                  borderRadius="10px"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  color={color}
+                  fontSize={{ base: "14px", md: "16px" }}
+                  mx="auto"
+                  mb={{ base: "10px", md: "14px" }}
                 >
                   {icon}
                 </Box>
                 <Text
                   fontFamily="'Poppins',sans-serif"
-                  fontSize={{ base:"28px", md:"36px", lg:"42px" }}
+                  fontSize={{ base: "28px", md: "36px", lg: "42px" }}
                   fontWeight="600"
                   color="#0f172a"
                   lineHeight="1"
@@ -987,10 +1025,21 @@ const Home = ({ setchoosesub }) => {
                 >
                   {val}
                 </Text>
-                <Text fontFamily="'Roboto',sans-serif" fontSize={{ base:"11px", md:"13px" }} fontWeight="400" color="#334155" mb="3px">
+                <Text
+                  fontFamily="'Roboto',sans-serif"
+                  fontSize={{ base: "11px", md: "13px" }}
+                  fontWeight="400"
+                  color="#334155"
+                  mb="3px"
+                >
                   {label}
                 </Text>
-                <Text fontFamily="'Roboto',sans-serif" fontSize="11px" fontWeight="300" color="#b0bec5">
+                <Text
+                  fontFamily="'Roboto',sans-serif"
+                  fontSize="11px"
+                  fontWeight="300"
+                  color="#b0bec5"
+                >
                   {note}
                 </Text>
               </Box>
@@ -1001,15 +1050,15 @@ const Home = ({ setchoosesub }) => {
 
       {/* ═══ SUBJECTS ═══════════════════════════════════════════════════════ */}
       {/* <S bg="#f8fafc" ref={subjectsRef}> */}
-        {/* Header */}
-        {/* <Box mb={{ base:"32px", md:"44px" }}>
+      {/* Header */}
+      {/* <Box mb={{ base:"32px", md:"44px" }}>
           <Lbl>Subjects</Lbl>
           <H>Pick a subject, start practising.</H>
           <P>Comprehensive question banks for SSC, UPSC, Banking and more — expert curated.</P>
         </Box> */}
 
-        {/* Cards grid:  2 cols mobile → 3 tablet → 6 desktop */}
-        {/* <Grid
+      {/* Cards grid:  2 cols mobile → 3 tablet → 6 desktop */}
+      {/* <Grid
           templateColumns={{
             base:"repeat(2,1fr)",
             sm:"repeat(3,1fr)",
@@ -1054,8 +1103,8 @@ const Home = ({ setchoosesub }) => {
             </Box>
           ))} */}
 
-          {/* Saved Questions */}
-          {/* <Link to="/Saved-question">
+      {/* Saved Questions */}
+      {/* <Link to="/Saved-question">
             <Box
               className="hv subj-card"
               bg="#fff"
@@ -1096,27 +1145,36 @@ const Home = ({ setchoosesub }) => {
       {/* ═══ HOW IT WORKS ═══════════════════════════════════════════════════ */}
       <S bg="#0f172a">
         {/* Header */}
-        <Box mb={{ base:"32px", md:"44px" }}>
+        <Box mb={{ base: "32px", md: "44px" }}>
           <Lbl dark>How it works</Lbl>
           <H dark>From signup to results.</H>
-          <P dark>For students practising solo, and for coaching centres managing their batches.</P>
+          <P dark>
+            For students practising solo, and for coaching centres managing
+            their batches.
+          </P>
         </Box>
 
         {/* Audience tags */}
-        <Flex gap="8px" mb={{ base:"24px", md:"32px" }} flexWrap="wrap">
+        <Flex gap="8px" mb={{ base: "24px", md: "32px" }} flexWrap="wrap">
           {[
-            { label:"For Students",        color:"#22c55e" },
-            { label:"For Coaching Owners", color:"#a78bfa" },
+            { label: "For Students", color: "#22c55e" },
+            { label: "For Coaching Owners", color: "#a78bfa" },
           ].map(({ label, color }) => (
             <Box
               key={label}
-              px={{ base:"12px", md:"14px" }}
+              px={{ base: "12px", md: "14px" }}
               py="5px"
               borderRadius="20px"
               bg={`${color}14`}
               border={`1px solid ${color}30`}
             >
-              <Text fontFamily="'Roboto',sans-serif" fontSize={{ base:"10px", md:"11px" }} fontWeight="500" color={color} letterSpacing="0.5px">
+              <Text
+                fontFamily="'Roboto',sans-serif"
+                fontSize={{ base: "10px", md: "11px" }}
+                fontWeight="500"
+                color={color}
+                letterSpacing="0.5px"
+              >
                 {label}
               </Text>
             </Box>
@@ -1125,8 +1183,12 @@ const Home = ({ setchoosesub }) => {
 
         {/* Steps grid */}
         <Grid
-          templateColumns={{ base:"1fr", md:"repeat(2,1fr)", lg:"repeat(3,1fr)" }}
-          gap={{ base:"10px", md:"12px" }}
+          templateColumns={{
+            base: "1fr",
+            md: "repeat(2,1fr)",
+            lg: "repeat(3,1fr)",
+          }}
+          gap={{ base: "10px", md: "12px" }}
         >
           {steps.map(({ n, icon, title, desc, color }) => (
             <Box
@@ -1134,17 +1196,22 @@ const Home = ({ setchoosesub }) => {
               bg="rgba(255,255,255,0.03)"
               border="1px solid rgba(255,255,255,0.07)"
               borderRadius="14px"
-              p={{ base:"22px", md:"28px" }}
+              p={{ base: "22px", md: "28px" }}
               position="relative"
               overflow="hidden"
-              _hover={{ bg:"rgba(255,255,255,0.05)", borderColor:`${color}28` }}
+              _hover={{
+                bg: "rgba(255,255,255,0.05)",
+                borderColor: `${color}28`,
+              }}
               transition="all 0.2s ease"
             >
               {/* Ghost number */}
               <Text
-                position="absolute" bottom="-12px" right="14px"
+                position="absolute"
+                bottom="-12px"
+                right="14px"
                 fontFamily="'Poppins',sans-serif"
-                fontSize={{ base:"60px", md:"72px" }}
+                fontSize={{ base: "60px", md: "72px" }}
                 fontWeight="700"
                 color="rgba(255,255,255,0.025)"
                 lineHeight="1"
@@ -1153,7 +1220,9 @@ const Home = ({ setchoosesub }) => {
                 {n}
               </Text>
 
-              <Icon color={color} size="40px">{icon}</Icon>
+              <Icon color={color} size="40px">
+                {icon}
+              </Icon>
 
               <Text
                 fontFamily="'Roboto',sans-serif"
@@ -1169,7 +1238,7 @@ const Home = ({ setchoosesub }) => {
               </Text>
               <Text
                 fontFamily="'Poppins',sans-serif"
-                fontSize={{ base:"14px", md:"15px" }}
+                fontSize={{ base: "14px", md: "15px" }}
                 fontWeight="500"
                 color="#fff"
                 mb="8px"
@@ -1179,7 +1248,7 @@ const Home = ({ setchoosesub }) => {
               </Text>
               <Text
                 fontFamily="'Roboto',sans-serif"
-                fontSize={{ base:"12px", md:"13px" }}
+                fontSize={{ base: "12px", md: "13px" }}
                 fontWeight="300"
                 color="rgba(255,255,255,0.38)"
                 lineHeight="1.75"
@@ -1194,12 +1263,27 @@ const Home = ({ setchoosesub }) => {
             bg="rgba(59,130,246,0.07)"
             border="1px solid rgba(59,130,246,0.2)"
             borderRadius="14px"
-            p={{ base:"22px", md:"28px" }}
+            p={{ base: "22px", md: "28px" }}
           >
-            <Text fontFamily="'Roboto',sans-serif" fontSize="10px" fontWeight="500" color="#60a5fa" letterSpacing="2px" textTransform="uppercase" mb="12px">
+            <Text
+              fontFamily="'Roboto',sans-serif"
+              fontSize="10px"
+              fontWeight="500"
+              color="#60a5fa"
+              letterSpacing="2px"
+              textTransform="uppercase"
+              mb="12px"
+            >
               End Result
             </Text>
-            <Text fontFamily="'Poppins',sans-serif" fontSize={{ base:"14px", md:"15px" }} fontWeight="500" color="#fff" mb="14px" lineHeight="1.35">
+            <Text
+              fontFamily="'Poppins',sans-serif"
+              fontSize={{ base: "14px", md: "15px" }}
+              fontWeight="500"
+              color="#fff"
+              mb="14px"
+              lineHeight="1.35"
+            >
               Track every test, every score.
             </Text>
             <Flex direction="column" gap="9px">
@@ -1208,10 +1292,18 @@ const Home = ({ setchoosesub }) => {
                 "Coaching owners see all batch results",
                 "Correct & incorrect breakdown per test",
                 "Share tests via WhatsApp in one tap",
-              ].map(p => (
+              ].map((p) => (
                 <Flex key={p} align="flex-start" gap="8px">
-                  <Box mt="3px" flexShrink={0}><FaCheckCircle size={11} color="#22c55e" /></Box>
-                  <Text fontFamily="'Roboto',sans-serif" fontSize={{ base:"12px", md:"13px" }} fontWeight="300" color="rgba(255,255,255,0.42)" lineHeight="1.6">
+                  <Box mt="3px" flexShrink={0}>
+                    <FaCheckCircle size={11} color="#22c55e" />
+                  </Box>
+                  <Text
+                    fontFamily="'Roboto',sans-serif"
+                    fontSize={{ base: "12px", md: "13px" }}
+                    fontWeight="300"
+                    color="rgba(255,255,255,0.42)"
+                    lineHeight="1.6"
+                  >
                     {p}
                   </Text>
                 </Flex>
@@ -1224,15 +1316,18 @@ const Home = ({ setchoosesub }) => {
       {/* ═══ WHY US ═════════════════════════════════════════════════════════ */}
       <S>
         <Grid
-          templateColumns={{ base:"1fr", lg:"5fr 7fr" }}
-          gap={{ base:"40px", md:"56px", lg:"72px" }}
+          templateColumns={{ base: "1fr", lg: "5fr 7fr" }}
+          gap={{ base: "40px", md: "56px", lg: "72px" }}
           alignItems="start"
         >
           {/* Left copy */}
           <Box>
             <Lbl>Why Revision Karlo?</Lbl>
             <H sm>Quality prep, completely free.</H>
-            <P>Lakhs of students waste money on costly apps. Revision Karlo gives you the same quality — free, always.</P>
+            <P>
+              Lakhs of students waste money on costly apps. Revision Karlo gives
+              you the same quality — free, always.
+            </P>
             <Flex direction="column" gap="10px" mt="22px">
               {[
                 "1200+ questions across all subjects",
@@ -1240,10 +1335,18 @@ const Home = ({ setchoosesub }) => {
                 "Detailed solutions and explanations",
                 "Rank tracking and performance analytics",
                 "Coaching centre batch integration",
-              ].map(pt => (
+              ].map((pt) => (
                 <Flex key={pt} align="flex-start" gap="9px">
-                  <Box mt="3px" flexShrink={0}><FaCheckCircle size={11} color="#22c55e" /></Box>
-                  <Text fontFamily="'Roboto',sans-serif" fontSize={{ base:"13px", md:"14px" }} fontWeight="400" color="#475569" lineHeight="1.65">
+                  <Box mt="3px" flexShrink={0}>
+                    <FaCheckCircle size={11} color="#22c55e" />
+                  </Box>
+                  <Text
+                    fontFamily="'Roboto',sans-serif"
+                    fontSize={{ base: "13px", md: "14px" }}
+                    fontWeight="400"
+                    color="#475569"
+                    lineHeight="1.65"
+                  >
                     {pt}
                   </Text>
                 </Flex>
@@ -1252,22 +1355,44 @@ const Home = ({ setchoosesub }) => {
           </Box>
 
           {/* Feature cards */}
-          <Grid templateColumns="repeat(2,1fr)" gap={{ base:"9px", md:"10px" }}>
+          <Grid
+            templateColumns="repeat(2,1fr)"
+            gap={{ base: "9px", md: "10px" }}
+          >
             {features.map(({ icon, title, desc, color }) => (
               <Box
                 key={title}
                 className="hv"
                 bg="#f8fafc"
                 borderRadius="13px"
-                p={{ base:"14px", md:"18px" }}
+                p={{ base: "14px", md: "18px" }}
                 border="1px solid #f0f4f8"
-                _hover={{ bg:"#fff", boxShadow:"0 4px 18px rgba(0,0,0,0.06)", borderColor:`${color}25` }}
+                _hover={{
+                  bg: "#fff",
+                  boxShadow: "0 4px 18px rgba(0,0,0,0.06)",
+                  borderColor: `${color}25`,
+                }}
               >
-                <Icon color={color} size="34px">{icon}</Icon>
-                <Text fontFamily="'Poppins',sans-serif" fontSize={{ base:"12px", md:"13px" }} fontWeight="500" color="#1e293b" mt="12px" mb="4px">
+                <Icon color={color} size="34px">
+                  {icon}
+                </Icon>
+                <Text
+                  fontFamily="'Poppins',sans-serif"
+                  fontSize={{ base: "12px", md: "13px" }}
+                  fontWeight="500"
+                  color="#1e293b"
+                  mt="12px"
+                  mb="4px"
+                >
                   {title}
                 </Text>
-                <Text fontFamily="'Roboto',sans-serif" fontSize={{ base:"11px", md:"12px" }} fontWeight="300" color="#94a3b8" lineHeight="1.7">
+                <Text
+                  fontFamily="'Roboto',sans-serif"
+                  fontSize={{ base: "11px", md: "12px" }}
+                  fontWeight="300"
+                  color="#94a3b8"
+                  lineHeight="1.7"
+                >
                   {desc}
                 </Text>
               </Box>
@@ -1278,15 +1403,15 @@ const Home = ({ setchoosesub }) => {
 
       {/* ═══ TESTIMONIALS ═══════════════════════════════════════════════════ */}
       <S bg="#f8fafc">
-        <Box mb={{ base:"32px", md:"44px" }}>
+        <Box mb={{ base: "32px", md: "44px" }}>
           <Lbl>Testimonials</Lbl>
           <H>Students who cracked it.</H>
           <P>Real students, real results.</P>
         </Box>
 
         <Grid
-          templateColumns={{ base:"1fr", md:"repeat(3,1fr)" }}
-          gap={{ base:"10px", md:"12px" }}
+          templateColumns={{ base: "1fr", md: "repeat(3,1fr)" }}
+          gap={{ base: "10px", md: "12px" }}
         >
           {testimonials.map(({ name, tag, init, color, text }) => (
             <Box
@@ -1294,16 +1419,18 @@ const Home = ({ setchoosesub }) => {
               className="hv"
               bg="#fff"
               borderRadius="14px"
-              p={{ base:"20px", md:"24px" }}
+              p={{ base: "20px", md: "24px" }}
               border="1px solid #edf0f5"
-              _hover={{ boxShadow:"0 6px 24px rgba(0,0,0,0.07)" }}
+              _hover={{ boxShadow: "0 6px 24px rgba(0,0,0,0.07)" }}
             >
               <Flex gap="2px" mb="14px">
-                {[1,2,3,4,5].map(s => <FaStar key={s} size={11} color="#fbbf24" />)}
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <FaStar key={s} size={11} color="#fbbf24" />
+                ))}
               </Flex>
               <Text
                 fontFamily="'Roboto',sans-serif"
-                fontSize={{ base:"13px", md:"14px" }}
+                fontSize={{ base: "13px", md: "14px" }}
                 fontWeight="300"
                 color="#64748b"
                 lineHeight="1.85"
@@ -1315,21 +1442,38 @@ const Home = ({ setchoosesub }) => {
               <Box h="1px" bg="#f1f5f9" mb="16px" />
               <Flex align="center" gap="10px">
                 <Box
-                  w="34px" h="34px" borderRadius="full" bg={color}
-                  display="flex" alignItems="center" justifyContent="center"
-                  color="#fff" fontSize="11px"
-                  fontFamily="'Poppins',sans-serif" fontWeight="600"
+                  w="34px"
+                  h="34px"
+                  borderRadius="full"
+                  bg={color}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  color="#fff"
+                  fontSize="11px"
+                  fontFamily="'Poppins',sans-serif"
+                  fontWeight="600"
                   flexShrink={0}
                 >
                   {init}
                 </Box>
                 <Box>
-                  <Text fontFamily="'Poppins',sans-serif" fontSize="13px" fontWeight="500" color="#0f172a">
+                  <Text
+                    fontFamily="'Poppins',sans-serif"
+                    fontSize="13px"
+                    fontWeight="500"
+                    color="#0f172a"
+                  >
                     {name}
                   </Text>
                   <Flex align="center" gap="5px">
                     <FaCheckCircle size={9} color={color} />
-                    <Text fontFamily="'Roboto',sans-serif" fontSize="11px" fontWeight="400" color={color}>
+                    <Text
+                      fontFamily="'Roboto',sans-serif"
+                      fontSize="11px"
+                      fontWeight="400"
+                      color={color}
+                    >
                       {tag}
                     </Text>
                   </Flex>
@@ -1343,23 +1487,29 @@ const Home = ({ setchoosesub }) => {
       {/* ═══ CTA ════════════════════════════════════════════════════════════ */}
       <Box
         bg="#0f172a"
-        py={{ base:"56px", md:"80px", lg:"96px" }}
-        px={{ base:"16px", md:"24px", lg:"40px" }}
+        py={{ base: "56px", md: "80px", lg: "96px" }}
+        px={{ base: "16px", md: "24px", lg: "40px" }}
         position="relative"
         overflow="hidden"
         borderTop="1px solid rgba(255,255,255,0.05)"
       >
         {/* Orb */}
         <Box
-          position="absolute" top="-80px" right="-80px"
-          w={{ base:"240px", md:"320px" }} h={{ base:"240px", md:"320px" }}
+          position="absolute"
+          top="-80px"
+          right="-80px"
+          w={{ base: "240px", md: "320px" }}
+          h={{ base: "240px", md: "320px" }}
           borderRadius="full"
           bg="radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)"
           pointerEvents="none"
         />
         <Box
-          position="absolute" bottom="-60px" left="-60px"
-          w="200px" h="200px"
+          position="absolute"
+          bottom="-60px"
+          left="-60px"
+          w="200px"
+          h="200px"
           borderRadius="full"
           bg="radial-gradient(circle, rgba(34,197,94,0.06) 0%, transparent 70%)"
           pointerEvents="none"
@@ -1369,7 +1519,7 @@ const Home = ({ setchoosesub }) => {
           <Lbl dark>Get Started</Lbl>
           <Text
             fontFamily="'Poppins',sans-serif"
-            fontSize={{ base:"24px", md:"36px", lg:"42px" }}
+            fontSize={{ base: "24px", md: "36px", lg: "42px" }}
             fontWeight="600"
             color="#fff"
             lineHeight="1.2"
@@ -1380,10 +1530,10 @@ const Home = ({ setchoosesub }) => {
           </Text>
           <Text
             fontFamily="'Roboto',sans-serif"
-            fontSize={{ base:"13px", md:"15px" }}
+            fontSize={{ base: "13px", md: "15px" }}
             fontWeight="300"
             color="rgba(255,255,255,0.38)"
-            mb={{ base:"32px", md:"40px" }}
+            mb={{ base: "32px", md: "40px" }}
             lineHeight="1.8"
           >
             50,000+ students already here. Join free and crack your exam.
@@ -1392,38 +1542,52 @@ const Home = ({ setchoosesub }) => {
           {/* Buttons */}
           <Flex
             justify="center"
-            gap={{ base:"10px", md:"12px" }}
+            gap={{ base: "10px", md: "12px" }}
             flexWrap="wrap"
-            mb={{ base:"24px", md:"28px" }}
+            mb={{ base: "24px", md: "28px" }}
           >
             <Box
-              as={Link} to="/auth/signup"
-              display="inline-flex" alignItems="center" gap="8px"
-              bg="#3b82f6" color="#fff"
-              px={{ base:"20px", md:"26px" }}
-              py={{ base:"11px", md:"13px" }}
+              as={Link}
+              to="/auth/signup"
+              display="inline-flex"
+              alignItems="center"
+              gap="8px"
+              bg="#3b82f6"
+              color="#fff"
+              px={{ base: "20px", md: "26px" }}
+              py={{ base: "11px", md: "13px" }}
               borderRadius="10px"
               fontFamily="'Poppins',sans-serif"
-              fontSize={{ base:"13px", md:"14px" }}
+              fontSize={{ base: "13px", md: "14px" }}
               fontWeight="500"
-              _hover={{ bg:"#2563eb", transform:"translateY(-1px)", boxShadow:"0 8px 22px rgba(59,130,246,0.32)" }}
+              _hover={{
+                bg: "#2563eb",
+                transform: "translateY(-1px)",
+                boxShadow: "0 8px 22px rgba(59,130,246,0.32)",
+              }}
               transition="all 0.18s ease"
             >
               Register Free <FaArrowRight size={11} />
             </Box>
             <Box
-              as={Link} to="/questionList"
-              display="inline-flex" alignItems="center" gap="7px"
+              as={Link}
+              to="/questionList"
+              display="inline-flex"
+              alignItems="center"
+              gap="7px"
               bg="rgba(255,255,255,0.06)"
               color="rgba(255,255,255,0.65)"
-              px={{ base:"20px", md:"26px" }}
-              py={{ base:"11px", md:"13px" }}
+              px={{ base: "20px", md: "26px" }}
+              py={{ base: "11px", md: "13px" }}
               borderRadius="10px"
               fontFamily="'Poppins',sans-serif"
-              fontSize={{ base:"13px", md:"14px" }}
+              fontSize={{ base: "13px", md: "14px" }}
               fontWeight="400"
               border="1px solid rgba(255,255,255,0.1)"
-              _hover={{ bg:"rgba(255,255,255,0.1)", transform:"translateY(-1px)" }}
+              _hover={{
+                bg: "rgba(255,255,255,0.1)",
+                transform: "translateY(-1px)",
+              }}
               transition="all 0.18s ease"
             >
               <FaPlay size={10} /> Try First
@@ -1431,11 +1595,20 @@ const Home = ({ setchoosesub }) => {
           </Flex>
 
           {/* Trust badges */}
-          <Flex justify="center" gap={{ base:"16px", md:"24px" }} flexWrap="wrap">
-            {["No Credit Card", "Instant Access", "Always Free"].map(b => (
+          <Flex
+            justify="center"
+            gap={{ base: "16px", md: "24px" }}
+            flexWrap="wrap"
+          >
+            {["No Credit Card", "Instant Access", "Always Free"].map((b) => (
               <Flex key={b} align="center" gap="6px">
                 <FaCheckCircle size={10} color="#22c55e" />
-                <Text fontFamily="'Roboto',sans-serif" fontSize={{ base:"11px", md:"12px" }} fontWeight="400" color="rgba(255,255,255,0.28)">
+                <Text
+                  fontFamily="'Roboto',sans-serif"
+                  fontSize={{ base: "11px", md: "12px" }}
+                  fontWeight="400"
+                  color="rgba(255,255,255,0.28)"
+                >
                   {b}
                 </Text>
               </Flex>
@@ -1446,7 +1619,7 @@ const Home = ({ setchoosesub }) => {
 
       {/* ═══ SOCIAL ═════════════════════════════════════════════════════════ */}
       <S>
-        <Box mb={{ base:"32px", md:"44px" }}>
+        <Box mb={{ base: "32px", md: "44px" }}>
           <Lbl>Community</Lbl>
           <H>Join 100k+ students.</H>
           <P>Latest updates, tips and study material across all platforms.</P>
@@ -1455,11 +1628,11 @@ const Home = ({ setchoosesub }) => {
         {/* 2 cols mobile, auto-fit sm+ */}
         <Grid
           templateColumns={{
-            base:"repeat(2,1fr)",
-            sm:"repeat(3,1fr)",
-            md:"repeat(5,1fr)",
+            base: "repeat(2,1fr)",
+            sm: "repeat(3,1fr)",
+            md: "repeat(5,1fr)",
           }}
-          gap={{ base:"10px", md:"12px" }}
+          gap={{ base: "10px", md: "12px" }}
         >
           {socials.map(({ icon, label, sub, color, onClick }) => (
             <Box
@@ -1469,27 +1642,44 @@ const Home = ({ setchoosesub }) => {
               cursor="pointer"
               bg="#f8fafc"
               borderRadius="13px"
-              p={{ base:"16px", md:"20px" }}
+              p={{ base: "16px", md: "20px" }}
               textAlign="center"
               border="1px solid #f0f4f8"
-              _hover={{ bg:"#fff", boxShadow:`0 5px 18px ${color}16`, borderColor:`${color}30` }}
+              _hover={{
+                bg: "#fff",
+                boxShadow: `0 5px 18px ${color}16`,
+                borderColor: `${color}30`,
+              }}
             >
               <Box
-                w={{ base:"38px", md:"42px" }}
-                h={{ base:"38px", md:"42px" }}
+                w={{ base: "38px", md: "42px" }}
+                h={{ base: "38px", md: "42px" }}
                 bg={color}
                 borderRadius="11px"
                 mx="auto"
-                display="flex" alignItems="center" justifyContent="center"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
                 color="#fff"
-                mb={{ base:"10px", md:"12px" }}
+                mb={{ base: "10px", md: "12px" }}
               >
                 {icon}
               </Box>
-              <Text fontFamily="'Poppins',sans-serif" fontSize={{ base:"12px", md:"13px" }} fontWeight="500" color="#1e293b" mb="2px">
+              <Text
+                fontFamily="'Poppins',sans-serif"
+                fontSize={{ base: "12px", md: "13px" }}
+                fontWeight="500"
+                color="#1e293b"
+                mb="2px"
+              >
                 {label}
               </Text>
-              <Text fontFamily="'Roboto',sans-serif" fontSize={{ base:"10px", md:"11px" }} fontWeight="300" color="#94a3b8">
+              <Text
+                fontFamily="'Roboto',sans-serif"
+                fontSize={{ base: "10px", md: "11px" }}
+                fontWeight="300"
+                color="#94a3b8"
+              >
                 {sub}
               </Text>
             </Box>
@@ -1502,8 +1692,8 @@ const Home = ({ setchoosesub }) => {
         w="100%"
         maxW="1100px"
         mx="auto"
-        px={{ base:"16px", md:"24px", lg:"40px" }}
-        pb={{ base:"32px", md:"40px" }}
+        px={{ base: "16px", md: "24px", lg: "40px" }}
+        pb={{ base: "32px", md: "40px" }}
       >
         <AdsterraBanner />
       </Box>
