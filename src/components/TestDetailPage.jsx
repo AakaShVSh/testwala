@@ -53,6 +53,7 @@
 //   FaRedoAlt,
 //   FaLayerGroup,
 //   FaRegClock,
+//   FaExternalLinkAlt,
 // } from "react-icons/fa";
 // import { apiFetch } from "../services/api";
 // import { useAuth } from "../context/AuthContext";
@@ -134,11 +135,13 @@
 //   );
 // }
 
-// function LeaderRow({ rank, result, currentUserId }) {
+// // ── LeaderRow — clickable for owner ─────────────────────────────────────────
+// function LeaderRow({ rank, result, currentUserId, isOwner, onViewResult }) {
 //   const name = result.studentId?.Name || result.studentId?.Email || "Student";
 //   const pct = result.scorePercentage ?? result.percentage ?? 0;
 //   const isMe = String(result.studentId?._id) === String(currentUserId);
 //   const medals = ["🥇", "🥈", "🥉"];
+
 //   return (
 //     <Flex
 //       px={5}
@@ -147,7 +150,13 @@
 //       gap={3}
 //       bg={isMe ? "linear-gradient(90deg,#eff6ff,#f0fdf4)" : "transparent"}
 //       borderLeft={isMe ? "3px solid #4a72b8" : "3px solid transparent"}
-//       _hover={{ bg: "#f8fafc" }}
+//       _hover={{
+//         bg: isOwner ? "#f0f7ff" : "#f8fafc",
+//         cursor: isOwner ? "pointer" : "default",
+//       }}
+//       onClick={isOwner ? () => onViewResult(result) : undefined}
+//       transition="background .15s"
+//       title={isOwner ? `View ${name}'s result` : undefined}
 //     >
 //       <Text w="28px" fontSize="15px" textAlign="center">
 //         {rank <= 3 ? (
@@ -196,6 +205,15 @@
 //             : "—"}
 //         </Text>
 //       </Box>
+//       {/* hint icon for owner */}
+//       {isOwner && (
+//         <Icon
+//           as={FaExternalLinkAlt}
+//           fontSize="10px"
+//           color="#94a3b8"
+//           flexShrink={0}
+//         />
+//       )}
 //     </Flex>
 //   );
 // }
@@ -407,12 +425,8 @@
 //   const location = useLocation();
 //   const [agreed, setAgreed] = useState(false);
 
-//   // ── Ref for the Instructions section ──────────────────────────────────────
 //   const instructionsRef = useRef(null);
 
-//   // Auto-scroll to instructions when returning from signin/signup
-//   // We encode the intent as a URL hash (#instructions) so it survives
-//   // the full redirect round-trip through the auth pages.
 //   useEffect(() => {
 //     if (window.location.hash === "#instructions" && instructionsRef.current) {
 //       const timer = setTimeout(() => {
@@ -420,7 +434,6 @@
 //           behavior: "smooth",
 //           block: "start",
 //         });
-//         // Clean the hash from the URL without causing a navigation
 //         window.history.replaceState(
 //           null,
 //           "",
@@ -440,8 +453,6 @@
 //     (q) => q.qush && String(q.qush).trim().length > 0,
 //   );
 
-//   // Build the redirect URL that includes #instructions hash so the page
-//   // scrolls back here after signin or signup.
 //   const redirectBack = encodeURIComponent(
 //     location.pathname + location.search + "#instructions",
 //   );
@@ -515,7 +526,6 @@
 
 //   return (
 //     <Box minH="100vh" bg="#F8FAFC" fontFamily="Inter, sans-serif">
-//       {/* ── Hero ─────────────────────────────────────────────────────────── */}
 //       <Box
 //         bg="#0B1120"
 //         px={px}
@@ -688,7 +698,6 @@
 //         </Box>
 //       </Box>
 
-//       {/* ── Body ─────────────────────────────────────────────────────────── */}
 //       <Box
 //         maxW="1200px"
 //         mx="auto"
@@ -784,7 +793,6 @@
 //               hasHindi={hasHindi}
 //             />
 
-//             {/* Test Details */}
 //             <Box
 //               bg="white"
 //               borderRadius="8px"
@@ -875,7 +883,6 @@
 //               </Grid>
 //             </Box>
 
-//             {/* ── Instructions — ref attached here ─────────────────────── */}
 //             <Box
 //               ref={instructionsRef}
 //               bg="white"
@@ -910,7 +917,6 @@
 //               </Grid>
 //             </Box>
 
-//             {/* Before You Start */}
 //             <Box
 //               bg="#FFFBEB"
 //               border="1px solid #FDE68A"
@@ -961,7 +967,6 @@
 //             </Box>
 //           </Box>
 
-//           {/* ── Sticky sidebar ───────────────────────────────────────────── */}
 //           <Box position={{ base: "static", lg: "sticky" }} top={{ lg: "20px" }}>
 //             <Box
 //               bg="white"
@@ -989,7 +994,6 @@
 //                 </Text>
 //               </Box>
 //               <Box px="16px" pt="16px" pb="20px">
-//                 {/* Timer display */}
 //                 <Box
 //                   mb="12px"
 //                   bg="#F8FAFC"
@@ -1154,7 +1158,6 @@
 //                   </Flex>
 //                 </Box>
 
-//                 {/* Agree checkbox */}
 //                 <Box
 //                   border="2px solid"
 //                   mb="12px"
@@ -1197,10 +1200,8 @@
 //                   </Flex>
 //                 </Box>
 
-//                 {/* CTA buttons */}
 //                 {!user ? (
 //                   <>
-//                     {/* Sign In — redirect back to this page at #instructions */}
 //                     <Button
 //                       w="full"
 //                       h="46px"
@@ -1219,7 +1220,6 @@
 //                     >
 //                       Sign In to Start
 //                     </Button>
-//                     {/* Create Account — same redirect so they land back at instructions */}
 //                     <Button
 //                       w="full"
 //                       h="40px"
@@ -1368,6 +1368,7 @@
 //   const [pwErr, setPwErr] = useState("");
 //   const [delOpen, setDelOpen] = useState(false);
 //   const [selectedLang, setSelectedLang] = useState("english");
+//   const [loadingResult, setLoadingResult] = useState(false);
 
 //   const viaToken = Boolean(location.state?.viaToken);
 
@@ -1502,7 +1503,6 @@
 
 //   const handleStartTest = () => {
 //     if (!user) {
-//       // Redirect back to this page at #instructions after auth
 //       const redirectBack = encodeURIComponent(
 //         location.pathname + location.search + "#instructions",
 //       );
@@ -1530,6 +1530,81 @@
 //       navigate(-1);
 //     } catch (e) {
 //       toast({ title: e.message, status: "error" });
+//     }
+//   };
+
+//   // ── Owner clicks a student row in leaderboard ─────────────────────────────
+//   // The leaderboard entry already has the result _id — use it directly.
+//   // We then fetch the full result + the test questions and navigate to
+//   // /test-result with the exact same state shape that ResultPage expects.
+//   const handleViewStudentResult = async (leaderboardEntry) => {
+//     const resultId = leaderboardEntry._id;
+//     if (!resultId) {
+//       toast({ title: "Result ID not found", status: "error" });
+//       return;
+//     }
+
+//     setLoadingResult(true);
+//     try {
+//       // Fetch full result document
+//       const resData = await apiFetch(`/results/${resultId}`);
+//       const r = resData.data || resData;
+
+//       // Normalise all fields to match what ResultPage reads from location.state
+//       const questions = test.questions || [];
+//       const totalQuestions = questions.length;
+//       const correctQus = r.correctQus || [];
+//       const wrongansqus = r.wrongansqus || r.wrongQus || [];
+//       const answeredQuestion = r.answeredQuestion || r.answered || [];
+//       const notAnswer = r.notAnswer || r.skipped || [];
+//       const markedAndAnswer = r.markedAndAnswer || [];
+//       const markedNotAnswer = r.markedNotAnswer || [];
+//       const score = r.correct ?? correctQus.length ?? 0;
+//       const scorePercentage =
+//         r.scorePercentage ??
+//         r.percentage ??
+//         (totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0);
+//       const allAnswers = r.allAnswers || r.answers || {};
+//       const questionTimes = r.questionTimes || r.qTimes || {};
+//       const timeTaken = r.timeTakenSec || r.timeTaken || 0;
+//       const percentile = r.percentile ?? null;
+
+//       // Student name for display
+//       const studentName =
+//         r.studentId?.Name ||
+//         r.studentId?.Email ||
+//         leaderboardEntry.studentId?.Name ||
+//         leaderboardEntry.studentId?.Email ||
+//         "Student";
+
+//       navigate("/test-result", {
+//         state: {
+//           // identity context (ResultPage ignores extra keys safely)
+//           viewingAs: "owner",
+//           studentName,
+
+//           // all the fields ResultPage reads
+//           testTitle: test.title,
+//           score,
+//           totalQuestions,
+//           scorePercentage,
+//           percentile,
+//           timeTaken,
+//           questions,
+//           allAnswers,
+//           questionTimes,
+//           correctQus,
+//           wrongansqus,
+//           answeredQuestion,
+//           notAnswer,
+//           markedAndAnswer,
+//           markedNotAnswer,
+//         },
+//       });
+//     } catch (e) {
+//       toast({ title: e.message || "Failed to load result", status: "error" });
+//     } finally {
+//       setLoadingResult(false);
 //     }
 //   };
 
@@ -1943,7 +2018,29 @@
 //               <Badge colorScheme="blue" borderRadius="full">
 //                 {leaderboard.length} entries
 //               </Badge>
+//               {/* hint for owner */}
+//               <Text fontSize="11px" color="#94a3b8" ml="auto">
+//                 Click a student to view their full result
+//               </Text>
 //             </Flex>
+
+//             {/* loading overlay while fetching a student result */}
+//             {loadingResult && (
+//               <Flex
+//                 px={6}
+//                 py={3}
+//                 align="center"
+//                 gap={2}
+//                 bg="#eff6ff"
+//                 borderBottom="1px solid #bfdbfe"
+//               >
+//                 <Spinner size="xs" color="#4a72b8" />
+//                 <Text fontSize="12px" color="#2563eb" fontWeight={600}>
+//                   Loading student result…
+//                 </Text>
+//               </Flex>
+//             )}
+
 //             {leaderboard.length === 0 ? (
 //               <Box py={16} textAlign="center">
 //                 <Icon
@@ -1970,6 +2067,8 @@
 //                     rank={i + 1}
 //                     result={r}
 //                     currentUserId={user?._id}
+//                     isOwner={isOwner}
+//                     onViewResult={handleViewStudentResult}
 //                   />
 //                 </Box>
 //               ))
@@ -2210,7 +2309,6 @@ const LANGUAGES = [
     lightBg: "#eff6ff",
     border: "#bfdbfe",
     accent: "#2563eb",
-    gradient: "linear-gradient(135deg,#1d4ed8,#2563eb)",
   },
   {
     value: "hindi",
@@ -2222,7 +2320,6 @@ const LANGUAGES = [
     lightBg: "#fffbeb",
     border: "#fde68a",
     accent: "#d97706",
-    gradient: "linear-gradient(135deg,#b45309,#d97706)",
   },
   {
     value: "bilingual",
@@ -2234,7 +2331,6 @@ const LANGUAGES = [
     lightBg: "#f5f3ff",
     border: "#ddd6fe",
     accent: "#7c3aed",
-    gradient: "linear-gradient(135deg,#6d28d9,#7c3aed)",
   },
 ];
 
@@ -2275,12 +2371,20 @@ function StatCard({ icon, label, value, color = "#4a72b8", bg = "#eff6ff" }) {
   );
 }
 
-// ── LeaderRow — clickable for owner ─────────────────────────────────────────
-function LeaderRow({ rank, result, currentUserId, isOwner, onViewResult }) {
+// ── LeaderRow: clickable for owner, shows spinner while loading ──────────────
+function LeaderRow({
+  rank,
+  result,
+  currentUserId,
+  isOwner,
+  onViewResult,
+  loadingId,
+}) {
   const name = result.studentId?.Name || result.studentId?.Email || "Student";
   const pct = result.scorePercentage ?? result.percentage ?? 0;
   const isMe = String(result.studentId?._id) === String(currentUserId);
   const medals = ["🥇", "🥈", "🥉"];
+  const isLoading = loadingId === result._id;
 
   return (
     <Flex
@@ -2294,8 +2398,9 @@ function LeaderRow({ rank, result, currentUserId, isOwner, onViewResult }) {
         bg: isOwner ? "#f0f7ff" : "#f8fafc",
         cursor: isOwner ? "pointer" : "default",
       }}
-      onClick={isOwner ? () => onViewResult(result) : undefined}
+      onClick={isOwner && !isLoading ? () => onViewResult(result) : undefined}
       transition="background .15s"
+      opacity={isLoading ? 0.7 : 1}
       title={isOwner ? `View ${name}'s result` : undefined}
     >
       <Text w="28px" fontSize="15px" textAlign="center">
@@ -2345,15 +2450,18 @@ function LeaderRow({ rank, result, currentUserId, isOwner, onViewResult }) {
             : "—"}
         </Text>
       </Box>
-      {/* hint icon for owner */}
-      {isOwner && (
-        <Icon
-          as={FaExternalLinkAlt}
-          fontSize="10px"
-          color="#94a3b8"
-          flexShrink={0}
-        />
-      )}
+      {isOwner &&
+        (isLoading ? (
+          <Spinner size="xs" color="#4a72b8" flexShrink={0} ml={1} />
+        ) : (
+          <Icon
+            as={FaExternalLinkAlt}
+            fontSize="11px"
+            color="#94a3b8"
+            flexShrink={0}
+            ml={1}
+          />
+        ))}
     </Flex>
   );
 }
@@ -2552,6 +2660,7 @@ function RuleCard({ number, icon, accent, bg, title, description }) {
   );
 }
 
+// ── TestInfoPage (student / public view) ─────────────────────────────────────
 function TestInfoPage({
   test,
   stats,
@@ -2564,7 +2673,6 @@ function TestInfoPage({
   const navigate = useNavigate();
   const location = useLocation();
   const [agreed, setAgreed] = useState(false);
-
   const instructionsRef = useRef(null);
 
   useEffect(() => {
@@ -2592,7 +2700,6 @@ function TestInfoPage({
   const hasHindi = test.questions?.some(
     (q) => q.qush && String(q.qush).trim().length > 0,
   );
-
   const redirectBack = encodeURIComponent(
     location.pathname + location.search + "#instructions",
   );
@@ -2604,14 +2711,14 @@ function TestInfoPage({
       bg: "#eff6ff",
       title: "Stay on this page",
       description:
-        "Do not switch browser tabs or open other apps during the test. Tab-switching is monitored and may flag your attempt.",
+        "Do not switch browser tabs or open other apps during the test.",
     },
     {
       icon: FaRegClock,
       accent: "#d97706",
       bg: "#fffbeb",
       title: "Strict time limit",
-      description: `You have exactly ${timeLimitMin} minutes. The test auto-submits the moment time runs out — no extensions or pauses allowed.`,
+      description: `You have exactly ${timeLimitMin} minutes. The test auto-submits when time runs out.`,
     },
     {
       icon: FaLayerGroup,
@@ -2619,14 +2726,14 @@ function TestInfoPage({
       bg: "#f5f3ff",
       title: "Mark & review",
       description:
-        "Use the question palette to jump between questions. Mark any question for review — you can revisit it before final submission.",
+        "Use the question palette to jump between questions and mark for review.",
     },
     {
       icon: FaCheckCircle,
       accent: "#16a34a",
       bg: "#f0fdf4",
       title: "No negative marking",
-      description: `Each correct answer scores 1 mark (total: ${questionCount}). Wrong answers and skipped questions carry zero penalty.`,
+      description: `Each correct answer scores 1 mark (total: ${questionCount}). No penalty for wrong answers.`,
     },
     {
       icon: FaRedoAlt,
@@ -2634,7 +2741,7 @@ function TestInfoPage({
       bg: "#ecfeff",
       title: "Reconnection is safe",
       description:
-        "Your answers are saved question by question. If you lose connection or refresh, your progress is fully recovered on reload.",
+        "Your answers are saved question by question. Progress is recovered on reload.",
     },
     {
       icon: FaBan,
@@ -2642,7 +2749,7 @@ function TestInfoPage({
       bg: "#fff1f2",
       title: "No copy-paste",
       description:
-        "Right-click, keyboard shortcuts (Ctrl+C, Ctrl+V), and text selection are disabled during the test for fairness.",
+        "Right-click and keyboard shortcuts are disabled during the test for fairness.",
     },
     {
       icon: FaMobileAlt,
@@ -2650,7 +2757,7 @@ function TestInfoPage({
       bg: "#fff7ed",
       title: "Use a stable device",
       description:
-        "Laptop or desktop recommended. Keep your device charged. Close unnecessary apps to ensure smooth performance.",
+        "Laptop or desktop recommended. Close unnecessary apps for smooth performance.",
     },
     {
       icon: FaGlobe,
@@ -2658,12 +2765,11 @@ function TestInfoPage({
       bg: "#f0fdfa",
       title: "Stable internet required",
       description:
-        "Use a reliable Wi-Fi or wired connection. Poor connectivity may cause delays in saving answers, though auto-recovery helps.",
+        "Use a reliable Wi-Fi or wired connection. Auto-recovery helps if you lose connection.",
     },
   ];
 
   const px = { base: "16px", md: "32px", lg: "48px" };
-
   return (
     <Box minH="100vh" bg="#F8FAFC" fontFamily="Inter, sans-serif">
       <Box
@@ -2681,7 +2787,6 @@ function TestInfoPage({
             w="fit-content"
             color="rgba(255,255,255,.4)"
             _hover={{ color: "rgba(255,255,255,.8)" }}
-            transition="color .15s"
             onClick={() => navigate(-1)}
           >
             <Icon as={FaArrowLeft} fontSize="11px" />
@@ -3107,6 +3212,7 @@ function TestInfoPage({
             </Box>
           </Box>
 
+          {/* Sidebar */}
           <Box position={{ base: "static", lg: "sticky" }} top={{ lg: "20px" }}>
             <Box
               bg="white"
@@ -3305,7 +3411,6 @@ function TestInfoPage({
                   borderRadius="8px"
                   bg={agreed ? "#EFF6FF" : "white"}
                   cursor="pointer"
-                  transition="all .15s"
                   _hover={{ borderColor: "#2563EB" }}
                   onClick={() => setAgreed((p) => !p)}
                   p="12px"
@@ -3323,7 +3428,6 @@ function TestInfoPage({
                       display="flex"
                       alignItems="center"
                       justifyContent="center"
-                      transition="all .15s"
                     >
                       {agreed && (
                         <Icon as={FaCheck} fontSize="9px" color="white" />
@@ -3356,7 +3460,6 @@ function TestInfoPage({
                         navigate(`/auth/signin?redirect=${redirectBack}`)
                       }
                       _hover={{ bg: "#1E293B" }}
-                      transition="all .15s"
                     >
                       Sign In to Start
                     </Button>
@@ -3391,7 +3494,6 @@ function TestInfoPage({
                       cursor={agreed ? "pointer" : "not-allowed"}
                       onClick={agreed ? onStart : undefined}
                       _hover={agreed ? { bg: "#1E40AF" } : {}}
-                      transition="all .15s"
                     >
                       {myResult ? "Retake Test" : "Start Test"}
                     </Button>
@@ -3485,9 +3587,9 @@ function TestInfoPage({
   );
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
 // MAIN PAGE
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
 export default function TestDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -3498,7 +3600,7 @@ export default function TestDetailPage() {
 
   const [test, setTest] = useState(null);
   const [stats, setStats] = useState(null);
-  const [leaderboard, setLeaderboard] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]); // first-attempt-per-student
   const [myResult, setMyResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("overview");
@@ -3508,9 +3610,32 @@ export default function TestDetailPage() {
   const [pwErr, setPwErr] = useState("");
   const [delOpen, setDelOpen] = useState(false);
   const [selectedLang, setSelectedLang] = useState("english");
-  const [loadingResult, setLoadingResult] = useState(false);
+  const [loadingResultId, setLoadingResultId] = useState(null);
 
   const viaToken = Boolean(location.state?.viaToken);
+
+  // ── Keep first attempt per student only ────────────────────────────────────
+  function deduplicateToFirstAttempt(results) {
+    const seen = new Map();
+    const sorted = [...results].sort(
+      (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
+    );
+    for (const r of sorted) {
+      const key = String(r.studentId?._id || r.studentId || r._id);
+      if (!seen.has(key)) seen.set(key, r);
+    }
+    return Array.from(seen.values());
+  }
+
+  function buildLeaderboard(raw) {
+    const first = deduplicateToFirstAttempt(raw);
+    first.sort((a, b) => {
+      const pa = a.scorePercentage ?? a.percentage ?? 0;
+      const pb = b.scorePercentage ?? b.percentage ?? 0;
+      return pb - pa;
+    });
+    return first;
+  }
 
   const load = useCallback(async () => {
     try {
@@ -3535,13 +3660,15 @@ export default function TestDetailPage() {
         (q) => q.qush && String(q.qush).trim().length > 0,
       );
       if (!hasHindi) setSelectedLang("english");
+
       const testId = testData._id;
       const [statsRes, lbRes] = await Promise.all([
         apiFetch(`/tests/${testId}/stats`).catch(() => ({ data: null })),
         apiFetch(`/tests/${testId}/leaderboard`).catch(() => ({ data: [] })),
       ]);
       setStats(statsRes.data);
-      setLeaderboard(lbRes.data || []);
+      setLeaderboard(buildLeaderboard(lbRes.data || []));
+
       if (user?._id) {
         apiFetch(`/results/student/me?testId=${testId}`)
           .then((r) => setMyResult(r.data?.[0] || null))
@@ -3569,7 +3696,7 @@ export default function TestDetailPage() {
           })),
         ]).then(([sRes, lbRes]) => {
           setStats(sRes.data);
-          setLeaderboard(lbRes.data || []);
+          setLeaderboard(buildLeaderboard(lbRes.data || []));
         });
       }
     };
@@ -3673,82 +3800,85 @@ export default function TestDetailPage() {
     }
   };
 
-  // ── Owner clicks a student row in leaderboard ─────────────────────────────
-  // The leaderboard entry already has the result _id — use it directly.
-  // We then fetch the full result + the test questions and navigate to
-  // /test-result with the exact same state shape that ResultPage expects.
+  // ── Owner clicks a leaderboard row ─────────────────────────────────────────
+  // Fetches: (1) the specific first-attempt full result, (2) ALL attempts by
+  // this student for this test. Passes both to ResultPage via location.state.
   const handleViewStudentResult = async (leaderboardEntry) => {
     const resultId = leaderboardEntry._id;
-    if (!resultId) {
-      toast({ title: "Result ID not found", status: "error" });
-      return;
-    }
+    const studentId = String(
+      leaderboardEntry.studentId?._id || leaderboardEntry.studentId,
+    );
+    const studentName =
+      leaderboardEntry.studentId?.Name ||
+      leaderboardEntry.studentId?.Email ||
+      "Student";
 
-    setLoadingResult(true);
+    setLoadingResultId(resultId);
     try {
-      // Fetch full result document
-      const resData = await apiFetch(`/results/${resultId}`);
-      const r = resData.data || resData;
+      // 1. Full result with allAnswers, questionTimes, etc.
+      const resultRes = await apiFetch(`/results/${resultId}`);
+      const full = resultRes.data || resultRes;
 
-      // Normalise all fields to match what ResultPage reads from location.state
-      const questions = test.questions || [];
+      // 2. All attempts by this student for this test (filter client-side)
+      const allRes = await apiFetch(`/results/test/${test._id}`);
+      const allAttempts = (allRes.data || [])
+        .filter((r) => String(r.studentId?._id || r.studentId) === studentId)
+        .sort(
+          (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
+        );
+
+      // 3. Questions from the full test
+      const questions = full.testId?.questions || test.questions || [];
       const totalQuestions = questions.length;
-      const correctQus = r.correctQus || [];
-      const wrongansqus = r.wrongansqus || r.wrongQus || [];
-      const answeredQuestion = r.answeredQuestion || r.answered || [];
-      const notAnswer = r.notAnswer || r.skipped || [];
-      const markedAndAnswer = r.markedAndAnswer || [];
-      const markedNotAnswer = r.markedNotAnswer || [];
-      const score = r.correct ?? correctQus.length ?? 0;
-      const scorePercentage =
-        r.scorePercentage ??
-        r.percentage ??
+      const score = full.correct ?? full.correctQus?.length ?? 0;
+      const pct =
+        full.scorePercentage ??
+        full.percentage ??
         (totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0);
-      const allAnswers = r.allAnswers || r.answers || {};
-      const questionTimes = r.questionTimes || r.qTimes || {};
-      const timeTaken = r.timeTakenSec || r.timeTaken || 0;
-      const percentile = r.percentile ?? null;
-
-      // Student name for display
-      const studentName =
-        r.studentId?.Name ||
-        r.studentId?.Email ||
-        leaderboardEntry.studentId?.Name ||
-        leaderboardEntry.studentId?.Email ||
-        "Student";
 
       navigate("/test-result", {
         state: {
-          // identity context (ResultPage ignores extra keys safely)
+          // ── owner-view flags ───────────────────────────────────────────────
           viewingAs: "owner",
           studentName,
-
-          // all the fields ResultPage reads
+          studentId,
+          testId: test._id,
+          // ── all retakes summary (for the retake list in ResultPage) ────────
+          allAttempts: allAttempts.map((r, idx) => ({
+            _id: r._id,
+            attemptNumber: idx + 1,
+            createdAt: r.createdAt,
+            scorePercentage: r.scorePercentage ?? r.percentage ?? 0,
+            timeTakenSec: r.timeTakenSec ?? r.timeTaken ?? 0,
+            correct: r.correct ?? r.correctQus?.length ?? 0,
+            totalQuestions,
+          })),
+          currentAttemptId: resultId,
+          // ── result fields (same shape ResultPage already expects) ──────────
           testTitle: test.title,
           score,
           totalQuestions,
-          scorePercentage,
-          percentile,
-          timeTaken,
+          scorePercentage: pct,
+          percentile: full.percentile ?? null,
+          timeTaken: full.timeTakenSec ?? full.timeTaken ?? 0,
           questions,
-          allAnswers,
-          questionTimes,
-          correctQus,
-          wrongansqus,
-          answeredQuestion,
-          notAnswer,
-          markedAndAnswer,
-          markedNotAnswer,
+          allAnswers: full.allAnswers || full.answers || {},
+          questionTimes: full.questionTimes || full.qTimes || {},
+          correctQus: full.correctQus || [],
+          wrongansqus: full.wrongansqus || full.wrongQus || [],
+          answeredQuestion: full.answeredQuestion || full.answered || [],
+          notAnswer: full.notAnswer || full.skipped || [],
+          markedAndAnswer: full.markedAndAnswer || [],
+          markedNotAnswer: full.markedNotAnswer || [],
         },
       });
     } catch (e) {
-      toast({ title: e.message || "Failed to load result", status: "error" });
+      toast({ title: "Could not load result: " + e.message, status: "error" });
     } finally {
-      setLoadingResult(false);
+      setLoadingResultId(null);
     }
   };
 
-  // ── Non-owner: show TestInfoPage ──────────────────────────────────────────
   if (!isOwner) {
     return (
       <>
@@ -3816,11 +3946,10 @@ export default function TestDetailPage() {
     );
   }
 
-  // ── Owner dashboard ───────────────────────────────────────────────────────
   const TABS = ["overview", "leaderboard", "questions"];
-
   return (
     <Box minH="100vh" bg="#f8fafc" fontFamily="Inter,sans-serif">
+      {/* Header gradient */}
       <Box
         bg="linear-gradient(135deg,#0f1e3a 0%,#1e3a5f 50%,#2d5fa8 100%)"
         px={{ base: 4, md: 8 }}
@@ -4150,37 +4279,24 @@ export default function TestDetailPage() {
               align="center"
               gap={3}
               borderBottom="1px solid #f1f5f9"
+              flexWrap="wrap"
             >
               <Icon as={FaTrophy} color="#f59e0b" />
               <Text fontSize="15px" fontWeight={800} color="#0f172a">
                 Leaderboard
               </Text>
               <Badge colorScheme="blue" borderRadius="full">
-                {leaderboard.length} entries
+                {leaderboard.length} students
               </Badge>
-              {/* hint for owner */}
-              <Text fontSize="11px" color="#94a3b8" ml="auto">
-                Click a student to view their full result
+              <Text
+                fontSize="11px"
+                color="#94a3b8"
+                ml="auto"
+                display={{ base: "none", sm: "block" }}
+              >
+                Click any student to view their full result
               </Text>
             </Flex>
-
-            {/* loading overlay while fetching a student result */}
-            {loadingResult && (
-              <Flex
-                px={6}
-                py={3}
-                align="center"
-                gap={2}
-                bg="#eff6ff"
-                borderBottom="1px solid #bfdbfe"
-              >
-                <Spinner size="xs" color="#4a72b8" />
-                <Text fontSize="12px" color="#2563eb" fontWeight={600}>
-                  Loading student result…
-                </Text>
-              </Flex>
-            )}
-
             {leaderboard.length === 0 ? (
               <Box py={16} textAlign="center">
                 <Icon
@@ -4209,6 +4325,7 @@ export default function TestDetailPage() {
                     currentUserId={user?._id}
                     isOwner={isOwner}
                     onViewResult={handleViewStudentResult}
+                    loadingId={loadingResultId}
                   />
                 </Box>
               ))
