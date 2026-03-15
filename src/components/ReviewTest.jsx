@@ -582,300 +582,236 @@
 //   );
 // }
 
+/**
+ * ReviewTest.jsx
+ * Professional, consistent, fully responsive review page.
+ * Mobile: stacked layout, bottom nav bar
+ * Tablet: same stacked but wider
+ * Desktop: sidebar-left + question-right split
+ */
 import React, { useState } from "react";
 import {
-  Box,
-  Flex,
-  Text,
-  Badge,
-  Icon,
-  VStack,
-  Button,
-  Grid,
+  Box, Flex, Text, Badge, Icon, VStack, Button, Grid, Divider,
+  Drawer, DrawerBody, DrawerContent, DrawerOverlay, DrawerCloseButton,
+  useDisclosure, useMediaQuery, Center,
 } from "@chakra-ui/react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  FaArrowLeft,
-  FaArrowRight,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaFlag,
-  FaCircle,
-  FaChartBar,
-  FaStopwatch,
+  FaArrowLeft, FaArrowRight, FaCheckCircle, FaTimesCircle,
+  FaFlag, FaCircle, FaChartBar, FaStopwatch, FaBars,
 } from "react-icons/fa";
 import { FiAlertCircle } from "react-icons/fi";
 
+// ─── helpers ─────────────────────────────────────────────────────
 const fmtQTime = (s) => {
   if (!s && s !== 0) return null;
   if (s === 0) return "< 1s";
-  const m = Math.floor(s / 60),
-    sec = s % 60;
+  const m = Math.floor(s / 60), sec = s % 60;
   return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
 };
 
-const STATUS_CFG = {
-  correct: {
-    label: "Correct",
-    color: "#16a34a",
-    bg: "#f0fdf4",
-    border: "#bbf7d0",
-    icon: FaCheckCircle,
-  },
-  incorrect: {
-    label: "Incorrect",
-    color: "#ef4444",
-    bg: "#fef2f2",
-    border: "#fecaca",
-    icon: FaTimesCircle,
-  },
-  markedAnswered: {
-    label: "Marked & Answered",
-    color: "#7c3aed",
-    bg: "#f5f3ff",
-    border: "#ddd6fe",
-    icon: FaFlag,
-  },
-  markedSkipped: {
-    label: "Marked (Skipped)",
-    color: "#d97706",
-    bg: "#fffbeb",
-    border: "#fde68a",
-    icon: FaFlag,
-  },
-  skipped: {
-    label: "Not Attempted",
-    color: "#64748b",
-    bg: "#f8fafc",
-    border: "#e2e8f0",
-    icon: FaCircle,
-  },
-  answered: {
-    label: "Answered",
-    color: "#2563eb",
-    bg: "#eff6ff",
-    border: "#bfdbfe",
-    icon: FaCheckCircle,
-  },
-  notVisited: {
-    label: "Not Visited",
-    color: "#94a3b8",
-    bg: "#f8fafc",
-    border: "#e2e8f0",
-    icon: FaCircle,
-  },
+// ─── status config ────────────────────────────────────────────────
+const STATUS = {
+  correct:        { label: "Correct",          color: "#15803d", bg: "#f0fdf4", border: "#bbf7d0", dotBg: "#16a34a", icon: FaCheckCircle },
+  incorrect:      { label: "Incorrect",         color: "#b91c1c", bg: "#fef2f2", border: "#fecaca", dotBg: "#ef4444", icon: FaTimesCircle },
+  markedAnswered: { label: "Marked & Answered", color: "#6d28d9", bg: "#f5f3ff", border: "#ddd6fe", dotBg: "#7c3aed", icon: FaFlag       },
+  markedSkipped:  { label: "Marked (Skipped)",  color: "#b45309", bg: "#fffbeb", border: "#fde68a", dotBg: "#d97706", icon: FaFlag       },
+  skipped:        { label: "Not Attempted",     color: "#475569", bg: "#f8fafc", border: "#e2e8f0", dotBg: "#94a3b8", icon: FaCircle     },
+  answered:       { label: "Answered",          color: "#1d4ed8", bg: "#eff6ff", border: "#bfdbfe", dotBg: "#2563eb", icon: FaCheckCircle},
+  notVisited:     { label: "Not Visited",       color: "#94a3b8", bg: "#f8fafc", border: "#e2e8f0", dotBg: "#cbd5e1", icon: FaCircle     },
 };
 
-const SIDEBAR_COLORS = {
-  correct: { bg: "#16a34a", color: "white" },
-  incorrect: { bg: "#ef4444", color: "white" },
-  markedAnswered: { bg: "#7c3aed", color: "white" },
-  markedSkipped: { bg: "#d97706", color: "white" },
-  skipped: { bg: "#e2e8f0", color: "#64748b" },
-  answered: { bg: "#2563eb", color: "white" },
-  notVisited: { bg: "#f1f5f9", color: "#94a3b8" },
+// palette cell bg/color for grid
+const CELL = {
+  correct:        { bg: "#16a34a", color: "white"   },
+  incorrect:      { bg: "#ef4444", color: "white"   },
+  markedAnswered: { bg: "#7c3aed", color: "white"   },
+  markedSkipped:  { bg: "#d97706", color: "white"   },
+  skipped:        { bg: "#e2e8f0", color: "#64748b" },
+  answered:       { bg: "#2563eb", color: "white"   },
+  notVisited:     { bg: "#f1f5f9", color: "#94a3b8" },
 };
 
-function getStatus(
-  index,
-  {
-    correctQus,
-    wrongansqus,
-    markedAndAnswer,
-    markedNotAnswer,
-    notAnswer,
-    answeredQuestion,
-  },
-) {
-  if (correctQus.includes(index)) return "correct";
-  if (wrongansqus.includes(index)) return "incorrect";
-  if (markedAndAnswer.includes(index)) return "markedAnswered";
-  if (markedNotAnswer.includes(index)) return "markedSkipped";
-  if (notAnswer.includes(index)) return "skipped";
-  if (answeredQuestion.includes(index)) return "answered";
+function getStatus(i, { correctQus, wrongansqus, markedAndAnswer, markedNotAnswer, notAnswer, answeredQuestion }) {
+  if (correctQus.includes(i))       return "correct";
+  if (wrongansqus.includes(i))      return "incorrect";
+  if (markedAndAnswer.includes(i))  return "markedAnswered";
+  if (markedNotAnswer.includes(i))  return "markedSkipped";
+  if (notAnswer.includes(i))        return "skipped";
+  if (answeredQuestion.includes(i)) return "answered";
   return "notVisited";
 }
 
-function QuestionView({
-  question,
-  index,
-  allAnswers,
-  statusArrays,
-  questionTimes,
-}) {
-  if (!question) return null;
-  const status = getStatus(index, statusArrays);
-  const cfg = STATUS_CFG[status];
-  const userAnswerIdx = allAnswers[index] ?? allAnswers[String(index)];
-  const correctIdx =
-    typeof question.answer === "number" ? question.answer : question.answer - 1;
-  const timeStr = fmtQTime(
-    questionTimes?.[index] ?? questionTimes?.[String(index)] ?? null,
-  );
+// ─── sidebar panel (reused in desktop + drawer) ───────────────────
+function SidebarContent({ questions, current, setCurrent, statusArrays, onClose }) {
+  const legendItems = [
+    { key: "correct",        label: "Correct"          },
+    { key: "incorrect",      label: "Wrong"            },
+    { key: "skipped",        label: "Not Attempted"    },
+    { key: "markedAnswered", label: "Marked & Answered"},
+    { key: "markedSkipped",  label: "Marked (Skipped)" },
+    { key: "notVisited",     label: "Not Visited"      },
+  ];
 
   return (
-    <Box
-      bg={cfg.bg}
-      border="1px solid"
-      borderColor={cfg.border}
-      borderRadius="4px"
-    >
-      {/* Header */}
-      <Flex
-        align="center"
-        justify="space-between"
-        px={5}
-        py={3}
-        bg="white"
-        borderBottom="1px solid"
-        borderColor={cfg.border}
-      >
-        <Flex align="center" gap={3}>
-          <Flex
-            w="28px"
-            h="28px"
-            bg={cfg.bg}
-            borderRadius="4px"
-            align="center"
-            justify="center"
-            border="1px solid"
-            borderColor={cfg.border}
-            flexShrink={0}
-          >
-            <Text fontSize="12px" fontWeight={900} color={cfg.color}>
-              {index + 1}
-            </Text>
-          </Flex>
-          <Badge
-            px={3}
-            py="4px"
-            borderRadius="4px"
-            fontSize="12px"
-            fontWeight={700}
-            bg={cfg.bg}
-            color={cfg.color}
-            border="1px solid"
-            borderColor={cfg.border}
-          >
-            <Flex align="center" gap={1.5}>
-              <Icon as={cfg.icon} fontSize="11px" />
-              {cfg.label}
+    <Box h="100%" display="flex" flexDirection="column" overflow="hidden">
+      {/* Legend */}
+      <Box px={5} py={5} borderBottom="1px solid #f1f5f9" flexShrink={0}>
+        <Text fontSize="11px" fontWeight={800} color="#94a3b8"
+          textTransform="uppercase" letterSpacing="1.2px" mb={3}>
+          Legend
+        </Text>
+        <VStack align="stretch" spacing={2}>
+          {legendItems.map(({ key, label }) => (
+            <Flex key={key} align="center" gap={2.5}>
+              <Box w="12px" h="12px" borderRadius="3px" flexShrink={0}
+                bg={CELL[key].bg}
+                border={key === "skipped" || key === "notVisited" ? "1.5px solid #cbd5e1" : "none"} />
+              <Text fontSize="12px" color="#475569" fontWeight={500} lineHeight="1">{label}</Text>
             </Flex>
-          </Badge>
+          ))}
+        </VStack>
+      </Box>
+
+      {/* Question palette */}
+      <Box px={5} py={5} flex={1} overflowY="auto"
+        css={{ "&::-webkit-scrollbar": { width: "3px" }, "&::-webkit-scrollbar-thumb": { background: "#e2e8f0", borderRadius: "4px" } }}>
+        <Text fontSize="11px" fontWeight={800} color="#94a3b8"
+          textTransform="uppercase" letterSpacing="1.2px" mb={3}>
+          Questions
+        </Text>
+        <Grid templateColumns="repeat(5, 1fr)" gap={2}>
+          {questions.map((_, i) => {
+            const st = getStatus(i, statusArrays);
+            const c  = CELL[st];
+            const active = i === current;
+            return (
+              <Center key={i}
+                h="36px" w="100%"
+                borderRadius="8px"
+                cursor="pointer"
+                fontSize="11px" fontWeight={800}
+                bg={active ? "#0f172a" : c.bg}
+                color={active ? "white" : c.color}
+                border={active ? "2px solid #4a72b8" : "2px solid transparent"}
+                boxShadow={active ? "0 0 0 3px rgba(74,114,184,.18)" : "none"}
+                transition="all .15s"
+                _hover={{ transform: "scale(1.06)", opacity: .9 }}
+                onClick={() => { setCurrent(i); onClose?.(); }}>
+                {i + 1}
+              </Center>
+            );
+          })}
+        </Grid>
+      </Box>
+    </Box>
+  );
+}
+
+// ─── question card ────────────────────────────────────────────────
+function QuestionCard({ question, index, allAnswers, statusArrays, questionTimes }) {
+  if (!question) return null;
+
+  const status = getStatus(index, statusArrays);
+  const cfg    = STATUS[status];
+  const userAnswerIdx = allAnswers[index] ?? allAnswers[String(index)];
+  const correctIdx    = typeof question.answer === "number" ? question.answer : question.answer - 1;
+  const timeStr       = fmtQTime(questionTimes?.[index] ?? questionTimes?.[String(index)] ?? null);
+
+  return (
+    <Box bg="white" borderRadius="16px" border="1px solid #e8eef7"
+      overflow="hidden" boxShadow="0 2px 16px rgba(0,0,0,.05)">
+
+      {/* Card top bar — colored by status */}
+      <Box h="4px" bg={cfg.dotBg} />
+
+      {/* Card header */}
+      <Flex align="center" justify="space-between"
+        px={{ base: 4, md: 6 }} py={4}
+        borderBottom="1px solid #f1f5f9">
+        <Flex align="center" gap={3}>
+          {/* Q number */}
+          <Flex w="32px" h="32px" flexShrink={0} borderRadius="8px"
+            bg={cfg.bg} border={`1.5px solid ${cfg.border}`}
+            align="center" justify="center">
+            <Text fontSize="13px" fontWeight={900} color={cfg.color}>{index + 1}</Text>
+          </Flex>
+          {/* Status pill */}
+          <Flex align="center" gap={1.5} px={3} py="5px" borderRadius="20px"
+            bg={cfg.bg} border={`1px solid ${cfg.border}`}>
+            <Icon as={cfg.icon} fontSize="11px" color={cfg.color} />
+            <Text fontSize="12px" fontWeight={700} color={cfg.color}>{cfg.label}</Text>
+          </Flex>
         </Flex>
+        {/* Time taken */}
         {timeStr && (
-          <Flex
-            align="center"
-            gap={1.5}
-            bg="#f8fafc"
-            px={3}
-            py="5px"
-            borderRadius="4px"
-            border="1px solid #e2e8f0"
-          >
-            <Icon as={FaStopwatch} fontSize="11px" color="#64748b" />
-            <Text fontSize="12px" fontWeight={700} color="#374151">
-              {timeStr}
-            </Text>
+          <Flex align="center" gap={1.5} px={3} py="5px" borderRadius="20px"
+            bg="#f8fafc" border="1px solid #e8eef7">
+            <Icon as={FaStopwatch} fontSize="10px" color="#64748b" />
+            <Text fontSize="12px" fontWeight={700} color="#374151">{timeStr}</Text>
           </Flex>
         )}
       </Flex>
 
-      {/* Body */}
-      <Box px={5} py={4}>
-        <Text
-          fontSize="15px"
-          fontWeight={600}
-          color="#0f172a"
-          mb={4}
-          lineHeight="1.75"
-        >
+      {/* Question text */}
+      <Box px={{ base: 4, md: 6 }} pt={5} pb={4}>
+        <Text fontSize={{ base: "15px", md: "16px" }} fontWeight={600}
+          color="#0f172a" lineHeight="1.8" mb={5}>
           {question.qus}
         </Text>
 
-        <VStack spacing={2} align="stretch" mb={4}>
+        {/* Options */}
+        <VStack spacing={2.5} align="stretch" mb={5}>
           {question.options?.map((opt, i) => {
-            const isCorrect = i === correctIdx;
+            const isCorrect  = i === correctIdx;
             const isUserPick = userAnswerIdx === i;
-            const isWrong = isUserPick && !isCorrect;
+            const isWrong    = isUserPick && !isCorrect;
+
+            const borderCol = isCorrect ? "#86efac" : isWrong ? "#fca5a5" : "#e8eef7";
+            const bgCol     = isCorrect ? "#f0fdf4"  : isWrong ? "#fef2f2"  : "#fafbff";
+            const circleBg  = isCorrect ? "#16a34a"  : isWrong ? "#ef4444"  : "#eef2f7";
+            const circleCol = isCorrect || isWrong ? "white" : "#64748b";
+
             return (
-              <Flex
-                key={i}
-                align="center"
-                gap={3}
-                px={4}
-                py={3}
-                borderRadius="4px"
-                border="1px solid"
-                borderColor={
-                  isCorrect ? "#86efac" : isWrong ? "#fca5a5" : "#e2e8f0"
-                }
-                bg={isCorrect ? "#f0fdf4" : isWrong ? "#fef2f2" : "white"}
-              >
-                <Flex
-                  w="26px"
-                  h="26px"
-                  borderRadius="4px"
-                  flexShrink={0}
-                  align="center"
-                  justify="center"
-                  fontWeight={800}
-                  fontSize="12px"
-                  bg={isCorrect ? "#16a34a" : isWrong ? "#ef4444" : "#f1f5f9"}
-                  color={isCorrect || isWrong ? "white" : "#64748b"}
-                >
-                  {String.fromCharCode(65 + i)}
-                </Flex>
-                <Text
-                  flex={1}
-                  fontSize="14px"
-                  color="#374151"
-                  fontWeight={isCorrect || isUserPick ? 600 : 400}
-                >
+              <Flex key={i} align="center" gap={4}
+                px={{ base: 3, md: 4 }} py={3}
+                borderRadius="10px"
+                border="1.5px solid" borderColor={borderCol}
+                bg={bgCol}>
+                {/* Letter */}
+                <Center w="32px" h="32px" borderRadius="8px" flexShrink={0}
+                  bg={circleBg} color={circleCol}
+                  fontSize="12px" fontWeight={900}>
+                  {isCorrect
+                    ? <Icon as={FaCheckCircle} fontSize="14px" />
+                    : isWrong
+                      ? <Icon as={FaTimesCircle} fontSize="14px" />
+                      : String.fromCharCode(65 + i)}
+                </Center>
+                {/* Text */}
+                <Text flex={1} fontSize={{ base: "13px", md: "14px" }} color="#1e293b"
+                  fontWeight={isCorrect || isUserPick ? 600 : 400} lineHeight="1.55">
                   {opt}
                 </Text>
-                <Flex gap={1.5} flexShrink={0}>
+                {/* Tags */}
+                <Flex gap={1.5} flexShrink={0} flexWrap="wrap" justify="flex-end">
                   {isCorrect && (
-                    <Badge
-                      bg="#f0fdf4"
-                      color="#16a34a"
-                      fontSize="10px"
-                      fontWeight={700}
-                      border="1px solid #bbf7d0"
-                      px={2}
-                      py="3px"
-                      borderRadius="4px"
-                    >
+                    <Box px={2.5} py="3px" borderRadius="20px" fontSize="10px" fontWeight={700}
+                      bg="#dcfce7" color="#15803d" border="1px solid #bbf7d0">
                       ✓ Correct
-                    </Badge>
+                    </Box>
                   )}
                   {isUserPick && isCorrect && (
-                    <Badge
-                      bg="#eff6ff"
-                      color="#2563eb"
-                      fontSize="10px"
-                      fontWeight={700}
-                      border="1px solid #bfdbfe"
-                      px={2}
-                      py="3px"
-                      borderRadius="4px"
-                    >
-                      Your Answer
-                    </Badge>
+                    <Box px={2.5} py="3px" borderRadius="20px" fontSize="10px" fontWeight={700}
+                      bg="#dbeafe" color="#1d4ed8" border="1px solid #bfdbfe">
+                      Your Pick
+                    </Box>
                   )}
                   {isWrong && (
-                    <Badge
-                      bg="#fef2f2"
-                      color="#ef4444"
-                      fontSize="10px"
-                      fontWeight={700}
-                      border="1px solid #fecaca"
-                      px={2}
-                      py="3px"
-                      borderRadius="4px"
-                    >
-                      ✗ Your Answer
-                    </Badge>
+                    <Box px={2.5} py="3px" borderRadius="20px" fontSize="10px" fontWeight={700}
+                      bg="#fee2e2" color="#b91c1c" border="1px solid #fecaca">
+                      ✗ Your Pick
+                    </Box>
                   )}
                 </Flex>
               </Flex>
@@ -884,55 +820,26 @@ function QuestionView({
         </VStack>
 
         {/* Answer summary */}
-        <Flex
-          gap={6}
-          align="center"
-          px={4}
-          py={3}
-          bg="white"
-          borderRadius="4px"
-          border="1px solid #f1f5f9"
-          mb={question.explanation ? 3 : 0}
-        >
-          <Box>
-            <Text
-              fontSize="10px"
-              color="#94a3b8"
-              fontWeight={700}
-              textTransform="uppercase"
-              letterSpacing=".7px"
-              mb={1}
-            >
+        <Flex gap={0} mb={question.explanation ? 4 : 0}
+          bg="#f8fafc" borderRadius="10px" border="1px solid #f1f5f9"
+          overflow="hidden">
+          <Box flex={1} px={4} py={3} borderRight="1px solid #f1f5f9">
+            <Text fontSize="10px" fontWeight={700} color="#94a3b8"
+              textTransform="uppercase" letterSpacing="0.8px" mb={1}>
               Your Answer
             </Text>
-            <Text
-              fontSize="14px"
-              fontWeight={700}
-              color={
-                status === "correct"
-                  ? "#16a34a"
-                  : status === "incorrect"
-                    ? "#ef4444"
-                    : "#94a3b8"
-              }
-            >
+            <Text fontSize="14px" fontWeight={700}
+              color={status === "correct" ? "#15803d" : status === "incorrect" ? "#b91c1c" : "#94a3b8"}>
               {userAnswerIdx !== undefined && userAnswerIdx !== null
-                ? question.options?.[userAnswerIdx] || "—"
-                : "Not Attempted"}
+                ? (question.options?.[userAnswerIdx] || "—") : "Not Attempted"}
             </Text>
           </Box>
-          <Box>
-            <Text
-              fontSize="10px"
-              color="#94a3b8"
-              fontWeight={700}
-              textTransform="uppercase"
-              letterSpacing=".7px"
-              mb={1}
-            >
+          <Box flex={1} px={4} py={3}>
+            <Text fontSize="10px" fontWeight={700} color="#94a3b8"
+              textTransform="uppercase" letterSpacing="0.8px" mb={1}>
               Correct Answer
             </Text>
-            <Text fontSize="14px" fontWeight={700} color="#16a34a">
+            <Text fontSize="14px" fontWeight={700} color="#15803d">
               {question.options?.[correctIdx] || "—"}
             </Text>
           </Box>
@@ -940,26 +847,16 @@ function QuestionView({
 
         {/* Explanation */}
         {question.explanation && (
-          <Box
-            mt={3}
-            p={4}
-            bg="#eff6ff"
-            borderRadius="4px"
-            borderLeft="3px solid #4a72b8"
-          >
-            <Flex align="center" gap={2} mb={1.5}>
-              <Icon as={FiAlertCircle} color="#4a72b8" fontSize="13px" />
-              <Text
-                fontSize="10px"
-                fontWeight={800}
-                color="#1e3a5f"
-                textTransform="uppercase"
-                letterSpacing=".7px"
-              >
+          <Box p={4} bg="#eff6ff" borderRadius="10px"
+            borderLeft="4px solid #3b82f6">
+            <Flex align="center" gap={2} mb={2}>
+              <Icon as={FiAlertCircle} color="#3b82f6" fontSize="14px" />
+              <Text fontSize="10px" fontWeight={800} color="#1e40af"
+                textTransform="uppercase" letterSpacing="0.8px">
                 Explanation
               </Text>
             </Flex>
-            <Text fontSize="13px" color="#1e3a5f" lineHeight="1.75">
+            <Text fontSize="13px" color="#1e3a5f" lineHeight="1.8">
               {question.explanation}
             </Text>
           </Box>
@@ -969,272 +866,247 @@ function QuestionView({
   );
 }
 
+// ─── main page ────────────────────────────────────────────────────
 export default function ReviewTest() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isDesktop] = useMediaQuery("(min-width: 1024px)");
   const s = location.state || {};
 
-  const questions = s.questions || [];
-  const allAnswers = s.allAnswers || {};
-  const questionTimes = s.questionTimes || {};
-  const correctQus = s.correctQus || [];
-  const wrongansqus = s.wrongansqus || [];
+  const questions        = s.questions || [];
+  const allAnswers       = s.allAnswers || {};
+  const questionTimes    = s.questionTimes || {};
+  const correctQus       = s.correctQus || [];
+  const wrongansqus      = s.wrongansqus || [];
   const answeredQuestion = s.answeredQuestion || [];
-  const notAnswer = s.notAnswer || [];
-  const markedAndAnswer = s.markedAndAnswer || [];
-  const markedNotAnswer = s.markedNotAnswer || [];
-  const testTitle = s.testTitle || "Test Review";
+  const notAnswer        = s.notAnswer || [];
+  const markedAndAnswer  = s.markedAndAnswer || [];
+  const markedNotAnswer  = s.markedNotAnswer || [];
+  const testTitle        = s.testTitle || "Test Review";
 
-  const statusArrays = {
-    correctQus,
-    wrongansqus,
-    markedAndAnswer,
-    markedNotAnswer,
-    notAnswer,
-    answeredQuestion,
-  };
+  const statusArrays = { correctQus, wrongansqus, markedAndAnswer, markedNotAnswer, notAnswer, answeredQuestion };
   const [current, setCurrent] = useState(0);
+
+  // progress
+  const totalAnswered = correctQus.length + wrongansqus.length + answeredQuestion.length + notAnswer.length + markedAndAnswer.length + markedNotAnswer.length;
+  const pct = questions.length > 0 ? Math.round((totalAnswered / questions.length) * 100) : 0;
 
   if (!questions.length) {
     return (
-      <Flex
-        minH="100vh"
-        align="center"
-        justify="center"
-        direction="column"
-        gap={4}
-        bg="#f8fafc"
-        fontFamily="'Sora',sans-serif"
-      >
-        <Icon as={FaChartBar} fontSize="48px" color="#e2e8f0" />
-        <Text fontSize="16px" fontWeight={700} color="#374151">
-          No review data found
-        </Text>
-        <Button
-          onClick={() => navigate(-1)}
-          leftIcon={<Icon as={FaArrowLeft} />}
-          bg="#4a72b8"
-          color="white"
-          borderRadius="4px"
-          fontWeight={700}
-          _hover={{ bg: "#3b5fa0" }}
-        >
+      <Flex minH="100vh" align="center" justify="center" direction="column" gap={4}
+        bg="#f8fafc" fontFamily="'DM Sans',sans-serif">
+        <Box fontSize="48px">📋</Box>
+        <Text fontSize="18px" fontWeight={700} color="#0f172a">No review data found</Text>
+        <Text fontSize="14px" color="#64748b">Please submit a test first</Text>
+        <Button onClick={() => navigate(-1)} leftIcon={<Icon as={FaArrowLeft} />}
+          bg="#0f172a" color="white" borderRadius="10px" fontWeight={700}
+          h="44px" px={6} mt={2} _hover={{ bg: "#1e293b" }}>
           Go Back
         </Button>
       </Flex>
     );
   }
 
+  const currentStatus = getStatus(current, statusArrays);
+  const currentCfg    = STATUS[currentStatus];
+
   return (
-    <Box minH="100vh" bg="#f1f5f9" fontFamily="'Sora',sans-serif">
-      {/* Header — full width, no maxW */}
+    <Box minH="100vh" bg="#f0f4fa" fontFamily="'DM Sans',sans-serif">
+
+      {/* ── Top header ── */}
       <Box
-        bg="linear-gradient(135deg,#0f1e3a,#1e3a5f,#2d5fa8)"
-        px={{ base: 4, md: 6 }}
-        py={4}
-      >
-        <Flex align="center" justify="space-between">
-          <Flex align="center" gap={3}>
-            <Box
-              cursor="pointer"
-              onClick={() => navigate(-1)}
-              color="rgba(255,255,255,.5)"
-              _hover={{ color: "white" }}
-              transition="color .15s"
-            >
-              <Icon as={FaArrowLeft} fontSize="14px" />
+        bg="linear-gradient(135deg,#0b1e3d 0%,#132952 55%,#1e4080 100%)"
+        boxShadow="0 2px 20px rgba(11,30,61,.4)"
+        position="sticky" top={0} zIndex={100}>
+
+        {/* Main bar */}
+        <Flex px={{ base: 4, md: 6, lg: 8 }} h={{ base: "56px", md: "64px" }}
+          align="center" justify="space-between">
+
+          {/* Left: back + title */}
+          <Flex align="center" gap={3} minW={0} flex={1}>
+            <Box cursor="pointer" onClick={() => navigate(-1)} flexShrink={0}
+              w="34px" h="34px" borderRadius="9px"
+              bg="rgba(255,255,255,.08)" border="1px solid rgba(255,255,255,.12)"
+              display="flex" alignItems="center" justifyContent="center"
+              _hover={{ bg: "rgba(255,255,255,.15)" }} transition="all .15s">
+              <Icon as={FaArrowLeft} color="rgba(255,255,255,.8)" fontSize="13px" />
             </Box>
-            <Box>
-              <Text
-                fontSize={{ base: "14px", md: "18px" }}
-                fontWeight={800}
-                color="white"
-                noOfLines={1}
-              >
+            <Box minW={0}>
+              <Text fontSize={{ base: "14px", md: "16px" }} fontWeight={800}
+                color="white" letterSpacing="-0.3px" noOfLines={1}>
                 {testTitle}
               </Text>
-              <Text fontSize="11px" color="rgba(255,255,255,.5)">
-                Review Mode · Q{current + 1} of {questions.length}
+              <Text fontSize="10px" color="rgba(255,255,255,.4)"
+                textTransform="uppercase" letterSpacing="1px" fontWeight={600}>
+                Review Mode
               </Text>
             </Box>
           </Flex>
-          <Flex
-            px={3}
-            py={1.5}
-            bg="rgba(255,255,255,.14)"
-            borderRadius="4px"
-            border="1px solid rgba(255,255,255,.22)"
-            align="center"
-          >
-            <Text fontSize="13px" fontWeight={800} color="white">
-              {current + 1} / {questions.length}
+
+          {/* Center: Q counter */}
+          <Flex align="center" gap={2} flexShrink={0}
+            bg="rgba(255,255,255,.08)" border="1px solid rgba(255,255,255,.12)"
+            borderRadius="10px" px={4} py="8px">
+            <Text fontSize={{ base: "15px", md: "17px" }} fontWeight={900}
+              color="white" letterSpacing="1.5px"
+              fontFamily="'JetBrains Mono', monospace">
+              {String(current + 1).padStart(2, "0")}/{String(questions.length).padStart(2, "0")}
             </Text>
           </Flex>
+
+          {/* Right: palette toggle (mobile/tablet) */}
+          {!isDesktop && (
+            <Box ml={3} flexShrink={0}
+              cursor="pointer" onClick={onOpen}
+              w="34px" h="34px" borderRadius="9px"
+              bg="rgba(255,255,255,.08)" border="1px solid rgba(255,255,255,.12)"
+              display="flex" alignItems="center" justifyContent="center"
+              _hover={{ bg: "rgba(255,255,255,.15)" }} transition="all .15s">
+              <Icon as={FaBars} color="rgba(255,255,255,.8)" fontSize="13px" />
+            </Box>
+          )}
         </Flex>
+
+        {/* Progress strip */}
+        <Box h="3px" bg="rgba(255,255,255,.08)">
+          <Box h="100%" bg="linear-gradient(90deg,#38bdf8,#818cf8)"
+            w={`${pct}%`} transition="width .6s ease" />
+        </Box>
       </Box>
 
-      {/* Body — full width, side by side */}
-      <Flex align="flex-start" direction={{ base: "column", lg: "row" }}>
-        {/* ── Sidebar — no gap, flush to edge ── */}
-        <Box
-          w={{ base: "100%", lg: "220px" }}
-          flexShrink={0}
-          bg="white"
-          borderRight="1px solid #e2e8f0"
-          borderBottom={{ base: "1px solid #e2e8f0", lg: "none" }}
-          p={4}
-          position={{ base: "static", lg: "sticky" }}
-          top={0}
-          minH={{ lg: "calc(100vh - 70px)" }}
-        >
-          {/* Legend */}
-          <Text
-            fontSize="10px"
-            fontWeight={700}
-            color="#94a3b8"
-            textTransform="uppercase"
-            letterSpacing=".8px"
-            mb={2}
-          >
-            Legend
-          </Text>
-          <VStack align="stretch" spacing={1.5} mb={4}>
-            {[
-              { key: "correct", label: "Correct" },
-              { key: "incorrect", label: "Wrong" },
-              { key: "skipped", label: "Skipped" },
-              { key: "markedAnswered", label: "Marked & Answered" },
-              { key: "markedSkipped", label: "Marked (Skipped)" },
-              { key: "notVisited", label: "Not Visited" },
-            ].map(({ key, label }) => (
-              <Flex key={key} align="center" gap={2}>
-                <Box
-                  w="11px"
-                  h="11px"
-                  borderRadius="2px"
-                  flexShrink={0}
-                  bg={SIDEBAR_COLORS[key].bg}
-                  border={
-                    key === "skipped" || key === "notVisited"
-                      ? "1px solid #cbd5e1"
-                      : "none"
-                  }
-                />
-                <Text fontSize="12px" color="#374151" fontWeight={500}>
-                  {label}
+      {/* ── Body ── */}
+      <Flex h={{ lg: "calc(100vh - 67px)" }} overflow={{ lg: "hidden" }}>
+
+        {/* Desktop sidebar */}
+        {isDesktop && (
+          <Box w="260px" flexShrink={0} bg="white"
+            borderRight="1px solid #e8eef7"
+            overflowY="auto"
+            css={{ "&::-webkit-scrollbar": { width: "3px" }, "&::-webkit-scrollbar-thumb": { background: "#e2e8f0", borderRadius: "4px" } }}>
+            <SidebarContent
+              questions={questions} current={current}
+              setCurrent={setCurrent} statusArrays={statusArrays} />
+          </Box>
+        )}
+
+        {/* Mobile/tablet drawer */}
+        {!isDesktop && (
+          <Drawer isOpen={isOpen} onClose={onClose} placement="left" size="xs">
+            <DrawerOverlay backdropFilter="blur(4px)" bg="rgba(0,0,0,.35)" />
+            <DrawerContent bg="white">
+              <DrawerCloseButton top={3} right={3} />
+              <Box pt={10} h="100%">
+                <SidebarContent
+                  questions={questions} current={current}
+                  setCurrent={setCurrent} statusArrays={statusArrays}
+                  onClose={onClose} />
+              </Box>
+            </DrawerContent>
+          </Drawer>
+        )}
+
+        {/* Question area */}
+        <Box flex={1} minW={0} overflowY="auto"
+          css={{ "&::-webkit-scrollbar": { width: "4px" }, "&::-webkit-scrollbar-thumb": { background: "#e2e8f0", borderRadius: "4px" } }}>
+
+          {/* Sub-header: Q number + status */}
+          <Flex px={{ base: 4, md: 6, lg: 8 }} py={3}
+            bg="white" borderBottom="1px solid #e8eef7"
+            align="center" justify="space-between" position="sticky" top={0} zIndex={10}>
+            <Flex align="center" gap={3}>
+              <Box px={3} py="5px" borderRadius="8px"
+                bg="linear-gradient(135deg,#0f172a,#1e3a5f)">
+                <Text fontSize="12px" fontWeight={800} color="white" letterSpacing=".5px">
+                  Q {current + 1} of {questions.length}
+                </Text>
+              </Box>
+              <Flex align="center" gap={1.5} px={3} py="5px"
+                borderRadius="20px" bg={currentCfg.bg} border={`1px solid ${currentCfg.border}`}>
+                <Icon as={currentCfg.icon} fontSize="10px" color={currentCfg.color} />
+                <Text fontSize="11px" fontWeight={700} color={currentCfg.color}>
+                  {currentCfg.label}
                 </Text>
               </Flex>
-            ))}
-          </VStack>
-
-          {/* Divider */}
-          <Box borderTop="1px solid #f1f5f9" mb={3} />
-
-          {/* Question palette */}
-          <Text
-            fontSize="10px"
-            fontWeight={700}
-            color="#94a3b8"
-            textTransform="uppercase"
-            letterSpacing=".8px"
-            mb={2}
-          >
-            Questions
-          </Text>
-          <Grid templateColumns="repeat(5,1fr)" gap={1.5}>
-            {questions.map((_, i) => {
-              const st = getStatus(i, statusArrays);
-              const sc = SIDEBAR_COLORS[st] || SIDEBAR_COLORS.notVisited;
-              const isActive = i === current;
-              return (
-                <Flex
-                  key={i}
-                  w="34px"
-                  h="34px"
-                  align="center"
-                  justify="center"
-                  borderRadius="4px"
-                  cursor="pointer"
-                  fontSize="11px"
-                  fontWeight={800}
-                  bg={isActive ? "#0f1e3a" : sc.bg}
-                  color={isActive ? "white" : sc.color}
-                  border={isActive ? "2px solid #4a72b8" : "none"}
-                  boxShadow={
-                    isActive ? "0 0 0 2px rgba(74,114,184,.2)" : "none"
-                  }
-                  onClick={() => setCurrent(i)}
-                  transition="all .1s"
-                  _hover={{ opacity: 0.8 }}
-                >
-                  {i + 1}
-                </Flex>
-              );
-            })}
-          </Grid>
-        </Box>
-
-        {/* ── Question + Nav — takes remaining width ── */}
-        <Box flex={1} minW={0} p={{ base: 3, md: 5 }}>
-          <QuestionView
-            question={questions[current]}
-            index={current}
-            allAnswers={allAnswers}
-            statusArrays={statusArrays}
-            questionTimes={questionTimes}
-          />
-
-          {/* Navigation */}
-          <Flex justify="space-between" align="center" mt={4} gap={3}>
-            <Button
-              leftIcon={<Icon as={FaArrowLeft} />}
-              isDisabled={current === 0}
-              onClick={() => setCurrent((c) => Math.max(0, c - 1))}
-              variant="outline"
-              borderRadius="4px"
-              fontWeight={700}
-              fontSize="13px"
-              borderColor="#e2e8f0"
-              color="#374151"
-              h="40px"
-              px={5}
-              _hover={{ bg: "#f8fafc" }}
-              _disabled={{ opacity: 0.4 }}
-            >
-              Previous
-            </Button>
-            <Button
-              onClick={() => navigate(-1)}
-              bg="#f1f5f9"
-              color="#64748b"
-              borderRadius="4px"
-              fontWeight={700}
-              fontSize="13px"
-              h="40px"
-              px={5}
-              _hover={{ bg: "#e2e8f0" }}
-            >
-              Back to Results
-            </Button>
-            <Button
-              rightIcon={<Icon as={FaArrowRight} />}
-              isDisabled={current === questions.length - 1}
-              onClick={() =>
-                setCurrent((c) => Math.min(questions.length - 1, c + 1))
-              }
-              bg="#4a72b8"
-              color="white"
-              borderRadius="4px"
-              fontWeight={700}
-              fontSize="13px"
-              h="40px"
-              px={5}
-              _hover={{ bg: "#3b5fa0" }}
-              _disabled={{ opacity: 0.4 }}
-            >
-              Next
-            </Button>
+            </Flex>
           </Flex>
+
+          {/* Question card */}
+          <Box px={{ base: 3, md: 5, lg: 8 }} py={{ base: 4, md: 6 }}>
+            <QuestionCard
+              question={questions[current]}
+              index={current}
+              allAnswers={allAnswers}
+              statusArrays={statusArrays}
+              questionTimes={questionTimes}
+            />
+          </Box>
+
+          {/* ── Bottom nav bar ── */}
+          <Box px={{ base: 3, md: 5, lg: 8 }} pb={6}>
+            <Flex align="center" justify="space-between" gap={3}
+              bg="white" borderRadius="14px" border="1px solid #e8eef7"
+              px={4} py={3} boxShadow="0 2px 10px rgba(0,0,0,.04)">
+
+              {/* Prev */}
+              <Button
+                leftIcon={<Icon as={FaArrowLeft} fontSize="11px" />}
+                isDisabled={current === 0}
+                onClick={() => setCurrent(c => Math.max(0, c - 1))}
+                bg="#f8fafc" color="#374151" borderRadius="10px"
+                fontWeight={700} fontSize="13px" h="40px" px={4}
+                border="1px solid #e2e8f0"
+                _hover={{ bg: "#f1f5f9", borderColor: "#cbd5e1" }}
+                _disabled={{ opacity: .35, cursor: "not-allowed" }}
+                transition="all .15s">
+                Prev
+              </Button>
+
+              {/* Dot nav — show 7 at a time */}
+              <Flex align="center" gap={1.5} flex={1} justify="center" overflow="hidden">
+                {(() => {
+                  const half = 3;
+                  let start = Math.max(0, current - half);
+                  let end   = Math.min(questions.length - 1, start + 6);
+                  if (end - start < 6) start = Math.max(0, end - 6);
+                  const visible = [];
+                  for (let i = start; i <= end; i++) visible.push(i);
+                  return visible.map(i => {
+                    const st = getStatus(i, statusArrays);
+                    const c  = CELL[st];
+                    const active = i === current;
+                    return (
+                      <Center key={i} w="30px" h="30px" borderRadius="8px" cursor="pointer"
+                        fontSize="10px" fontWeight={800}
+                        bg={active ? "#0f172a" : c.bg}
+                        color={active ? "white" : c.color}
+                        border={active ? "2px solid #4a72b8" : "2px solid transparent"}
+                        boxShadow={active ? "0 0 0 2px rgba(74,114,184,.2)" : "none"}
+                        onClick={() => setCurrent(i)} transition="all .12s"
+                        _hover={{ transform: "scale(1.08)" }}>
+                        {i + 1}
+                      </Center>
+                    );
+                  });
+                })()}
+              </Flex>
+
+              {/* Next */}
+              <Button
+                rightIcon={<Icon as={FaArrowRight} fontSize="11px" />}
+                isDisabled={current === questions.length - 1}
+                onClick={() => setCurrent(c => Math.min(questions.length - 1, c + 1))}
+                bg="linear-gradient(135deg,#0f172a,#1e3a5f)" color="white"
+                borderRadius="10px" fontWeight={700} fontSize="13px"
+                h="40px" px={4}
+                _hover={{ opacity: .9, boxShadow: "0 4px 14px rgba(15,23,42,.25)" }}
+                _disabled={{ opacity: .35, cursor: "not-allowed" }}
+                transition="all .15s">
+                Next
+              </Button>
+            </Flex>
+          </Box>
         </Box>
       </Flex>
     </Box>
