@@ -592,7 +592,7 @@
 
 /**
  * ReviewTest.jsx — one-question-at-a-time review mode
- * Fixed: excess whitespace removed, compact layout, per-question time shown
+ * Full-width layout, larger fonts, proper use of available space
  */
 import React, { useState } from "react";
 import { Box, Flex, Text, Badge, Icon, VStack, Button, Grid } from "@chakra-ui/react";
@@ -650,71 +650,87 @@ function QuestionView({ question, index, allAnswers, statusArrays, questionTimes
   const timeStr = fmtQTime(timeTaken);
 
   return (
-    <Box bg={cfg.bg} border="1.5px solid" borderColor={cfg.border}
-      borderRadius="14px" overflow="hidden" boxShadow="0 2px 12px rgba(0,0,0,.05)">
+    <Box bg={cfg.bg} border="2px solid" borderColor={cfg.border}
+      borderRadius="16px" overflow="hidden"
+      boxShadow="0 4px 20px rgba(0,0,0,.07)">
+
       {/* Card header */}
-      <Flex align="center" justify="space-between" px={5} py={3} bg="white"
-        borderBottom="1px solid" borderColor={cfg.border}>
-        <Flex align="center" gap={3}>
-          <Flex w="26px" h="26px" bg={cfg.bg} borderRadius="full" align="center" justify="center"
-            border="1.5px solid" borderColor={cfg.border}>
-            <Text fontSize="11px" fontWeight={800} color={cfg.color}>{index + 1}</Text>
+      <Flex align="center" justify="space-between" px={6} py={4} bg="white"
+        borderBottom="1.5px solid" borderColor={cfg.border}>
+        <Flex align="center" gap={4}>
+          {/* Question number bubble */}
+          <Flex w="36px" h="36px" bg={cfg.bg} borderRadius="full" align="center" justify="center"
+            border="2px solid" borderColor={cfg.border} flexShrink={0}>
+            <Text fontSize="14px" fontWeight={900} color={cfg.color}>{index + 1}</Text>
           </Flex>
-          <Badge px={3} py={1} borderRadius="full" fontSize="11px" fontWeight={700}
-            bg={cfg.bg} color={cfg.color} border="1px solid" borderColor={cfg.border}>
-            <Flex align="center" gap={1.5}>
-              <Icon as={cfg.icon} fontSize="10px" />{cfg.label}
+          {/* Status badge */}
+          <Badge px={4} py={1.5} borderRadius="full" fontSize="13px" fontWeight={700}
+            bg={cfg.bg} color={cfg.color} border="1.5px solid" borderColor={cfg.border}>
+            <Flex align="center" gap={2}>
+              <Icon as={cfg.icon} fontSize="13px" />{cfg.label}
             </Flex>
           </Badge>
         </Flex>
-        {/* Per-question time */}
+        {/* Time badge */}
         {timeStr && (
-          <Flex align="center" gap={1.5} bg="#f8fafc" px={3} py="4px"
+          <Flex align="center" gap={2} bg="#f8fafc" px={4} py={2}
             borderRadius="full" border="1px solid #e2e8f0">
-            <Icon as={FaStopwatch} fontSize="10px" color="#64748b" />
-            <Text fontSize="11px" fontWeight={700} color="#374151">{timeStr}</Text>
+            <Icon as={FaStopwatch} fontSize="12px" color="#64748b" />
+            <Text fontSize="13px" fontWeight={700} color="#374151">{timeStr}</Text>
           </Flex>
         )}
       </Flex>
 
-      <Box px={5} py={4}>
+      {/* Question body */}
+      <Box px={6} py={5}>
         {/* Question text */}
-        <Text fontSize="14px" fontWeight={600} color="#1e293b" mb={4} lineHeight="1.7">
+        <Text fontSize="17px" fontWeight={600} color="#0f172a" mb={5} lineHeight="1.8">
           {question.qus}
         </Text>
 
         {/* Options */}
-        <VStack spacing={2} align="stretch" mb={4}>
+        <VStack spacing={3} align="stretch" mb={5}>
           {question.options?.map((opt, i) => {
             const isCorrect  = i === correctIdx;
             const isUserPick = userAnswerIdx === i;
             const isWrong    = isUserPick && !isCorrect;
             return (
-              <Flex key={i} align="center" gap={3} px={4} py="10px" borderRadius="9px"
-                border="1.5px solid"
+              <Flex key={i} align="center" gap={4} px={5} py={4} borderRadius="12px"
+                border="2px solid"
                 borderColor={isCorrect ? "#86efac" : isWrong ? "#fca5a5" : "#e2e8f0"}
-                bg={isCorrect ? "#f0fdf4" : isWrong ? "#fef2f2" : "white"}>
-                <Flex w="24px" h="24px" borderRadius="full" flexShrink={0} align="center"
-                  justify="center" fontWeight={800} fontSize="10px"
+                bg={isCorrect ? "#f0fdf4" : isWrong ? "#fef2f2" : "white"}
+                transition="all .1s">
+                {/* Letter circle */}
+                <Flex w="34px" h="34px" borderRadius="full" flexShrink={0} align="center"
+                  justify="center" fontWeight={900} fontSize="14px"
                   bg={isCorrect ? "#16a34a" : isWrong ? "#ef4444" : "#f1f5f9"}
                   color={isCorrect || isWrong ? "white" : "#64748b"}>
                   {String.fromCharCode(65 + i)}
                 </Flex>
-                <Text flex={1} fontSize="13px" color="#374151" fontWeight={isCorrect || isUserPick ? 600 : 400}>
+                {/* Option text */}
+                <Text flex={1} fontSize="15px" color="#374151"
+                  fontWeight={isCorrect || isUserPick ? 600 : 400}>
                   {opt}
                 </Text>
-                <Flex gap={1.5} flexShrink={0}>
+                {/* Tags */}
+                <Flex gap={2} flexShrink={0} flexWrap="wrap" justify="flex-end">
                   {isCorrect && (
-                    <Badge bg="#f0fdf4" color="#16a34a" fontSize="10px" fontWeight={700}
-                      border="1px solid #bbf7d0" px={2} py={0.5} borderRadius="full">✓ Correct</Badge>
+                    <Badge bg="#f0fdf4" color="#16a34a" fontSize="11px" fontWeight={700}
+                      border="1px solid #bbf7d0" px={3} py={1} borderRadius="full">
+                      ✓ Correct Answer
+                    </Badge>
                   )}
                   {isUserPick && isCorrect && (
-                    <Badge bg="#eff6ff" color="#2563eb" fontSize="10px" fontWeight={700}
-                      border="1px solid #bfdbfe" px={2} py={0.5} borderRadius="full">Your Answer</Badge>
+                    <Badge bg="#eff6ff" color="#2563eb" fontSize="11px" fontWeight={700}
+                      border="1px solid #bfdbfe" px={3} py={1} borderRadius="full">
+                      Your Answer
+                    </Badge>
                   )}
                   {isWrong && (
-                    <Badge bg="#fef2f2" color="#ef4444" fontSize="10px" fontWeight={700}
-                      border="1px solid #fecaca" px={2} py={0.5} borderRadius="full">✗ Your Answer</Badge>
+                    <Badge bg="#fef2f2" color="#ef4444" fontSize="11px" fontWeight={700}
+                      border="1px solid #fecaca" px={3} py={1} borderRadius="full">
+                      ✗ Your Answer
+                    </Badge>
                   )}
                 </Flex>
               </Flex>
@@ -722,30 +738,44 @@ function QuestionView({ question, index, allAnswers, statusArrays, questionTimes
           })}
         </VStack>
 
-        {/* Answer summary */}
-        <Flex gap={6} mb={question.explanation ? 3 : 0} flexWrap="wrap">
+        {/* Answer summary row */}
+        <Flex gap={8} mb={question.explanation ? 4 : 0}
+          px={5} py={4} bg="white" borderRadius="12px" border="1px solid #f1f5f9">
           <Box>
-            <Text fontSize="10px" color="#94a3b8" fontWeight={700} textTransform="uppercase" mb={1}>Your Answer</Text>
-            <Text fontSize="13px" fontWeight={700}
+            <Text fontSize="11px" color="#94a3b8" fontWeight={700}
+              textTransform="uppercase" letterSpacing=".8px" mb={1.5}>
+              Your Answer
+            </Text>
+            <Text fontSize="15px" fontWeight={800}
               color={status === "correct" ? "#16a34a" : status === "incorrect" ? "#ef4444" : "#94a3b8"}>
               {userAnswerIdx !== undefined && userAnswerIdx !== null
                 ? (question.options?.[userAnswerIdx] || "—") : "Not Attempted"}
             </Text>
           </Box>
           <Box>
-            <Text fontSize="10px" color="#94a3b8" fontWeight={700} textTransform="uppercase" mb={1}>Correct Answer</Text>
-            <Text fontSize="13px" fontWeight={700} color="#16a34a">{question.options?.[correctIdx] || "—"}</Text>
+            <Text fontSize="11px" color="#94a3b8" fontWeight={700}
+              textTransform="uppercase" letterSpacing=".8px" mb={1.5}>
+              Correct Answer
+            </Text>
+            <Text fontSize="15px" fontWeight={800} color="#16a34a">
+              {question.options?.[correctIdx] || "—"}
+            </Text>
           </Box>
         </Flex>
 
         {/* Explanation */}
         {question.explanation && (
-          <Box mt={3} p={3} bg="#eff6ff" borderRadius="9px" borderLeft="3px solid #4a72b8">
-            <Flex align="center" gap={2} mb={1}>
-              <Icon as={FiAlertCircle} color="#4a72b8" fontSize="13px" />
-              <Text fontSize="10px" fontWeight={700} color="#1e3a5f" textTransform="uppercase">Explanation</Text>
+          <Box mt={4} p={5} bg="#eff6ff" borderRadius="12px" borderLeft="4px solid #4a72b8">
+            <Flex align="center" gap={2.5} mb={2}>
+              <Icon as={FiAlertCircle} color="#4a72b8" fontSize="15px" />
+              <Text fontSize="12px" fontWeight={800} color="#1e3a5f"
+                textTransform="uppercase" letterSpacing=".8px">
+                Explanation
+              </Text>
             </Flex>
-            <Text fontSize="13px" color="#1e3a5f" lineHeight="1.7">{question.explanation}</Text>
+            <Text fontSize="14px" color="#1e3a5f" lineHeight="1.8">
+              {question.explanation}
+            </Text>
           </Box>
         )}
       </Box>
@@ -776,10 +806,12 @@ export default function ReviewTest() {
     return (
       <Flex minH="100vh" align="center" justify="center" direction="column" gap={4}
         bg="#f8fafc" fontFamily="'Sora',sans-serif">
-        <Icon as={FaChartBar} fontSize="48px" color="#e2e8f0" />
-        <Text fontSize="16px" fontWeight={700} color="#374151">No review data found</Text>
+        <Icon as={FaChartBar} fontSize="52px" color="#e2e8f0" />
+        <Text fontSize="18px" fontWeight={700} color="#374151">No review data found</Text>
+        <Text fontSize="14px" color="#94a3b8" mb={2}>Please submit a test first</Text>
         <Button onClick={() => navigate(-1)} leftIcon={<Icon as={FaArrowLeft} />}
-          bg="#4a72b8" color="white" borderRadius="10px" fontWeight={700} _hover={{ bg: "#3b5fa0" }}>
+          bg="#4a72b8" color="white" borderRadius="10px" fontWeight={700}
+          h="44px" px={6} _hover={{ bg: "#3b5fa0" }}>
           Go Back
         </Button>
       </Flex>
@@ -789,65 +821,91 @@ export default function ReviewTest() {
   return (
     <Box minH="100vh" bg="#f1f5f9" fontFamily="'Sora',sans-serif">
       {/* Header */}
-      <Box bg="linear-gradient(135deg,#0f1e3a,#1e3a5f,#2d5fa8)" px={{ base: 4, md: 8 }} py={4}>
-        <Flex maxW="1200px" mx="auto" align="center" justify="space-between">
-          <Flex align="center" gap={3}>
+      <Box bg="linear-gradient(135deg,#0f1e3a,#1e3a5f,#2d5fa8)"
+        px={{ base: 4, md: 8 }} py={4}>
+        <Flex maxW="1400px" mx="auto" align="center" justify="space-between">
+          <Flex align="center" gap={4}>
             <Box cursor="pointer" onClick={() => navigate(-1)}
-              color="rgba(255,255,255,.5)" _hover={{ color: "white" }}>
-              <Icon as={FaArrowLeft} fontSize="14px" />
+              color="rgba(255,255,255,.5)" _hover={{ color: "white" }} transition="color .15s">
+              <Icon as={FaArrowLeft} fontSize="16px" />
             </Box>
             <Box>
-              <Text fontSize={{ base: "14px", md: "17px" }} fontWeight={800} color="white" noOfLines={1}>{testTitle}</Text>
-              <Text fontSize="11px" color="rgba(255,255,255,.5)">Review Mode · Q{current + 1} of {questions.length}</Text>
+              <Text fontSize={{ base: "15px", md: "19px" }} fontWeight={800}
+                color="white" noOfLines={1}>
+                {testTitle}
+              </Text>
+              <Text fontSize="12px" color="rgba(255,255,255,.5)">
+                Review Mode · Q{current + 1} of {questions.length}
+              </Text>
             </Box>
           </Flex>
-          <Flex px={3} py={1.5} bg="rgba(255,255,255,.12)" borderRadius="9px"
-            border="1px solid rgba(255,255,255,.2)" align="center">
-            <Text fontSize="12px" fontWeight={700} color="white">{current + 1} / {questions.length}</Text>
+          <Flex px={4} py={2} bg="rgba(255,255,255,.15)" borderRadius="10px"
+            border="1px solid rgba(255,255,255,.25)" align="center">
+            <Text fontSize="14px" fontWeight={800} color="white">
+              {current + 1} / {questions.length}
+            </Text>
           </Flex>
         </Flex>
       </Box>
 
-      <Box maxW="1200px" mx="auto" px={{ base: 3, md: 8 }} py={5}>
-        <Flex gap={5} align="flex-start" direction={{ base: "column", lg: "row" }}>
+      {/* Body — side-by-side on desktop, stacked on mobile */}
+      <Box maxW="1400px" mx="auto" px={{ base: 3, md: 6, lg: 8 }} py={6}>
+        <Flex gap={6} align="flex-start" direction={{ base: "column", lg: "row" }}>
 
-          {/* ── Compact Sidebar ── */}
-          <Box w={{ base: "100%", lg: "200px" }} flexShrink={0} bg="white" borderRadius="14px"
-            border="1px solid #e2e8f0" boxShadow="0 2px 8px rgba(0,0,0,.04)" p={4}
-            position={{ base: "static", lg: "sticky" }} top="16px">
-            {/* Mini legend */}
-            <Text fontSize="10px" fontWeight={700} color="#94a3b8" textTransform="uppercase"
-              letterSpacing=".8px" mb={2}>Legend</Text>
-            <VStack align="stretch" spacing={1} mb={3}>
+          {/* ── LEFT: Sidebar (fixed width) ── */}
+          <Box
+            w={{ base: "100%", lg: "240px" }}
+            flexShrink={0}
+            bg="white"
+            borderRadius="16px"
+            border="1px solid #e2e8f0"
+            boxShadow="0 2px 12px rgba(0,0,0,.05)"
+            p={5}
+            position={{ base: "static", lg: "sticky" }}
+            top="20px"
+          >
+            {/* Legend */}
+            <Text fontSize="11px" fontWeight={700} color="#94a3b8"
+              textTransform="uppercase" letterSpacing=".8px" mb={3}>
+              Legend
+            </Text>
+            <VStack align="stretch" spacing={2} mb={5}>
               {[
-                { key: "correct",        label: "Correct"      },
-                { key: "incorrect",      label: "Wrong"        },
-                { key: "skipped",        label: "Skipped"      },
-                { key: "markedAnswered", label: "Marked & Ans" },
-                { key: "markedSkipped",  label: "Marked Skip"  },
+                { key: "correct",        label: "Correct"          },
+                { key: "incorrect",      label: "Wrong"            },
+                { key: "skipped",        label: "Skipped"          },
+                { key: "markedAnswered", label: "Marked & Answered"},
+                { key: "markedSkipped",  label: "Marked (Skipped)" },
+                { key: "notVisited",     label: "Not Visited"      },
               ].map(({ key, label }) => (
-                <Flex key={key} align="center" gap={2}>
-                  <Box w="9px" h="9px" borderRadius="3px" bg={SIDEBAR_COLORS[key].bg} flexShrink={0}
-                    border={key === "skipped" ? "1px solid #cbd5e1" : "none"} />
-                  <Text fontSize="11px" color="#64748b">{label}</Text>
+                <Flex key={key} align="center" gap={2.5}>
+                  <Box w="12px" h="12px" borderRadius="4px"
+                    bg={SIDEBAR_COLORS[key].bg} flexShrink={0}
+                    border={key === "skipped" || key === "notVisited" ? "1px solid #cbd5e1" : "none"} />
+                  <Text fontSize="13px" color="#374151" fontWeight={500}>{label}</Text>
                 </Flex>
               ))}
             </VStack>
-            {/* Question grid */}
-            <Text fontSize="10px" fontWeight={700} color="#94a3b8" textTransform="uppercase"
-              letterSpacing=".8px" mb={2}>Questions</Text>
-            <Grid templateColumns="repeat(5,1fr)" gap={1}>
+
+            {/* Question palette */}
+            <Text fontSize="11px" fontWeight={700} color="#94a3b8"
+              textTransform="uppercase" letterSpacing=".8px" mb={3}>
+              Questions
+            </Text>
+            <Grid templateColumns="repeat(5, 1fr)" gap={2}>
               {questions.map((_, i) => {
                 const st = getStatus(i, statusArrays);
                 const sc = SIDEBAR_COLORS[st] || SIDEBAR_COLORS.notVisited;
                 const isActive = i === current;
                 return (
-                  <Flex key={i} w="28px" h="28px" align="center" justify="center"
-                    borderRadius="7px" cursor="pointer" fontSize="10px" fontWeight={700}
-                    bg={isActive ? "#0f1e3a" : sc.bg} color={isActive ? "white" : sc.color}
-                    border={isActive ? "2px solid #4a72b8" : "none"}
-                    boxShadow={isActive ? "0 0 0 2px rgba(74,114,184,.3)" : "none"}
-                    onClick={() => setCurrent(i)} transition="all .12s" _hover={{ opacity: .8 }}>
+                  <Flex key={i} w="36px" h="36px" align="center" justify="center"
+                    borderRadius="9px" cursor="pointer" fontSize="12px" fontWeight={800}
+                    bg={isActive ? "#0f1e3a" : sc.bg}
+                    color={isActive ? "white" : sc.color}
+                    border={isActive ? "2.5px solid #4a72b8" : "none"}
+                    boxShadow={isActive ? "0 0 0 3px rgba(74,114,184,.25)" : "none"}
+                    onClick={() => setCurrent(i)} transition="all .12s"
+                    _hover={{ opacity: .85, transform: "scale(1.05)" }}>
                     {i + 1}
                   </Flex>
                 );
@@ -855,28 +913,41 @@ export default function ReviewTest() {
             </Grid>
           </Box>
 
-          {/* ── Question + Nav ── */}
+          {/* ── RIGHT: Question card (takes all remaining width) ── */}
           <Box flex={1} minW={0}>
-            <QuestionView question={questions[current]} index={current}
-              allAnswers={allAnswers} statusArrays={statusArrays} questionTimes={questionTimes} />
+            <QuestionView
+              question={questions[current]}
+              index={current}
+              allAnswers={allAnswers}
+              statusArrays={statusArrays}
+              questionTimes={questionTimes}
+            />
 
             {/* Navigation buttons */}
-            <Flex justify="space-between" mt={4} gap={3}>
-              <Button leftIcon={<Icon as={FaArrowLeft} />} isDisabled={current === 0}
+            <Flex justify="space-between" mt={5} gap={3}>
+              <Button
+                leftIcon={<Icon as={FaArrowLeft} />}
+                isDisabled={current === 0}
                 onClick={() => setCurrent(c => Math.max(0, c - 1))}
-                variant="outline" borderRadius="10px" fontWeight={700} fontSize="13px"
-                borderColor="#e2e8f0" color="#374151" _hover={{ bg: "#f8fafc" }} h="40px" px={4}>
+                variant="outline" borderRadius="11px" fontWeight={700} fontSize="14px"
+                borderColor="#e2e8f0" color="#374151" h="46px" px={6}
+                _hover={{ bg: "#f8fafc" }} _disabled={{ opacity: .4 }}>
                 Previous
               </Button>
-              <Button onClick={() => navigate(-1)} bg="#f1f5f9" color="#64748b"
-                borderRadius="10px" fontWeight={700} fontSize="13px"
-                _hover={{ bg: "#e2e8f0" }} h="40px" px={4}>
+              <Button
+                onClick={() => navigate(-1)}
+                bg="#f1f5f9" color="#64748b" borderRadius="11px"
+                fontWeight={700} fontSize="14px" h="46px" px={6}
+                _hover={{ bg: "#e2e8f0" }}>
                 Back to Results
               </Button>
-              <Button rightIcon={<Icon as={FaArrowRight} />} isDisabled={current === questions.length - 1}
+              <Button
+                rightIcon={<Icon as={FaArrowRight} />}
+                isDisabled={current === questions.length - 1}
                 onClick={() => setCurrent(c => Math.min(questions.length - 1, c + 1))}
-                bg="#4a72b8" color="white" borderRadius="10px" fontWeight={700} fontSize="13px"
-                _hover={{ bg: "#3b5fa0" }} h="40px" px={4}>
+                bg="#4a72b8" color="white" borderRadius="11px"
+                fontWeight={700} fontSize="14px" h="46px" px={6}
+                _hover={{ bg: "#3b5fa0" }} _disabled={{ opacity: .4 }}>
                 Next
               </Button>
             </Flex>
