@@ -1776,11 +1776,30 @@ const TakeTest = ({ handleFullScreen }) => {
   );
   const [reversesec, setreversesec] = useState(() => totalTimeInSeconds % 60);
 
-  const [isFullscreenActive, setIsFullscreenActive] = useState(true);
+  const [isFullscreenActive, setIsFullscreenActive] = useState(false);
   const [hasExitedFullscreen, setHasExitedFullscreen] = useState(false);
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
   const cancelSubmitRef = useRef();
   const giveMarkRef = useRef(null);
+
+  // ── Request fullscreen on mount ────────────────────────────────
+  useEffect(() => {
+    if (isMobile) return; // skip fullscreen enforcement on mobile
+    const requestFS = async () => {
+      const el = document.documentElement;
+      try {
+        if (el.requestFullscreen) await el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+        else if (el.msRequestFullscreen) await el.msRequestFullscreen();
+        setIsFullscreenActive(true);
+      } catch {
+        // Browser blocked auto-fullscreen — user will see the overlay prompt
+        setIsFullscreenActive(false);
+      }
+    };
+    requestFS();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount
 
   const totalAnswered = answeredQuestion.length + markedAndAnswer.length;
   const progressPct =
@@ -2391,7 +2410,7 @@ const TakeTest = ({ handleFullScreen }) => {
       fontFamily="'DM Sans',sans-serif"
       position="relative"
     >
-      {!isMobile && !isFullscreenActive && hasExitedFullscreen && (
+      {!isMobile && !isFullscreenActive && (
         <Box
           position="fixed"
           inset={0}
