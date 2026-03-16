@@ -7830,14 +7830,11 @@ import {
   FormLabel,
   FormErrorMessage,
   Stack,
-  Checkbox,
-  CheckboxGroup,
   Textarea,
   useDisclosure,
   useToast,
   Select,
   Divider,
-  Badge,
 } from "@chakra-ui/react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -7845,17 +7842,13 @@ import {
   FaSearch,
   FaPlus,
   FaMapMarkerAlt,
-  FaEnvelope,
   FaPhone,
   FaGlobe,
   FaArrowLeft,
   FaChalkboardTeacher,
-  FaUsers,
   FaClipboardList,
   FaExternalLinkAlt,
   FaClock,
-  FaLock,
-  FaUnlock,
   FaBookOpen,
   FaLink,
   FaCheck,
@@ -7873,7 +7866,7 @@ import { apiFetch } from "../services/api";
 import { socket } from "../services/socket";
 import RequestTestDrawer, { MyTestRequests } from "./RequestTestDrawer";
 
-// ── Constants ─────────────────────────────────────────────────────────────
+// ── Constants ──────────────────────────────────────────────────────────────
 const EXAM_TYPES = [
   "SSC",
   "UPSC",
@@ -7940,12 +7933,18 @@ const toSlug = (s) =>
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
 
+// ── Helper: merge standard + custom exam types for display ─────────────────
+function allExamTypesOf(coaching) {
+  return [...(coaching.examTypes || []), ...(coaching.customExamTypes || [])];
+}
+
 // ═══════════════════════════════════════════════════════════════
-// STATUS SCREEN — pending / rejected coaching
+// STATUS SCREEN
 // ═══════════════════════════════════════════════════════════════
 function CoachingStatusScreen({ coaching }) {
   const navigate = useNavigate();
   const isPending = coaching.status === "pending";
+  const displayTypes = allExamTypesOf(coaching);
 
   return (
     <Box minH="100vh" bg="#f8fafc" fontFamily="'Sora',sans-serif">
@@ -8017,7 +8016,7 @@ function CoachingStatusScreen({ coaching }) {
                 </Flex>
               )}
               <Flex flexWrap="wrap" gap={2} mt={3}>
-                {coaching.examTypes?.map((ex) => (
+                {displayTypes.map((ex) => (
                   <Box
                     key={ex}
                     bg={(EXAM_COLORS[ex] || EXAM_COLORS.OTHER).bg}
@@ -8106,13 +8105,14 @@ function CoachingStatusScreen({ coaching }) {
 // ═══════════════════════════════════════════════════════════════
 function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
   const toast = useToast();
-  const [customExamInput, setCustomExamInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [errs, setErrs] = useState({});
+  const [customExamInput, setCustomExamInput] = useState("");
   const [form, setForm] = useState({
     name: "",
     description: "",
     examTypes: [],
+    customExamTypes: [], // ← separate array for non-enum values
     fullAddress: "",
     landmark: "",
     city: "",
@@ -8134,10 +8134,41 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
     setErrs((p) => ({ ...p, [k]: "" }));
   };
 
+  const toggleStandardType = (ex) => {
+    const isOn = form.examTypes.includes(ex);
+    if (isOn) {
+      const next = form.examTypes.filter((v) => v !== ex);
+      // Deselecting OTHER also clears all custom tags
+      const nextCustom = ex === "OTHER" ? [] : form.customExamTypes;
+      setForm((p) => ({ ...p, examTypes: next, customExamTypes: nextCustom }));
+    } else {
+      setForm((p) => ({ ...p, examTypes: [...p.examTypes, ex] }));
+    }
+    setErrs((p) => ({ ...p, examTypes: "" }));
+  };
+
+  const addCustomType = () => {
+    const val = customExamInput.trim().toUpperCase();
+    if (!val || form.customExamTypes.includes(val)) {
+      setCustomExamInput("");
+      return;
+    }
+    setForm((p) => ({ ...p, customExamTypes: [...p.customExamTypes, val] }));
+    setCustomExamInput("");
+  };
+
+  const removeCustomType = (tag) => {
+    setForm((p) => ({
+      ...p,
+      customExamTypes: p.customExamTypes.filter((v) => v !== tag),
+    }));
+  };
+
   const validate = () => {
     const e = {};
     if (!form.name.trim()) e.name = "Coaching name is required";
-    if (!form.examTypes.length) e.examTypes = "Select at least one exam type";
+    if (!form.examTypes.length && !form.customExamTypes.length)
+      e.examTypes = "Select at least one exam type";
     if (!form.fullAddress.trim()) e.fullAddress = "Full address is required";
     if (!form.city.trim()) e.city = "City is required";
     if (!form.state) e.state = "State is required";
@@ -8276,47 +8307,7 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
               <FormErrorMessage>{errs.name}</FormErrorMessage>
             </FormControl>
 
-            {/* <FormControl isRequired isInvalid={!!errs.examTypes}>
-              <FormLabel {...LS}>Exam Types</FormLabel>
-              <Box
-                border="1px solid"
-                borderColor={errs.examTypes ? "red.400" : "#e2e8f0"}
-                borderRadius="10px"
-                p={4}
-                bg="#f8fafc"
-              >
-                <CheckboxGroup
-                  value={form.examTypes}
-                  onChange={(vals) => {
-                    setForm((p) => ({ ...p, examTypes: vals }));
-                    setErrs((p) => ({ ...p, examTypes: "" }));
-                  }}
-                >
-                  <Flex flexWrap="wrap" gap={2}>
-                    {EXAM_TYPES.map((ex) => {
-                      const c = EXAM_COLORS[ex] || EXAM_COLORS.OTHER;
-                      return (
-                        <Checkbox key={ex} value={ex} colorScheme="blue">
-                          <Box
-                            bg={c.bg}
-                            color={c.color}
-                            px={3}
-                            py="4px"
-                            borderRadius="full"
-                            fontSize="11px"
-                            fontWeight={700}
-                          >
-                            {ex}
-                          </Box>
-                        </Checkbox>
-                      );
-                    })}
-                  </Flex>
-                </CheckboxGroup>
-              </Box>
-              <FormErrorMessage>{errs.examTypes}</FormErrorMessage>
-            </FormControl> */}
-
+            {/* ── Exam Types ───────────────────────────────────────────── */}
             <FormControl isRequired isInvalid={!!errs.examTypes}>
               <FormLabel {...LS}>Exam Types</FormLabel>
               <Box
@@ -8326,7 +8317,7 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                 p={4}
                 bg="#f8fafc"
               >
-                {/* Standard exam type chips */}
+                {/* Standard chips */}
                 <Flex
                   flexWrap="wrap"
                   gap={2}
@@ -8340,28 +8331,10 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                         key={ex}
                         as="button"
                         type="button"
-                        onClick={() => {
-                          const current = form.examTypes;
-                          let next;
-                          if (isOn) {
-                            // Deselecting OTHER also clears custom tags
-                            next =
-                              ex === "OTHER"
-                                ? current.filter(
-                                    (v) =>
-                                      EXAM_TYPES.includes(v) && v !== "OTHER",
-                                  )
-                                : current.filter((v) => v !== ex);
-                          } else {
-                            next = [...current, ex];
-                          }
-                          setForm((p) => ({ ...p, examTypes: next }));
-                          setErrs((p) => ({ ...p, examTypes: "" }));
-                        }}
-                        bg={isOn ? c.bg : "white"}
-                        color={isOn ? c.color : "#94a3b8"}
-                        border="1.5px solid"
-                        borderColor={isOn ? c.color + "66" : "#e2e8f0"}
+                        onClick={() => toggleStandardType(ex)}
+                        display="flex"
+                        alignItems="center"
+                        gap={1.5}
                         px={3}
                         py="5px"
                         borderRadius="full"
@@ -8369,14 +8342,15 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                         fontWeight={700}
                         cursor="pointer"
                         transition="all .15s"
+                        bg={isOn ? c.bg : "white"}
+                        color={isOn ? c.color : "#94a3b8"}
+                        border="1.5px solid"
+                        borderColor={isOn ? c.color + "66" : "#e2e8f0"}
                         _hover={{
                           borderColor: c.color + "99",
                           color: c.color,
                           bg: c.bg,
                         }}
-                        display="flex"
-                        alignItems="center"
-                        gap={1.5}
                       >
                         {isOn && <Icon as={FaCheck} fontSize="9px" />}
                         {ex}
@@ -8385,7 +8359,7 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                   })}
                 </Flex>
 
-                {/* Custom exam type input — shown only when OTHER is selected */}
+                {/* Custom input — only when OTHER is active */}
                 {form.examTypes.includes("OTHER") && (
                   <Box borderTop="1px solid #e2e8f0" pt={3}>
                     <Text
@@ -8403,14 +8377,7 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             e.preventDefault();
-                            const val = customExamInput.trim().toUpperCase();
-                            if (val && !form.examTypes.includes(val)) {
-                              setForm((p) => ({
-                                ...p,
-                                examTypes: [...p.examTypes, val],
-                              }));
-                            }
-                            setCustomExamInput("");
+                            addCustomType();
                           }
                         }}
                         placeholder="e.g. Banking, Airforce, CDS…"
@@ -8419,11 +8386,11 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                         borderRadius="8px"
                         borderColor="#e2e8f0"
                         bg="white"
+                        flex={1}
                         _focus={{
                           borderColor: "#4a72b8",
                           boxShadow: "0 0 0 1px #4a72b8",
                         }}
-                        flex={1}
                       />
                       <Button
                         type="button"
@@ -8434,65 +8401,46 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                         borderRadius="8px"
                         bg="#4a72b8"
                         color="white"
-                        _hover={{ bg: "#3b5fa0" }}
                         flexShrink={0}
-                        onClick={() => {
-                          const val = customExamInput.trim().toUpperCase();
-                          if (val && !form.examTypes.includes(val)) {
-                            setForm((p) => ({
-                              ...p,
-                              examTypes: [...p.examTypes, val],
-                            }));
-                          }
-                          setCustomExamInput("");
-                        }}
+                        _hover={{ bg: "#3b5fa0" }}
+                        onClick={addCustomType}
                       >
                         Add
                       </Button>
                     </Flex>
 
                     {/* Custom tag pills */}
-                    {form.examTypes.filter((v) => !EXAM_TYPES.includes(v))
-                      .length > 0 && (
+                    {form.customExamTypes.length > 0 && (
                       <Flex flexWrap="wrap" gap={2} mt={1}>
-                        {form.examTypes
-                          .filter((v) => !EXAM_TYPES.includes(v))
-                          .map((tag) => (
-                            <Flex
-                              key={tag}
-                              align="center"
-                              gap={1.5}
-                              bg="white"
-                              border="1px solid #e2e8f0"
-                              borderRadius="full"
-                              px={3}
-                              py="4px"
-                              fontSize="11px"
-                              fontWeight={700}
-                              color="#374151"
+                        {form.customExamTypes.map((tag) => (
+                          <Flex
+                            key={tag}
+                            align="center"
+                            gap={1.5}
+                            bg="white"
+                            border="1px solid #e2e8f0"
+                            borderRadius="full"
+                            px={3}
+                            py="4px"
+                            fontSize="11px"
+                            fontWeight={700}
+                            color="#374151"
+                          >
+                            {tag}
+                            <Box
+                              as="button"
+                              type="button"
+                              fontSize="14px"
+                              color="#94a3b8"
+                              lineHeight={1}
+                              ml={0.5}
+                              _hover={{ color: "#ef4444" }}
+                              onClick={() => removeCustomType(tag)}
                             >
-                              {tag}
-                              <Box
-                                as="button"
-                                type="button"
-                                fontSize="13px"
-                                color="#94a3b8"
-                                lineHeight={1}
-                                ml={0.5}
-                                _hover={{ color: "#ef4444" }}
-                                onClick={() =>
-                                  setForm((p) => ({
-                                    ...p,
-                                    examTypes: p.examTypes.filter(
-                                      (v) => v !== tag,
-                                    ),
-                                  }))
-                                }
-                              >
-                                ×
-                              </Box>
-                            </Flex>
-                          ))}
+                              ×
+                            </Box>
+                          </Flex>
+                        ))}
                       </Flex>
                     )}
                   </Box>
@@ -8763,8 +8711,6 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
 
 // ═══════════════════════════════════════════════════════════════
 // STUDENT TESTS SECTION
-// Shown to any visitor (non-owner) on the coaching detail page.
-// Fetches published tests for this coaching and displays them.
 // ═══════════════════════════════════════════════════════════════
 function StudentTestsSection({ coachingId }) {
   const navigate = useNavigate();
@@ -8779,7 +8725,6 @@ function StudentTestsSection({ coachingId }) {
     apiFetch(`/tests?coaching=${coachingId}&status=published`)
       .then((r) => {
         const all = r.data ?? [];
-        // Guard: keep only tests that actually belong to this coaching
         const filtered = all.filter((t) => {
           const tCoaching = t.coaching?._id ?? t.coaching ?? t.coachingId;
           return String(tCoaching) === String(coachingId);
@@ -8790,7 +8735,6 @@ function StudentTestsSection({ coachingId }) {
       .finally(() => setLoading(false));
   }, [coachingId]);
 
-  /* ── Section header label ──────────────────────────────────── */
   const SectionLabel = ({ children }) => (
     <Text
       fontSize="11px"
@@ -8804,7 +8748,6 @@ function StudentTestsSection({ coachingId }) {
     </Text>
   );
 
-  /* ── Loading skeleton ───────────────────────────────────────── */
   if (loading)
     return (
       <Box>
@@ -8815,7 +8758,6 @@ function StudentTestsSection({ coachingId }) {
       </Box>
     );
 
-  /* ── Error ──────────────────────────────────────────────────── */
   if (error)
     return (
       <Box>
@@ -8834,7 +8776,6 @@ function StudentTestsSection({ coachingId }) {
       </Box>
     );
 
-  /* ── Empty state ────────────────────────────────────────────── */
   if (tests.length === 0)
     return (
       <Box>
@@ -8864,7 +8805,6 @@ function StudentTestsSection({ coachingId }) {
       </Box>
     );
 
-  /* ── Test cards ─────────────────────────────────────────────── */
   return (
     <Box>
       <Flex align="center" justify="space-between" mb={5}>
@@ -8873,7 +8813,6 @@ function StudentTestsSection({ coachingId }) {
           {tests.length} test{tests.length !== 1 ? "s" : ""}
         </Text>
       </Flex>
-
       <Box
         bg="white"
         border="1px solid #e2e8f0"
@@ -8889,7 +8828,6 @@ function StudentTestsSection({ coachingId }) {
                 year: "numeric",
               })
             : null;
-
           return (
             <Flex
               key={test._id}
@@ -8902,7 +8840,6 @@ function StudentTestsSection({ coachingId }) {
               }
               flexWrap={{ base: "wrap", sm: "nowrap" }}
             >
-              {/* Icon */}
               <Flex
                 w="44px"
                 h="44px"
@@ -8918,8 +8855,6 @@ function StudentTestsSection({ coachingId }) {
                   color={examColor.color}
                 />
               </Flex>
-
-              {/* Title + meta */}
               <Box flex={1} minW={0}>
                 <Text
                   fontSize="14px"
@@ -8973,8 +8908,6 @@ function StudentTestsSection({ coachingId }) {
                   )}
                 </Flex>
               </Box>
-
-              {/* Start button */}
               <Button
                 flexShrink={0}
                 h="36px"
@@ -9008,9 +8941,7 @@ function StudentTestsSection({ coachingId }) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// COACHING DETAIL — approved coaching dashboard
-// Shows: header stats, share link, "Request Test" button,
-//        MyTestRequests panel (owner) OR StudentTestsSection (student)
+// COACHING DETAIL
 // ═══════════════════════════════════════════════════════════════
 function CoachingDetail({ coaching }) {
   const navigate = useNavigate();
@@ -9021,7 +8952,6 @@ function CoachingDetail({ coaching }) {
     onOpen: openReq,
     onClose: closeReq,
   } = useDisclosure();
-
   const [copied, setCopied] = useState(false);
   const [socketConnected, setSocketConnected] = useState(socket.connected);
 
@@ -9033,7 +8963,9 @@ function CoachingDetail({ coaching }) {
   );
 
   const shareUrl = `${window.location.origin}/coaching/${coaching.slug}`;
-  const coachingExamTypes = coaching.examTypes || [];
+
+  // Merge standard + custom for display everywhere
+  const displayExamTypes = allExamTypesOf(coaching);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl).then(() => {
@@ -9055,7 +8987,6 @@ function CoachingDetail({ coaching }) {
     <Box minH="100vh" bg="#f8fafc" fontFamily="'Sora',sans-serif">
       <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}`}</style>
 
-      {/* ── Hero header ───────────────────────────────────────────────────── */}
       <Box
         bg="linear-gradient(135deg,#0f1e3a 0%,#1e3a5f 45%,#2d5fa8 100%)"
         px={{ base: 4, md: 8 }}
@@ -9074,7 +9005,6 @@ function CoachingDetail({ coaching }) {
           bg="rgba(255,255,255,.035)"
         />
         <Box maxW="1100px" mx="auto" position="relative" zIndex={1}>
-          {/* Back */}
           <Flex
             align="center"
             gap={2}
@@ -9219,8 +9149,9 @@ function CoachingDetail({ coaching }) {
                 )}
               </Flex>
 
+              {/* All exam types (standard + custom) in the hero */}
               <Flex flexWrap="wrap" gap={2}>
-                {coachingExamTypes.map((ex) => (
+                {displayExamTypes.map((ex) => (
                   <Box
                     key={ex}
                     bg="rgba(255,255,255,.12)"
@@ -9239,7 +9170,6 @@ function CoachingDetail({ coaching }) {
             </Box>
           </Flex>
 
-          {/* ── Owner controls ──────────────────────────────────────────── */}
           {isOwner && (
             <Box
               mt={10}
@@ -9282,7 +9212,6 @@ function CoachingDetail({ coaching }) {
                 </Text>
               </Flex>
 
-              {/* Share link */}
               <Box mb={7}>
                 <Text
                   fontSize="13px"
@@ -9334,7 +9263,6 @@ function CoachingDetail({ coaching }) {
                 </Flex>
               </Box>
 
-              {/* Request Test button */}
               <Button
                 leftIcon={<FaPaperPlane />}
                 onClick={openReq}
@@ -9354,7 +9282,6 @@ function CoachingDetail({ coaching }) {
             </Box>
           )}
 
-          {/* Stats row */}
           <Flex
             mt={10}
             gap={8}
@@ -9363,7 +9290,7 @@ function CoachingDetail({ coaching }) {
             flexWrap="wrap"
           >
             {[
-              [FaClipboardList, coachingExamTypes.length, "Courses"],
+              [FaClipboardList, displayExamTypes.length, "Courses"],
               [FaBookOpen, coaching.studentCount || "—", "Student Range"],
               [FaCheckCircle, "Verified", "Status"],
             ].map(([Ic, val, label]) => (
@@ -9395,7 +9322,6 @@ function CoachingDetail({ coaching }) {
         </Box>
       </Box>
 
-      {/* ── Body ─────────────────────────────────────────────────────────── */}
       <Box maxW="1100px" mx="auto" px={{ base: 4, md: 8 }} py={8}>
         {coaching.description && (
           <Box mb={10} pb={10} borderBottom="1px solid #e2e8f0">
@@ -9416,12 +9342,9 @@ function CoachingDetail({ coaching }) {
         )}
 
         {isOwner ? (
-          /* ── Owner: test-request management panel ─────────────────────── */
           <MyTestRequests coachingId={coaching._id} onRequestTest={openReq} />
         ) : (
-          /* ── Student / visitor: exam types + available tests ─────────── */
           <Box>
-            {/* Courses offered */}
             <Box mb={10} pb={10} borderBottom="1px solid #e2e8f0">
               <Text
                 fontSize="11px"
@@ -9434,7 +9357,7 @@ function CoachingDetail({ coaching }) {
                 Courses Offered
               </Text>
               <Flex flexWrap="wrap" gap={3}>
-                {coachingExamTypes.map((ex) => {
+                {displayExamTypes.map((ex) => {
                   const c = EXAM_COLORS[ex] || EXAM_COLORS.OTHER;
                   return (
                     <Box
@@ -9454,19 +9377,16 @@ function CoachingDetail({ coaching }) {
                 })}
               </Flex>
             </Box>
-
-            {/* Published tests */}
             <StudentTestsSection coachingId={coaching._id} />
           </Box>
         )}
       </Box>
 
-      {/* Request Test Drawer */}
       <RequestTestDrawer
         isOpen={reqOpen}
         onClose={closeReq}
         coachingId={coaching._id}
-        coachingExamTypes={coachingExamTypes}
+        coachingExamTypes={displayExamTypes}
         currentUser={user}
       />
     </Box>
@@ -9510,7 +9430,11 @@ function CoachingList({ onCoachingCreated }) {
           c.name?.toLowerCase().includes(q) ||
           c.city?.toLowerCase().includes(q),
       );
-    if (examF) list = list.filter((c) => c.examTypes?.includes(examF));
+    if (examF)
+      list = list.filter(
+        (c) =>
+          c.examTypes?.includes(examF) || c.customExamTypes?.includes(examF),
+      );
     setFiltered(list);
   }, [query, examF, all]);
 
@@ -9574,7 +9498,6 @@ function CoachingList({ onCoachingCreated }) {
             </Button>
           </Flex>
 
-          {/* Search bar */}
           <Flex
             gap={3}
             bg="white"
@@ -9708,135 +9631,138 @@ function CoachingList({ onCoachingCreated }) {
               <Box w="80px" />
             </Flex>
 
-            {filtered.map((c, idx) => (
-              <Flex
-                key={c._id}
-                px={6}
-                py={4}
-                align="center"
-                gap={4}
-                borderBottom={
-                  idx < filtered.length - 1 ? "1px solid #f1f5f9" : "none"
-                }
-                cursor="pointer"
-                transition="background .15s"
-                _hover={{ bg: "#f8faff" }}
-                onClick={() => navigate(`/coaching/${c.slug}`)}
-              >
+            {filtered.map((c, idx) => {
+              const allTypes = allExamTypesOf(c);
+              return (
                 <Flex
-                  w="40px"
-                  h="40px"
-                  flexShrink={0}
-                  bg="linear-gradient(135deg,#4a72b8,#1e3a5f)"
-                  borderRadius="11px"
+                  key={c._id}
+                  px={6}
+                  py={4}
                   align="center"
-                  justify="center"
-                  fontSize="16px"
-                  fontWeight={800}
-                  color="white"
+                  gap={4}
+                  borderBottom={
+                    idx < filtered.length - 1 ? "1px solid #f1f5f9" : "none"
+                  }
+                  cursor="pointer"
+                  transition="background .15s"
+                  _hover={{ bg: "#f8faff" }}
+                  onClick={() => navigate(`/coaching/${c.slug}`)}
                 >
-                  {c.name?.[0]?.toUpperCase()}
-                </Flex>
-                <Box flex={3} minW={0}>
-                  <Flex align="center" gap={2}>
-                    <Text
-                      fontSize="14px"
-                      fontWeight={700}
-                      color="#0f172a"
-                      noOfLines={1}
-                    >
-                      {c.name}
-                    </Text>
-                    <Icon
-                      as={FaCheckCircle}
-                      fontSize="11px"
-                      color="#16a34a"
-                      flexShrink={0}
-                    />
+                  <Flex
+                    w="40px"
+                    h="40px"
+                    flexShrink={0}
+                    bg="linear-gradient(135deg,#4a72b8,#1e3a5f)"
+                    borderRadius="11px"
+                    align="center"
+                    justify="center"
+                    fontSize="16px"
+                    fontWeight={800}
+                    color="white"
+                  >
+                    {c.name?.[0]?.toUpperCase()}
                   </Flex>
-                  {c.description && (
-                    <Text
-                      fontSize="12px"
-                      color="#94a3b8"
-                      noOfLines={1}
-                      mt="1px"
-                    >
-                      {c.description}
-                    </Text>
-                  )}
-                </Box>
-                <Flex
-                  flex={2}
-                  flexWrap="wrap"
-                  gap={1}
-                  display={{ base: "none", md: "flex" }}
-                >
-                  {c.examTypes?.slice(0, 3).map((ex) => {
-                    const cl = EXAM_COLORS[ex] || EXAM_COLORS.OTHER;
-                    return (
+                  <Box flex={3} minW={0}>
+                    <Flex align="center" gap={2}>
+                      <Text
+                        fontSize="14px"
+                        fontWeight={700}
+                        color="#0f172a"
+                        noOfLines={1}
+                      >
+                        {c.name}
+                      </Text>
+                      <Icon
+                        as={FaCheckCircle}
+                        fontSize="11px"
+                        color="#16a34a"
+                        flexShrink={0}
+                      />
+                    </Flex>
+                    {c.description && (
+                      <Text
+                        fontSize="12px"
+                        color="#94a3b8"
+                        noOfLines={1}
+                        mt="1px"
+                      >
+                        {c.description}
+                      </Text>
+                    )}
+                  </Box>
+                  <Flex
+                    flex={2}
+                    flexWrap="wrap"
+                    gap={1}
+                    display={{ base: "none", md: "flex" }}
+                  >
+                    {allTypes.slice(0, 3).map((ex) => {
+                      const cl = EXAM_COLORS[ex] || EXAM_COLORS.OTHER;
+                      return (
+                        <Box
+                          key={ex}
+                          bg={cl.bg}
+                          color={cl.color}
+                          px={2}
+                          py="2px"
+                          borderRadius="full"
+                          fontSize="10px"
+                          fontWeight={700}
+                        >
+                          {ex}
+                        </Box>
+                      );
+                    })}
+                    {allTypes.length > 3 && (
                       <Box
-                        key={ex}
-                        bg={cl.bg}
-                        color={cl.color}
+                        bg="#f1f5f9"
+                        color="#64748b"
                         px={2}
                         py="2px"
                         borderRadius="full"
                         fontSize="10px"
                         fontWeight={700}
                       >
-                        {ex}
+                        +{allTypes.length - 3}
                       </Box>
-                    );
-                  })}
-                  {(c.examTypes?.length || 0) > 3 && (
+                    )}
+                  </Flex>
+                  <Flex
+                    flex={1}
+                    align="center"
+                    gap={1}
+                    display={{ base: "none", sm: "flex" }}
+                  >
+                    {c.city && (
+                      <>
+                        <Icon
+                          as={FaMapMarkerAlt}
+                          fontSize="11px"
+                          color="#94a3b8"
+                          flexShrink={0}
+                        />
+                        <Text fontSize="12px" color="#64748b" noOfLines={1}>
+                          {c.city}
+                        </Text>
+                      </>
+                    )}
+                  </Flex>
+                  <Flex w="80px" justify="flex-end">
                     <Box
-                      bg="#f1f5f9"
-                      color="#64748b"
-                      px={2}
-                      py="2px"
-                      borderRadius="full"
-                      fontSize="10px"
+                      px={3}
+                      py="5px"
+                      borderRadius="8px"
+                      bg="#f0f7ff"
+                      color="#4a72b8"
+                      fontSize="12px"
                       fontWeight={700}
                     >
-                      +{c.examTypes.length - 3}
+                      View →
                     </Box>
-                  )}
+                  </Flex>
                 </Flex>
-                <Flex
-                  flex={1}
-                  align="center"
-                  gap={1}
-                  display={{ base: "none", sm: "flex" }}
-                >
-                  {c.city && (
-                    <>
-                      <Icon
-                        as={FaMapMarkerAlt}
-                        fontSize="11px"
-                        color="#94a3b8"
-                        flexShrink={0}
-                      />
-                      <Text fontSize="12px" color="#64748b" noOfLines={1}>
-                        {c.city}
-                      </Text>
-                    </>
-                  )}
-                </Flex>
-                <Flex w="80px" justify="flex-end">
-                  <Box
-                    px={3}
-                    py="5px"
-                    borderRadius="8px"
-                    bg="#f0f7ff"
-                    color="#4a72b8"
-                    fontSize="12px"
-                    fontWeight={700}
-                  >
-                    View →
-                  </Box>
-                </Flex>
-              </Flex>
-            ))}
+              );
+            })}
           </Box>
         )}
       </Box>
@@ -9866,7 +9792,6 @@ export default function CoachingPage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
 
-  // Load by slug (public)
   useEffect(() => {
     if (!slug) return;
     setSlugLoading(true);
@@ -9877,7 +9802,6 @@ export default function CoachingPage() {
       .finally(() => setSlugLoading(false));
   }, [slug]);
 
-  // Load owner's coaching
   useEffect(() => {
     if (slug || authLoading) return;
     if (!user?._id) {
