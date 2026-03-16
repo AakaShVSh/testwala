@@ -3614,6 +3614,23 @@ export default function TestDetailPage() {
 
   const viaToken = Boolean(location.state?.viaToken);
 
+  // Keep only each student's FIRST attempt (earliest createdAt), then sort score desc.
+  const firstAttemptPerStudent = (raw) => {
+    const seen = new Map();
+    const byDate = [...raw].sort(
+      (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
+    );
+    for (const r of byDate) {
+      const key = String(r.studentId?._id || r.studentId || r._id);
+      if (!seen.has(key)) seen.set(key, r);
+    }
+    return Array.from(seen.values()).sort((a, b) => {
+      const pa = a.scorePercentage ?? a.percentage ?? 0;
+      const pb = b.scorePercentage ?? b.percentage ?? 0;
+      return pb - pa;
+    });
+  };
+
   const load = useCallback(async () => {
     try {
       let testData = null;
@@ -3643,7 +3660,7 @@ export default function TestDetailPage() {
         apiFetch(`/tests/${testId}/leaderboard`).catch(() => ({ data: [] })),
       ]);
       setStats(statsRes.data);
-      setLeaderboard(lbRes.data || []);
+      setLeaderboard(firstAttemptPerStudent(lbRes.data || []));
       if (user?._id) {
         apiFetch(`/results/student/me?testId=${testId}`)
           .then((r) => setMyResult(r.data?.[0] || null))
@@ -3671,7 +3688,7 @@ export default function TestDetailPage() {
           })),
         ]).then(([sRes, lbRes]) => {
           setStats(sRes.data);
-          setLeaderboard(lbRes.data || []);
+          setLeaderboard(firstAttemptPerStudent(lbRes.data || []));
         });
       }
     };
