@@ -7809,7 +7809,7 @@
 //   );
 // }
 
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Flex,
@@ -7933,9 +7933,12 @@ const toSlug = (s) =>
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
 
-// ── Helper: merge standard + custom exam types for display ─────────────────
+// ── Helper: merge standard (minus "OTHER") + custom for display ────────────
 function allExamTypesOf(coaching) {
-  return [...(coaching.examTypes || []), ...(coaching.customExamTypes || [])];
+  return [
+    ...(coaching.examTypes || []).filter((t) => t !== "OTHER"),
+    ...(coaching.customExamTypes || []),
+  ];
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -8112,7 +8115,7 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
     name: "",
     description: "",
     examTypes: [],
-    customExamTypes: [], // ← separate array for non-enum values
+    customExamTypes: [],
     fullAddress: "",
     landmark: "",
     city: "",
@@ -8138,7 +8141,6 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
     const isOn = form.examTypes.includes(ex);
     if (isOn) {
       const next = form.examTypes.filter((v) => v !== ex);
-      // Deselecting OTHER also clears all custom tags
       const nextCustom = ex === "OTHER" ? [] : form.customExamTypes;
       setForm((p) => ({ ...p, examTypes: next, customExamTypes: nextCustom }));
     } else {
@@ -8167,7 +8169,11 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
   const validate = () => {
     const e = {};
     if (!form.name.trim()) e.name = "Coaching name is required";
-    if (!form.examTypes.length && !form.customExamTypes.length)
+    // "OTHER" alone doesn't count — must have at least one real selection
+    if (
+      !form.examTypes.filter((t) => t !== "OTHER").length &&
+      !form.customExamTypes.length
+    )
       e.examTypes = "Select at least one exam type";
     if (!form.fullAddress.trim()) e.fullAddress = "Full address is required";
     if (!form.city.trim()) e.city = "City is required";
@@ -8307,7 +8313,6 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
               <FormErrorMessage>{errs.name}</FormErrorMessage>
             </FormControl>
 
-            {/* ── Exam Types ───────────────────────────────────────────── */}
             <FormControl isRequired isInvalid={!!errs.examTypes}>
               <FormLabel {...LS}>Exam Types</FormLabel>
               <Box
@@ -8317,7 +8322,6 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                 p={4}
                 bg="#f8fafc"
               >
-                {/* Standard chips */}
                 <Flex
                   flexWrap="wrap"
                   gap={2}
@@ -8359,7 +8363,6 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                   })}
                 </Flex>
 
-                {/* Custom input — only when OTHER is active */}
                 {form.examTypes.includes("OTHER") && (
                   <Box borderTop="1px solid #e2e8f0" pt={3}>
                     <Text
@@ -8408,8 +8411,6 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                         Add
                       </Button>
                     </Flex>
-
-                    {/* Custom tag pills */}
                     {form.customExamTypes.length > 0 && (
                       <Flex flexWrap="wrap" gap={2} mt={1}>
                         {form.customExamTypes.map((tag) => (
@@ -8946,7 +8947,6 @@ function StudentTestsSection({ coachingId }) {
 function CoachingDetail({ coaching }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const toast = useToast();
   const {
     isOpen: reqOpen,
     onOpen: openReq,
@@ -8963,8 +8963,7 @@ function CoachingDetail({ coaching }) {
   );
 
   const shareUrl = `${window.location.origin}/coaching/${coaching.slug}`;
-
-  // Merge standard + custom for display everywhere
+  // Single source of truth — no "OTHER" anywhere
   const displayExamTypes = allExamTypesOf(coaching);
 
   const handleCopy = () => {
@@ -9149,7 +9148,7 @@ function CoachingDetail({ coaching }) {
                 )}
               </Flex>
 
-              {/* All exam types (standard + custom) in the hero */}
+              {/* Hero badges — displayExamTypes never contains "OTHER" */}
               <Flex flexWrap="wrap" gap={2}>
                 {displayExamTypes.map((ex) => (
                   <Box
@@ -9282,6 +9281,7 @@ function CoachingDetail({ coaching }) {
             </Box>
           )}
 
+          {/* Stats — course count uses displayExamTypes.length */}
           <Flex
             mt={10}
             gap={8}
@@ -9356,6 +9356,7 @@ function CoachingDetail({ coaching }) {
               >
                 Courses Offered
               </Text>
+              {/* Courses section — displayExamTypes never contains "OTHER" */}
               <Flex flexWrap="wrap" gap={3}>
                 {displayExamTypes.map((ex) => {
                   const c = EXAM_COLORS[ex] || EXAM_COLORS.OTHER;
@@ -9544,7 +9545,7 @@ function CoachingList({ onCoachingCreated }) {
               }}
             >
               <option value="">All Exams</option>
-              {EXAM_TYPES.map((e) => (
+              {EXAM_TYPES.filter((e) => e !== "OTHER").map((e) => (
                 <option key={e} value={e}>
                   {e}
                 </option>
@@ -9632,7 +9633,7 @@ function CoachingList({ onCoachingCreated }) {
             </Flex>
 
             {filtered.map((c, idx) => {
-              const allTypes = allExamTypesOf(c);
+              const rowTypes = allExamTypesOf(c); // strips "OTHER", merges custom
               return (
                 <Flex
                   key={c._id}
@@ -9696,7 +9697,7 @@ function CoachingList({ onCoachingCreated }) {
                     gap={1}
                     display={{ base: "none", md: "flex" }}
                   >
-                    {allTypes.slice(0, 3).map((ex) => {
+                    {rowTypes.slice(0, 3).map((ex) => {
                       const cl = EXAM_COLORS[ex] || EXAM_COLORS.OTHER;
                       return (
                         <Box
@@ -9713,7 +9714,7 @@ function CoachingList({ onCoachingCreated }) {
                         </Box>
                       );
                     })}
-                    {allTypes.length > 3 && (
+                    {rowTypes.length > 3 && (
                       <Box
                         bg="#f1f5f9"
                         color="#64748b"
@@ -9723,7 +9724,7 @@ function CoachingList({ onCoachingCreated }) {
                         fontSize="10px"
                         fontWeight={700}
                       >
-                        +{allTypes.length - 3}
+                        +{rowTypes.length - 3}
                       </Box>
                     )}
                   </Flex>
