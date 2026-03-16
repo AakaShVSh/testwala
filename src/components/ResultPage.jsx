@@ -1132,7 +1132,6 @@
 
 
 
-
 /**
  * ResultPage.jsx
  *
@@ -1322,24 +1321,27 @@ function AllAttemptsPanel({ allAttempts, currentResultId, questions, navigate,
       const res = await apiFetch(`/results/${attempt._id}`);
       const r = res.data || res;
       const toArr = (v) => Array.isArray(v) ? v : [];
-      const qs = Array.isArray(r.testId?.questions) ? r.testId.questions
+      const originalQs = Array.isArray(r.testId?.questions) ? r.testId.questions
                : Array.isArray(questions) ? questions : [];
+      const shuffledQs = Array.isArray(r.shuffledQuestions) && r.shuffledQuestions.length > 0
+               ? r.shuffledQuestions : [];
 
       navigate("/test-result", {
         replace: true,
         state: {
           viewingAs: "owner",
           studentName, studentId, testId, testTitle,
-          backUrl,                              // ← keep so back always lands on leaderboard
+          backUrl,
           allAttempts,
           currentAttemptId: String(attempt._id),
           resultId: String(attempt._id),
           score: r.correct ?? (Array.isArray(r.correctQus) ? r.correctQus.length : 0) ?? 0,
-          totalQuestions: qs.length || r.totalQuestions || 0,
+          totalQuestions: originalQs.length || r.totalQuestions || 0,
           scorePercentage: r.scorePercentage ?? r.percentage ?? 0,
           percentile: r.percentile ?? null,
           timeTaken: r.timeTakenSec ?? r.timeTaken ?? 0,
-          questions: qs,
+          shuffledQuestions: shuffledQs,
+          questions: originalQs,
           allAnswers:       (r.allAnswers && typeof r.allAnswers === "object") ? r.allAnswers : {},
           questionTimes:    (r.questionTimes && typeof r.questionTimes === "object") ? r.questionTimes : {},
           correctQus:       toArr(r.correctQus),
@@ -1550,7 +1552,12 @@ export default function ResultPage() {
   const percentile    = s.percentile ?? null;
   const timeTaken     = s.timeTaken ?? 0;
 
-  const questions        = Array.isArray(s.questions)        ? s.questions        : [];
+  // Use shuffledQuestions if present — this is the exact order questions were
+  // shown during the test. allAnswers indices are based on this shuffled order.
+  // Fall back to questions (original order) for old results or student's own view.
+  const questions = Array.isArray(s.shuffledQuestions) && s.shuffledQuestions.length > 0
+    ? s.shuffledQuestions
+    : Array.isArray(s.questions) ? s.questions : [];
   const allAnswers       = (s.allAnswers && typeof s.allAnswers === "object") ? s.allAnswers : {};
   const questionTimes    = (s.questionTimes && typeof s.questionTimes === "object") ? s.questionTimes : {};
   const correctQus       = Array.isArray(s.correctQus)       ? s.correctQus       : [];

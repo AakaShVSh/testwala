@@ -6097,10 +6097,17 @@ export default function TestDetailPage() {
       const r = res.data || res;
       const studentName = r.studentId?.Name || r.studentId?.Email || "Student";
       const studentId = String(r.studentId?._id || r.studentId);
-      const questions =
+
+      // questions for rendering: prefer shuffledQuestions stored in result
+      // (exact order shown to student), fall back to original test questions
+      const originalQuestions =
         Array.isArray(r.testId?.questions) && r.testId.questions.length
           ? r.testId.questions
           : test.questions || [];
+      const shuffledQuestions =
+        Array.isArray(r.shuffledQuestions) && r.shuffledQuestions.length > 0
+          ? r.shuffledQuestions
+          : null; // null = no shuffle data saved (old results)
 
       // 2. All attempts by this student for this test — to power the retakes panel
       let allAttempts = [];
@@ -6122,7 +6129,7 @@ export default function TestDetailPage() {
             correct:
               a.correct ??
               (Array.isArray(a.correctQus) ? a.correctQus.length : 0),
-            totalQuestions: questions.length,
+            totalQuestions: originalQuestions.length,
           }));
       } catch {
         // if this fails, just show the single result without retakes panel
@@ -6145,11 +6152,14 @@ export default function TestDetailPage() {
             r.correct ??
             (Array.isArray(r.correctQus) ? r.correctQus.length : 0) ??
             0,
-          totalQuestions: questions.length || r.totalQuestions || 0,
+          totalQuestions: originalQuestions.length || r.totalQuestions || 0,
           scorePercentage: r.scorePercentage ?? r.percentage ?? 0,
           percentile: r.percentile ?? null,
           timeTaken: r.timeTakenSec ?? r.timeTaken ?? 0,
-          questions,
+          // shuffledQuestions = the order questions were shown during the test.
+          // ResultPage uses this to map allAnswers indices to the right questions.
+          shuffledQuestions: shuffledQuestions || [],
+          questions: originalQuestions, // fallback for old results without shuffle data
           allAnswers:
             r.allAnswers && typeof r.allAnswers === "object"
               ? r.allAnswers
