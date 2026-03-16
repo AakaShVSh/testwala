@@ -76,7 +76,11 @@ export const testsAPI = {
 export const resultsAPI = {
   submit: (body) =>
     apiFetch("/results/submit", { method: "POST", body: JSON.stringify(body) }),
-  getMyResults: () => apiFetch("/results/student/me"),
+  // Pass optional testId to filter: getMyResults({ testId: "abc123" })
+  getMyResults: (p = {}) => {
+    const qs = new URLSearchParams(p).toString();
+    return apiFetch(`/results/student/me${qs ? `?${qs}` : ""}`);
+  },
   getById: (id) => apiFetch(`/results/${id}`),
   getForTest: (testId) => apiFetch(`/results/test/${testId}`),
 };

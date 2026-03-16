@@ -1,6 +1,11 @@
 /**
  * src/services/socket.js
  *
+ * BEHAVIOUR:
+ * - "test:submitted" is only emitted by the backend on a student's FIRST attempt.
+ *   Retakes save to the DB but do NOT fire live socket updates, so the leaderboard
+ *   and stats panels stay accurate (first attempt = leaderboard entry).
+ *
  * FIXES:
  * 1. Rooms are re-joined on every "connect" event (handles reconnections)
  * 2. joinUserRoom / joinCoachingRoom / leaveCoachingRoom helpers exported
@@ -55,7 +60,6 @@ export function joinUserRoom(userId) {
   const room = `user:${userId}`;
   _rooms.add(room);
   if (socket.connected) socket.emit("join-user", room);
-  // If not yet connected, the "connect" listener above will join on connect
 }
 
 /**
