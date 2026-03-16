@@ -1567,6 +1567,10 @@
 // RequestTestDrawer.jsx
 // ═══════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════
+// RequestTestDrawer.jsx
+// ═══════════════════════════════════════════════════════════════
+
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Box,
@@ -1624,10 +1628,13 @@ import { apiFetch } from "../services/api";
 import { socket } from "../services/socket";
 import { useAuth } from "../context/AuthContext";
 
-const EXAM_TYPES = ["SSC", "UPSC", "BANK", "RAILWAY", "STATE", "DEFENCE", "OTHER"];
+// Standard enum values the backend accepts
+const STANDARD_EXAM_TYPES = ["SSC", "UPSC", "BANK", "RAILWAY", "STATE", "DEFENCE"];
+const ALL_STANDARD = [...STANDARD_EXAM_TYPES, "OTHER"];
+
 const SUBJECTS = [
-  "math","english","gs","vocabulary","reasoning","science",
-  "history","geography","polity","economics","mathtwo",
+  "math", "english", "gs", "vocabulary", "reasoning", "science",
+  "history", "geography", "polity", "economics", "mathtwo",
 ];
 const OPTION_LABELS = ["A", "B", "C", "D"];
 
@@ -1659,8 +1666,9 @@ const FileIcon = ({ type }) => {
   return <Icon as={Ic} color={FILE_COLORS[type] || "#64748b"} fontSize="18px" />;
 };
 
-// ── Helper: resolve display label for an exam type ─────────────────────────
-function resolveExamLabel(examType, customExamType) {
+// ── Display helper ─────────────────────────────────────────────────────────
+// Never shows "OTHER" — always shows the human-readable label
+function displayExamType(examType, customExamType) {
   if (examType === "OTHER" && customExamType) return customExamType;
   return examType || "—";
 }
@@ -1674,7 +1682,6 @@ function TestDetailModal({ test, isOpen, onClose }) {
   if (!test) return null;
 
   const shareUrl = `${window.location.origin}/tests/${test.slug || test._id}`;
-  const examLabel = resolveExamLabel(test.examType, test.customExamType);
 
   const copy = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -1692,16 +1699,19 @@ function TestDetailModal({ test, isOpen, onClose }) {
       <ModalOverlay backdropFilter="blur(4px)" bg="rgba(0,0,0,.5)" />
       <ModalContent mx={4} borderRadius="20px" overflow="hidden" fontFamily="'Sora',sans-serif">
         <ModalCloseButton top={4} right={4} zIndex={10} color="white" />
-        <ModalHeader px={7} pt={7} pb={5} bg="linear-gradient(135deg,#0f1e3a,#2d5fa8)" color="white">
-          <Text fontSize="18px" fontWeight={800} lineHeight="1.2" mb={1}>{test.title}</Text>
+        <ModalHeader px={7} pt={7} pb={5}
+          bg="linear-gradient(135deg,#0f1e3a,#2d5fa8)" color="white">
+          <Text fontSize="18px" fontWeight={800} lineHeight="1.2" mb={1}>
+            {test.title}
+          </Text>
           <Flex gap={4} mt={2} flexWrap="wrap">
             {[
-              ["📋", examLabel],
-              ["⏱", `${test.timeLimitMin || 30} min`],
-              ["❓", `${test.questions?.length || test.totalMarks || 0} questions`],
+              ["📋", displayExamType(test.examType, test.customExamType)],
+              ["⏱",  `${test.timeLimitMin || 30} min`],
+              ["❓",  `${test.questions?.length || test.totalMarks || 0} questions`],
               ["🔐", test.visibility === "private" ? "Private" : "Public"],
             ].map(([icon, val]) =>
-              val && (
+              val && val !== "—" && (
                 <Text key={val} fontSize="12px" color="rgba(255,255,255,.7)" fontWeight={600}>
                   {icon} {val}
                 </Text>
@@ -1846,9 +1856,7 @@ export function MyTestRequests({ coachingId, onRequestTest }) {
       toast({
         title: "🎉 Your test is ready!",
         description: data?.testTitle || "Admin has completed your test request.",
-        status: "success",
-        duration: 6000,
-        isClosable: true,
+        status: "success", duration: 6000, isClosable: true,
       });
     };
     socket.on("test:created", handler);
@@ -1858,17 +1866,10 @@ export function MyTestRequests({ coachingId, onRequestTest }) {
     };
   }, [coachingId, load]);
 
-  const openTest = (req) => {
-    setSelTest(req.createdTestId);
-    onOpen();
-  };
+  const openTest = (req) => { setSelTest(req.createdTestId); onOpen(); };
 
   if (loading)
-    return (
-      <Flex justify="center" py={10}>
-        <Spinner color="#4a72b8" thickness="3px" />
-      </Flex>
-    );
+    return <Flex justify="center" py={10}><Spinner color="#4a72b8" thickness="3px" /></Flex>;
 
   return (
     <Box fontFamily="'Sora',sans-serif">
@@ -1889,7 +1890,9 @@ export function MyTestRequests({ coachingId, onRequestTest }) {
           borderRadius="14px" border="1px solid #e2e8f0">
           <Icon as={FaClipboardList} fontSize="42px" color="#e2e8f0"
             display="block" mx="auto" mb={3} />
-          <Text fontSize="14px" fontWeight={700} color="#94a3b8" mb={2}>No requests yet</Text>
+          <Text fontSize="14px" fontWeight={700} color="#94a3b8" mb={2}>
+            No requests yet
+          </Text>
           <Text fontSize="13px" color="#94a3b8" mb={5} maxW="320px" mx="auto">
             Submit a request with your reference material — admin will build the
             test and send it back.
@@ -1915,8 +1918,6 @@ export function MyTestRequests({ coachingId, onRequestTest }) {
 
           {requests.map((req, idx) => {
             const s = STATUS_STYLE[req.status] || STATUS_STYLE.pending;
-            // Show custom exam type when examType is "OTHER"
-            const examLabel = resolveExamLabel(req.examType, req.customExamType);
             return (
               <Flex key={req._id} px={6} py={4} align="center"
                 borderBottom={idx < requests.length - 1 ? "1px solid #f1f5f9" : "none"}
@@ -1939,10 +1940,10 @@ export function MyTestRequests({ coachingId, onRequestTest }) {
                   )}
                 </Box>
 
-                {/* Exam column — shows custom label, never "OTHER" */}
+                {/* Exam column — never shows raw "OTHER" */}
                 <Text flex={1} fontSize="13px" fontWeight={600} color="#374151"
                   display={{ base: "none", md: "block" }}>
-                  {examLabel}
+                  {displayExamType(req.examType, req.customExamType)}
                 </Text>
 
                 <Text flex={1} fontSize="13px" fontWeight={600} color="#374151"
@@ -1985,13 +1986,13 @@ export function MyTestRequests({ coachingId, onRequestTest }) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// DEFAULT EXPORT — RequestTestDrawer (submission form)
+// DEFAULT EXPORT — RequestTestDrawer
 // ═══════════════════════════════════════════════════════════════
 export default function RequestTestDrawer({
   isOpen,
   onClose,
   coachingId,
-  coachingExamTypes = [],
+  coachingExamTypes = [],  // already cleaned by allExamTypesOf() — no "OTHER"
   currentUser,
 }) {
   const toast = useToast();
@@ -1999,18 +2000,19 @@ export default function RequestTestDrawer({
   const [busy, setBusy] = useState(false);
   const [files, setFiles] = useState([]);
   const [errs, setErrs] = useState({});
-  const [customExamInput, setCustomExamInput] = useState("");
+  const [customInput, setCustomInput] = useState("");
 
-  // coachingExamTypes already has "OTHER" stripped and custom types merged
-  // from allExamTypesOf() — so we need to map them to valid enum values
-  const STANDARD = ["SSC", "UPSC", "BANK", "RAILWAY", "STATE", "DEFENCE"];
+  // Split coaching types into standard vs custom
+  const coachingStandard = coachingExamTypes.filter((t) => STANDARD_EXAM_TYPES.includes(t));
+  const coachingCustom   = coachingExamTypes.filter((t) => !STANDARD_EXAM_TYPES.includes(t));
 
-  // Determine initial examType: first standard type from coaching, else empty
-  const firstStandard = coachingExamTypes.find((t) => STANDARD.includes(t)) || "";
+  // Remaining standard types not in this coaching
+  const otherStandard = STANDARD_EXAM_TYPES.filter((t) => !coachingExamTypes.includes(t));
 
   const [form, setForm] = useState({
     title: "",
-    examType: firstStandard,
+    // selected value in dropdown — can be a standard type, a custom label, or "OTHER"
+    selectedExam: coachingStandard[0] || coachingCustom[0] || "",
     subject: "",
     totalQuestions: 20,
     timeLimitMin: 30,
@@ -2020,8 +2022,9 @@ export default function RequestTestDrawer({
   });
 
   useEffect(() => {
-    const first = coachingExamTypes.find((t) => STANDARD.includes(t)) || "";
-    if (first && !form.examType) setForm((p) => ({ ...p, examType: first }));
+    const first = coachingStandard[0] || coachingCustom[0] || "";
+    if (first && !form.selectedExam)
+      setForm((p) => ({ ...p, selectedExam: first }));
   }, [coachingExamTypes]);
 
   const sf = (k) => (e) => {
@@ -2029,10 +2032,20 @@ export default function RequestTestDrawer({
     setErrs((p) => ({ ...p, [k]: "" }));
   };
 
-  // Custom types are ones in coachingExamTypes that aren't standard enum values
-  const coachingCustomTypes = coachingExamTypes.filter((t) => !STANDARD.includes(t));
-  // Whether "OTHER" is selected (meaning user wants to type a custom exam type)
-  const isOtherSelected = form.examType === "OTHER";
+  // Derive what to send to the backend from selectedExam
+  // If selectedExam is a standard type → examType = selectedExam, customExamType = ""
+  // If selectedExam is a custom label  → examType = "OTHER", customExamType = selectedExam
+  // If selectedExam is "OTHER"         → examType = "OTHER", customExamType = customInput
+  const resolvePayloadExamType = () => {
+    if (STANDARD_EXAM_TYPES.includes(form.selectedExam)) {
+      return { examType: form.selectedExam, customExamType: "" };
+    }
+    if (form.selectedExam === "OTHER") {
+      return { examType: "OTHER", customExamType: customInput.trim() };
+    }
+    // It's one of the coaching's custom labels (e.g. "CDS", "Airforce")
+    return { examType: "OTHER", customExamType: form.selectedExam };
+  };
 
   const handleFiles = async (e) => {
     const picked = Array.from(e.target.files);
@@ -2056,10 +2069,12 @@ export default function RequestTestDrawer({
   const handleSubmit = async () => {
     const e = {};
     if (!form.title.trim()) e.title = "Give this request a title";
-    if (!form.examType) e.examType = "Select an exam type";
-    if (form.examType === "OTHER" && !customExamInput.trim())
-      e.customExamType = "Please specify the exam type";
+    if (!form.selectedExam) e.selectedExam = "Select an exam type";
+    if (form.selectedExam === "OTHER" && !customInput.trim())
+      e.selectedExam = "Please specify the exam type";
     if (Object.keys(e).length) { setErrs(e); return; }
+
+    const { examType, customExamType } = resolvePayloadExamType();
 
     setBusy(true);
     try {
@@ -2069,9 +2084,8 @@ export default function RequestTestDrawer({
           coachingId,
           requestedBy: currentUser._id,
           title: form.title.trim(),
-          examType: form.examType,
-          // Only send customExamType when OTHER is selected
-          customExamType: form.examType === "OTHER" ? customExamInput.trim() : "",
+          examType,
+          customExamType,
           subject: form.subject || undefined,
           totalQuestions: Number(form.totalQuestions) || 20,
           timeLimitMin: Number(form.timeLimitMin) || 30,
@@ -2079,17 +2093,14 @@ export default function RequestTestDrawer({
           visibility: form.visibility,
           instructions: form.instructions.trim() || undefined,
           attachments: files.map((f) => ({
-            fileName: f.name,
-            fileType: f.type,
-            fileData: f.base64,
+            fileName: f.name, fileType: f.type, fileData: f.base64,
           })),
         }),
       });
       toast({
         title: "Request sent to admin!",
         description: "You'll be notified when your test is ready.",
-        status: "success",
-        duration: 5000,
+        status: "success", duration: 5000,
       });
       resetState();
       onClose();
@@ -2101,20 +2112,15 @@ export default function RequestTestDrawer({
   };
 
   const resetState = () => {
-    const first = coachingExamTypes.find((t) => STANDARD.includes(t)) || "";
+    const first = coachingStandard[0] || coachingCustom[0] || "";
     setForm({
-      title: "",
-      examType: first,
-      subject: "",
-      totalQuestions: 20,
-      timeLimitMin: 30,
-      difficulty: "mixed",
-      visibility: "public",
-      instructions: "",
+      title: "", selectedExam: first, subject: "",
+      totalQuestions: 20, timeLimitMin: 30,
+      difficulty: "mixed", visibility: "public", instructions: "",
     });
     setFiles([]);
     setErrs({});
-    setCustomExamInput("");
+    setCustomInput("");
   };
 
   const handleClose = () => { resetState(); onClose(); };
@@ -2169,78 +2175,66 @@ export default function RequestTestDrawer({
             </FormControl>
 
             <Flex gap={3} direction={{ base: "column", sm: "row" }}>
-              <FormControl flex={1} isRequired isInvalid={!!errs.examType}>
+              <FormControl flex={1} isRequired isInvalid={!!errs.selectedExam}>
                 <FormLabel {...LS}>Exam Type</FormLabel>
-                <Select value={form.examType} onChange={(e) => {
-                    sf("examType")(e);
-                    if (e.target.value !== "OTHER") setCustomExamInput("");
-                    setErrs((p) => ({ ...p, customExamType: "" }));
+                <Select
+                  value={form.selectedExam}
+                  onChange={(e) => {
+                    setForm((p) => ({ ...p, selectedExam: e.target.value }));
+                    setErrs((p) => ({ ...p, selectedExam: "" }));
+                    if (e.target.value !== "OTHER") setCustomInput("");
                   }}
                   borderRadius="10px" h="44px" fontSize="14px"
-                  borderColor={errs.examType ? "red.400" : "#e2e8f0"}>
+                  borderColor={errs.selectedExam ? "red.400" : "#e2e8f0"}>
                   <option value="">Select…</option>
 
-                  {/* Standard types from this coaching */}
-                  {coachingExamTypes.filter((t) => STANDARD.includes(t)).length > 0 && (
+                  {/* This coaching's standard exam types */}
+                  {coachingStandard.length > 0 && (
                     <optgroup label="Your Coaching">
-                      {coachingExamTypes
-                        .filter((t) => STANDARD.includes(t))
-                        .map((et) => (
-                          <option key={et} value={et}>{et}</option>
-                        ))}
-                    </optgroup>
-                  )}
-
-                  {/* Custom types from this coaching (e.g. "CDS", "Airforce") */}
-                  {coachingCustomTypes.length > 0 && (
-                    <optgroup label="Your Custom Types">
-                      {coachingCustomTypes.map((et) => (
-                        // Store these as "OTHER" enum with customExamType = the label
-                        <option key={et} value={`CUSTOM:${et}`}>{et}</option>
+                      {coachingStandard.map((et) => (
+                        <option key={et} value={et}>{et}</option>
                       ))}
                     </optgroup>
                   )}
 
-                  {/* All remaining standard types not already shown */}
-                  <optgroup label="Other Exam Types">
-                    {STANDARD.filter((et) => !coachingExamTypes.includes(et)).map((et) => (
-                      <option key={et} value={et}>{et}</option>
-                    ))}
-                    <option value="OTHER">Other (specify below)</option>
-                  </optgroup>
-                </Select>
-                <FormErrorMessage>{errs.examType}</FormErrorMessage>
+                  {/* This coaching's custom exam types (e.g. "CDS", "Airforce") */}
+                  {coachingCustom.length > 0 && (
+                    <optgroup label="Your Coaching (Custom)">
+                      {coachingCustom.map((et) => (
+                        <option key={et} value={et}>{et}</option>
+                      ))}
+                    </optgroup>
+                  )}
 
-                {/* Custom input — shown when OTHER is selected or a CUSTOM: value */}
-                {(isOtherSelected || form.examType.startsWith("CUSTOM:")) && (
-                  <Box mt={2}>
-                    <Input
-                      value={
-                        form.examType.startsWith("CUSTOM:")
-                          ? form.examType.replace("CUSTOM:", "")
-                          : customExamInput
-                      }
-                      onChange={
-                        form.examType.startsWith("CUSTOM:")
-                          ? undefined  // readonly — already set from coaching
-                          : (e) => {
-                              setCustomExamInput(e.target.value);
-                              setErrs((p) => ({ ...p, customExamType: "" }));
-                            }
-                      }
-                      readOnly={form.examType.startsWith("CUSTOM:")}
-                      placeholder="e.g. Airforce, CDS, Banking…"
-                      h="38px"
-                      fontSize="13px"
-                      borderRadius="8px"
-                      borderColor={errs.customExamType ? "red.400" : "#e2e8f0"}
-                      bg={form.examType.startsWith("CUSTOM:") ? "#f8fafc" : "white"}
-                      _focus={{ borderColor: "#4a72b8", boxShadow: "0 0 0 1px #4a72b8" }}
-                    />
-                    {errs.customExamType && (
-                      <Text fontSize="12px" color="red.500" mt={1}>{errs.customExamType}</Text>
-                    )}
-                  </Box>
+                  {/* All other standard types */}
+                  {otherStandard.length > 0 && (
+                    <optgroup label="Other">
+                      {otherStandard.map((et) => (
+                        <option key={et} value={et}>{et}</option>
+                      ))}
+                    </optgroup>
+                  )}
+
+                  {/* Manual entry */}
+                  <option value="OTHER">Other (type below…)</option>
+                </Select>
+                <FormErrorMessage>{errs.selectedExam}</FormErrorMessage>
+
+                {/* Only show text input when user picks "Other (type below…)" */}
+                {form.selectedExam === "OTHER" && (
+                  <Input
+                    mt={2}
+                    value={customInput}
+                    onChange={(e) => {
+                      setCustomInput(e.target.value);
+                      setErrs((p) => ({ ...p, selectedExam: "" }));
+                    }}
+                    placeholder="e.g. Airforce, CDS, Banking…"
+                    h="38px" fontSize="13px" borderRadius="8px"
+                    borderColor={errs.selectedExam ? "red.400" : "#e2e8f0"}
+                    bg="white"
+                    _focus={{ borderColor: "#4a72b8", boxShadow: "0 0 0 1px #4a72b8" }}
+                  />
                 )}
               </FormControl>
 
@@ -2315,8 +2309,8 @@ export default function RequestTestDrawer({
                 <Text fontSize="11px" color="#94a3b8">PDF · Images · Excel · max 10 MB</Text>
               </Flex>
               <Text fontSize="12px" color="#64748b" mb={3}>
-                Upload chapter PDFs, question screenshots, handwritten notes or Excel
-                sheets. Admin will use these to create your test.
+                Upload chapter PDFs, question screenshots, handwritten notes or Excel sheets.
+                Admin will use these to create your test.
               </Text>
 
               <input ref={fileRef} type="file" multiple
@@ -2354,10 +2348,8 @@ export default function RequestTestDrawer({
                         </Text>
                       </Box>
                       {f.type === "image" && (
-                        <Box w="48px" h="36px" borderRadius="6px"
-                          overflow="hidden" flexShrink={0}>
-                          <img src={`data:${f.mimeType};base64,${f.base64}`}
-                            alt={f.name}
+                        <Box w="48px" h="36px" borderRadius="6px" overflow="hidden" flexShrink={0}>
+                          <img src={`data:${f.mimeType};base64,${f.base64}`} alt={f.name}
                             style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                         </Box>
                       )}
@@ -2475,11 +2467,11 @@ export function NotificationBell() {
 
   const notifStyle = (type) => {
     switch (type) {
-      case "test_ready":        return { icon: FaCheckCircle, color: "#16a34a", bg: "#dcfce7" };
-      case "request_rejected":  return { icon: FaTimesCircle, color: "#dc2626", bg: "#fee2e2" };
-      case "request_processing":return { icon: FaClock,       color: "#2563eb", bg: "#eff6ff" };
-      case "coaching_approved": return { icon: FaCheckCircle, color: "#16a34a", bg: "#dcfce7" };
-      default:                  return { icon: FaBell,        color: "#4a72b8", bg: "#eff6ff" };
+      case "test_ready":         return { icon: FaCheckCircle, color: "#16a34a", bg: "#dcfce7" };
+      case "request_rejected":   return { icon: FaTimesCircle, color: "#dc2626", bg: "#fee2e2" };
+      case "request_processing": return { icon: FaClock,       color: "#2563eb", bg: "#eff6ff" };
+      case "coaching_approved":  return { icon: FaCheckCircle, color: "#16a34a", bg: "#dcfce7" };
+      default:                   return { icon: FaBell,        color: "#4a72b8", bg: "#eff6ff" };
     }
   };
 
