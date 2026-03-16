@@ -914,6 +914,9 @@ const TakeTest = ({ handleFullScreen }) => {
   const quest = location.state?.quest ?? [];
   const testMeta = location.state?.testMeta ?? {};
 
+  // question is the SHUFFLED array — this order is what the student sees.
+  // We store this exact array in the result (shuffledQuestions) so ResultPage
+  // can map allAnswers indices back to the correct questions.
   const [question] = useState(() => [...quest].sort(() => Math.random() - 0.5));
   const [currentquestion, setcurrentquestion] = useState(0);
   const [answeredQuestion, setAnsweredQuestion] = useState([]);
@@ -931,10 +934,9 @@ const TakeTest = ({ handleFullScreen }) => {
   const [animKey, setAnimKey] = useState(0);
 
   // ── Per-question time tracking ─────────────────────────────────
-  // questionTimes: { [questionIndex]: totalSecondsSpent }
-  const questionTimesRef = useRef({}); // accumulated time per question (sent to backend)
-  const qStartTimeRef = useRef(Date.now()); // when current question was entered
-  const [qElapsed, setQElapsed] = useState(0); // live display counter for current question
+  const questionTimesRef = useRef({});
+  const qStartTimeRef = useRef(Date.now());
+  const [qElapsed, setQElapsed] = useState(0);
 
   const timeLimitMin = Number(testMeta?.timeLimitMin) || 0;
   const isCountdown = timeLimitMin > 0;
@@ -980,9 +982,8 @@ const TakeTest = ({ handleFullScreen }) => {
       setQElapsed(elapsed);
     }, 1000);
     return () => clearInterval(t);
-  }, [currentquestion]); // resets when question changes
+  }, [currentquestion]);
 
-  // Save accumulated time for previous question, reset start for new one
   const saveQuestionTime = (leavingIdx) => {
     const spent = Math.floor((Date.now() - qStartTimeRef.current) / 1000);
     questionTimesRef.current[leavingIdx] =
@@ -1105,12 +1106,9 @@ const TakeTest = ({ handleFullScreen }) => {
 
   // ── Navigation ────────────────────────────────────────────────
   const goToQuestion = (idx) => {
-    // Save time spent on current question before leaving
     saveQuestionTime(currentquestion);
-    // Reset per-question stopwatch
     qStartTimeRef.current = Date.now();
     setQElapsed(0);
-
     setcurrentquestion(idx);
     const savedIndex = allAnsRef.current[idx];
     setans(
@@ -1297,6 +1295,7 @@ const TakeTest = ({ handleFullScreen }) => {
         question.length > 0 ? Math.round((mark / question.length) * 100) : 0;
       let apiPercentile = null,
         savedResultId = null;
+
       if (testMeta?.testId) {
         try {
           const res = await resultsAPI.submit({
@@ -1306,13 +1305,18 @@ const TakeTest = ({ handleFullScreen }) => {
             wrongAnswers: wrongans,
             timeTaken,
             allAnswers: allAnsRef.current,
-            questionTimes: questionTimesRef.current, // ← per-question times
+            questionTimes: questionTimesRef.current,
             correctQus,
             wrongQus: wrongansqus,
             answeredQus: answeredQuestion,
             notAnsweredQus: notAnswer,
             markedAndAnswered: markedAndAnswer,
             markedNotAnswered: markedNotAnswer,
+            // ── Store the shuffled question order ──────────────────────────
+            // allAnswers indices are based on this shuffled array.
+            // The backend saves this so ResultPage can reconstruct the correct
+            // answer↔question mapping when the owner views the result.
+            shuffledQuestions: question,
           });
           apiPercentile = res.data?.percentile ?? res.percentile ?? null;
           savedResultId = res.data?._id ?? res._id ?? null;
@@ -1326,9 +1330,11 @@ const TakeTest = ({ handleFullScreen }) => {
           console.error("Save result error:", err);
         }
       }
+
       if (document.exitFullscreen) document.exitFullscreen();
       else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
       if (handleFullScreen) handleFullScreen(false);
+
       navigate("/test-result", {
         replace: true,
         state: {
@@ -1342,9 +1348,12 @@ const TakeTest = ({ handleFullScreen }) => {
           percentile: apiPercentile,
           savedResultId,
           timeTaken,
+          // Pass the shuffled array so the student's own ResultPage also uses
+          // the correct question order (same as what was shown during the test)
+          shuffledQuestions: question,
           questions: question,
           allAnswers: allAnsRef.current,
-          questionTimes: { ...questionTimesRef.current }, // ← pass to result page
+          questionTimes: { ...questionTimesRef.current },
           correctQus,
           wrongansqus,
           answeredQuestion,
@@ -1767,7 +1776,6 @@ const TakeTest = ({ handleFullScreen }) => {
                   {STATUS_STYLE[currentStatus].label}
                 </Badge>
               )}
-              {/* ── Per-question stopwatch ── */}
               <QuestionTimer elapsed={qElapsed} />
             </Flex>
             <ReportQuestionDropdown />
