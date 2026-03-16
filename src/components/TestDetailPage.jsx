@@ -5972,7 +5972,9 @@ export default function TestDetailPage() {
 
   useEffect(() => {
     if (!test?._id) return;
-    const onSubmitted = ({ testId }) => {
+    // Backend only emits "test:attempted" on a student's FIRST attempt,
+    // so this listener naturally keeps the leaderboard first-attempt only.
+    const onAttempted = ({ testId }) => {
       if (String(testId) === String(test._id)) {
         Promise.all([
           apiFetch(`/tests/${test._id}/stats`).catch(() => ({ data: null })),
@@ -5985,8 +5987,8 @@ export default function TestDetailPage() {
         });
       }
     };
-    socket.on("test:submitted", onSubmitted);
-    return () => socket.off("test:submitted", onSubmitted);
+    socket.on("test:attempted", onAttempted);
+    return () => socket.off("test:attempted", onAttempted);
   }, [test?._id]);
 
   if (loading)
