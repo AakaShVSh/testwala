@@ -8106,6 +8106,7 @@ function CoachingStatusScreen({ coaching }) {
 // ═══════════════════════════════════════════════════════════════
 function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
   const toast = useToast();
+  const [customExamInput, setCustomExamInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [errs, setErrs] = useState({});
   const [form, setForm] = useState({
@@ -8275,7 +8276,7 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
               <FormErrorMessage>{errs.name}</FormErrorMessage>
             </FormControl>
 
-            <FormControl isRequired isInvalid={!!errs.examTypes}>
+            {/* <FormControl isRequired isInvalid={!!errs.examTypes}>
               <FormLabel {...LS}>Exam Types</FormLabel>
               <Box
                 border="1px solid"
@@ -8312,6 +8313,190 @@ function AddCoachingDrawer({ isOpen, onClose, onCreated, currentUser }) {
                     })}
                   </Flex>
                 </CheckboxGroup>
+              </Box>
+              <FormErrorMessage>{errs.examTypes}</FormErrorMessage>
+            </FormControl> */}
+
+            <FormControl isRequired isInvalid={!!errs.examTypes}>
+              <FormLabel {...LS}>Exam Types</FormLabel>
+              <Box
+                border="1px solid"
+                borderColor={errs.examTypes ? "red.400" : "#e2e8f0"}
+                borderRadius="10px"
+                p={4}
+                bg="#f8fafc"
+              >
+                {/* Standard exam type chips */}
+                <Flex
+                  flexWrap="wrap"
+                  gap={2}
+                  mb={form.examTypes.includes("OTHER") ? 3 : 0}
+                >
+                  {EXAM_TYPES.map((ex) => {
+                    const c = EXAM_COLORS[ex] || EXAM_COLORS.OTHER;
+                    const isOn = form.examTypes.includes(ex);
+                    return (
+                      <Box
+                        key={ex}
+                        as="button"
+                        type="button"
+                        onClick={() => {
+                          const current = form.examTypes;
+                          let next;
+                          if (isOn) {
+                            // Deselecting OTHER also clears custom tags
+                            next =
+                              ex === "OTHER"
+                                ? current.filter(
+                                    (v) =>
+                                      EXAM_TYPES.includes(v) && v !== "OTHER",
+                                  )
+                                : current.filter((v) => v !== ex);
+                          } else {
+                            next = [...current, ex];
+                          }
+                          setForm((p) => ({ ...p, examTypes: next }));
+                          setErrs((p) => ({ ...p, examTypes: "" }));
+                        }}
+                        bg={isOn ? c.bg : "white"}
+                        color={isOn ? c.color : "#94a3b8"}
+                        border="1.5px solid"
+                        borderColor={isOn ? c.color + "66" : "#e2e8f0"}
+                        px={3}
+                        py="5px"
+                        borderRadius="full"
+                        fontSize="11px"
+                        fontWeight={700}
+                        cursor="pointer"
+                        transition="all .15s"
+                        _hover={{
+                          borderColor: c.color + "99",
+                          color: c.color,
+                          bg: c.bg,
+                        }}
+                        display="flex"
+                        alignItems="center"
+                        gap={1.5}
+                      >
+                        {isOn && <Icon as={FaCheck} fontSize="9px" />}
+                        {ex}
+                      </Box>
+                    );
+                  })}
+                </Flex>
+
+                {/* Custom exam type input — shown only when OTHER is selected */}
+                {form.examTypes.includes("OTHER") && (
+                  <Box borderTop="1px solid #e2e8f0" pt={3}>
+                    <Text
+                      fontSize="11px"
+                      color="#64748b"
+                      fontWeight={600}
+                      mb={2}
+                    >
+                      Specify other exam types:
+                    </Text>
+                    <Flex gap={2} mb={2}>
+                      <Input
+                        value={customExamInput}
+                        onChange={(e) => setCustomExamInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const val = customExamInput.trim().toUpperCase();
+                            if (val && !form.examTypes.includes(val)) {
+                              setForm((p) => ({
+                                ...p,
+                                examTypes: [...p.examTypes, val],
+                              }));
+                            }
+                            setCustomExamInput("");
+                          }
+                        }}
+                        placeholder="e.g. Banking, Airforce, CDS…"
+                        h="36px"
+                        fontSize="13px"
+                        borderRadius="8px"
+                        borderColor="#e2e8f0"
+                        bg="white"
+                        _focus={{
+                          borderColor: "#4a72b8",
+                          boxShadow: "0 0 0 1px #4a72b8",
+                        }}
+                        flex={1}
+                      />
+                      <Button
+                        type="button"
+                        h="36px"
+                        px={4}
+                        fontSize="12px"
+                        fontWeight={700}
+                        borderRadius="8px"
+                        bg="#4a72b8"
+                        color="white"
+                        _hover={{ bg: "#3b5fa0" }}
+                        flexShrink={0}
+                        onClick={() => {
+                          const val = customExamInput.trim().toUpperCase();
+                          if (val && !form.examTypes.includes(val)) {
+                            setForm((p) => ({
+                              ...p,
+                              examTypes: [...p.examTypes, val],
+                            }));
+                          }
+                          setCustomExamInput("");
+                        }}
+                      >
+                        Add
+                      </Button>
+                    </Flex>
+
+                    {/* Custom tag pills */}
+                    {form.examTypes.filter((v) => !EXAM_TYPES.includes(v))
+                      .length > 0 && (
+                      <Flex flexWrap="wrap" gap={2} mt={1}>
+                        {form.examTypes
+                          .filter((v) => !EXAM_TYPES.includes(v))
+                          .map((tag) => (
+                            <Flex
+                              key={tag}
+                              align="center"
+                              gap={1.5}
+                              bg="white"
+                              border="1px solid #e2e8f0"
+                              borderRadius="full"
+                              px={3}
+                              py="4px"
+                              fontSize="11px"
+                              fontWeight={700}
+                              color="#374151"
+                            >
+                              {tag}
+                              <Box
+                                as="button"
+                                type="button"
+                                fontSize="13px"
+                                color="#94a3b8"
+                                lineHeight={1}
+                                ml={0.5}
+                                _hover={{ color: "#ef4444" }}
+                                onClick={() =>
+                                  setForm((p) => ({
+                                    ...p,
+                                    examTypes: p.examTypes.filter(
+                                      (v) => v !== tag,
+                                    ),
+                                  }))
+                                }
+                              >
+                                ×
+                              </Box>
+                            </Flex>
+                          ))}
+                      </Flex>
+                    )}
+                  </Box>
+                )}
               </Box>
               <FormErrorMessage>{errs.examTypes}</FormErrorMessage>
             </FormControl>

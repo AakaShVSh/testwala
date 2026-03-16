@@ -49,7 +49,7 @@ mailjet
 googleought
 save test
 report question
-first attempt should only come in leaderboard
+first attempt should only come in leaderboard ---> done
 
 later
 join button in coaching page
