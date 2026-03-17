@@ -9391,6 +9391,7 @@ function CoachingDetail({ coaching }) {
         coachingExamTypes={displayExamTypes}
         currentUser={user}
       />
+      <AdsterraBanner/>
     </Box>
   );
 }
