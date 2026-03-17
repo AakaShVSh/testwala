@@ -9343,7 +9343,11 @@ function CoachingDetail({ coaching }) {
         )}
 
         {isOwner ? (
+          <>
           <MyTestRequests coachingId={coaching._id} onRequestTest={openReq} />
+        <Box mt={10}>
+      <AdsterraBanner />
+    </Box></>
         ) : (
           <Box>
             <Box mb={10} pb={10} borderBottom="1px solid #e2e8f0">
@@ -9380,6 +9384,9 @@ function CoachingDetail({ coaching }) {
               </Flex>
             </Box>
             <StudentTestsSection coachingId={coaching._id} />
+            <Box mt={10}>
+              <AdsterraBanner />
+            </Box>
           </Box>
         )}
       </Box>
@@ -9391,7 +9398,7 @@ function CoachingDetail({ coaching }) {
         coachingExamTypes={displayExamTypes}
         currentUser={user}
       />
-      <AdsterraBanner/>
+      <AdsterraBanner />
     </Box>
   );
 }

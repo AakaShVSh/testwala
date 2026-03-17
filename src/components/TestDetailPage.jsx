@@ -3418,6 +3418,7 @@ function TestInfoPage({
                 ))}
               </Flex>
             </Box>
+            <AdsterraBanner/>
           </Box>
 
           {/* Sticky sidebar */}
