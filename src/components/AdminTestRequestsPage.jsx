@@ -3014,9 +3014,17 @@ answer is 0-indexed (0=A, 1=B, 2=C, 3=D).`;
                         ["Visibility", fullRequest.visibility],
                         ["Submitted By", fullRequest.requestedBy?.Name],
                         [
-                          "Date",
-                          new Date(fullRequest.createdAt).toLocaleDateString(
+                          "Submitted At",
+                          new Date(fullRequest.createdAt).toLocaleString(
                             "en-IN",
+                            {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: true,
+                            },
                           ),
                         ],
                       ].map(([label, val]) => (
