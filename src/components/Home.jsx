@@ -1698,7 +1698,7 @@ const Home = ({ setchoosesub }) => {
         <AdsterraBanner />
       </Box>
 
-      <FloatingVideoAd />
+      {/* <FloatingVideoAd /> */}
     </Box>
   );
 };

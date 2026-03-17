@@ -7865,6 +7865,7 @@ import {
 import { apiFetch } from "../services/api";
 import { socket } from "../services/socket";
 import RequestTestDrawer, { MyTestRequests } from "./RequestTestDrawer";
+import AdsterraBanner from "./AdsterraBanner";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const EXAM_TYPES = [
@@ -9777,6 +9778,7 @@ function CoachingList({ onCoachingCreated }) {
         }}
         currentUser={currentUser}
       />
+      <AdsterraBanner />
     </Box>
   );
 }
