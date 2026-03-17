@@ -23,23 +23,12 @@
 //   useDisclosure,
 //   InputGroup,
 //   InputLeftElement,
-//   Table,
-//   Thead,
-//   Tbody,
-//   Tr,
-//   Th,
-//   Td,
 //   AlertDialog,
 //   AlertDialogOverlay,
 //   AlertDialogContent,
 //   AlertDialogHeader,
 //   AlertDialogBody,
 //   AlertDialogFooter,
-//   Accordion,
-//   AccordionItem,
-//   AccordionButton,
-//   AccordionPanel,
-//   AccordionIcon,
 // } from "@chakra-ui/react";
 // import {
 //   FaSearch,
@@ -50,17 +39,16 @@
 //   FaRobot,
 //   FaPlus,
 //   FaTrash,
-//   FaBuilding,
 //   FaClipboardList,
 //   FaFilePdf,
 //   FaFileImage,
 //   FaFileExcel,
 //   FaDownload,
-//   FaEdit,
 //   FaCheck,
 //   FaPaperPlane,
 //   FaHourglass,
-//   FaSyncAlt,
+//   FaExpand,
+//   FaTimes,
 // } from "react-icons/fa";
 // import { useNavigate } from "react-router-dom";
 // import { apiFetch } from "../services/api";
@@ -115,12 +103,205 @@
 // };
 
 // // ── File icon ─────────────────────────────────────────────────────────────────
-// const FileIcon = ({ type }) => {
+// const FileIcon = ({ type, size = "16px" }) => {
 //   const map = { pdf: FaFilePdf, image: FaFileImage, excel: FaFileExcel };
 //   const colors = { pdf: "#ef4444", image: "#8b5cf6", excel: "#16a34a" };
 //   const Ic = map[type] || FaClipboardList;
-//   return <Icon as={Ic} color={colors[type] || "#64748b"} fontSize="16px" />;
+//   return <Icon as={Ic} color={colors[type] || "#64748b"} fontSize={size} />;
 // };
+
+// // ── Download helper ───────────────────────────────────────────────────────────
+// const downloadFile = (att) => {
+//   try {
+//     const mimeMap = {
+//       pdf: "application/pdf",
+//       image: "image/jpeg",
+//       excel:
+//         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+//     };
+//     const mime = mimeMap[att.fileType] || "application/octet-stream";
+//     const byteChars = atob(att.fileData);
+//     const byteArrays = [];
+//     for (let offset = 0; offset < byteChars.length; offset += 512) {
+//       const slice = byteChars.slice(offset, offset + 512);
+//       byteArrays.push(
+//         new Uint8Array(slice.length).map((_, i) => slice.charCodeAt(i)),
+//       );
+//     }
+//     const blob = new Blob(byteArrays, { type: mime });
+//     const url = URL.createObjectURL(blob);
+//     const a = document.createElement("a");
+//     a.href = url;
+//     a.download =
+//       att.fileName ||
+//       `attachment.${att.fileType === "image" ? "jpg" : att.fileType}`;
+//     a.click();
+//     URL.revokeObjectURL(url);
+//   } catch {
+//     window.open(
+//       `data:application/octet-stream;base64,${att.fileData}`,
+//       "_blank",
+//     );
+//   }
+// };
+
+// // ── File Preview Modal ────────────────────────────────────────────────────────
+// function FilePreviewModal({ attachment, isOpen, onClose }) {
+//   if (!attachment) return null;
+//   const { fileType, fileData, fileName } = attachment;
+
+//   return (
+//     <Modal
+//       isOpen={isOpen}
+//       onClose={onClose}
+//       size="5xl"
+//       isCentered
+//       scrollBehavior="inside"
+//     >
+//       <ModalOverlay backdropFilter="blur(6px)" bg="rgba(0,0,0,.7)" />
+//       <ModalContent
+//         borderRadius="16px"
+//         overflow="hidden"
+//         fontFamily="'Sora',sans-serif"
+//         maxH="90vh"
+//         mx={4}
+//       >
+//         {/* Header */}
+//         <ModalHeader
+//           px={6}
+//           py={4}
+//           bg="linear-gradient(135deg,#0f1e3a,#1e3a5f)"
+//           color="white"
+//           borderRadius="16px 16px 0 0"
+//         >
+//           <Flex align="center" justify="space-between">
+//             <Flex align="center" gap={3}>
+//               <FileIcon type={fileType} size="20px" />
+//               <Box>
+//                 <Text
+//                   fontSize="14px"
+//                   fontWeight={800}
+//                   noOfLines={1}
+//                   maxW="500px"
+//                 >
+//                   {fileName}
+//                 </Text>
+//                 <Text
+//                   fontSize="11px"
+//                   color="rgba(255,255,255,.5)"
+//                   textTransform="uppercase"
+//                 >
+//                   {fileType} file
+//                 </Text>
+//               </Box>
+//             </Flex>
+//             <Flex gap={2}>
+//               <Button
+//                 size="sm"
+//                 h="34px"
+//                 px={4}
+//                 bg="rgba(255,255,255,.12)"
+//                 color="white"
+//                 borderRadius="8px"
+//                 fontWeight={700}
+//                 fontSize="12px"
+//                 leftIcon={<Icon as={FaDownload} fontSize="11px" />}
+//                 onClick={() => downloadFile(attachment)}
+//                 _hover={{ bg: "rgba(255,255,255,.2)" }}
+//               >
+//                 Download
+//               </Button>
+//               <Button
+//                 size="sm"
+//                 h="34px"
+//                 w="34px"
+//                 p={0}
+//                 bg="rgba(255,255,255,.12)"
+//                 color="white"
+//                 borderRadius="8px"
+//                 onClick={onClose}
+//                 _hover={{ bg: "rgba(255,255,255,.2)" }}
+//               >
+//                 <Icon as={FaTimes} fontSize="12px" />
+//               </Button>
+//             </Flex>
+//           </Flex>
+//         </ModalHeader>
+
+//         {/* Preview body */}
+//         <ModalBody
+//           p={0}
+//           bg="#0f172a"
+//           minH="400px"
+//           display="flex"
+//           alignItems="center"
+//           justifyContent="center"
+//         >
+//           {fileType === "image" && (
+//             <Box w="100%" textAlign="center" p={4}>
+//               <img
+//                 src={`data:image/jpeg;base64,${fileData}`}
+//                 alt={fileName}
+//                 style={{
+//                   maxWidth: "100%",
+//                   maxHeight: "75vh",
+//                   objectFit: "contain",
+//                   borderRadius: "8px",
+//                   boxShadow: "0 8px 32px rgba(0,0,0,.4)",
+//                 }}
+//               />
+//             </Box>
+//           )}
+
+//           {fileType === "pdf" && (
+//             <Box w="100%" h="75vh">
+//               <iframe
+//                 src={`data:application/pdf;base64,${fileData}`}
+//                 width="100%"
+//                 height="100%"
+//                 style={{ border: "none", borderRadius: "0 0 16px 16px" }}
+//                 title={fileName}
+//               />
+//             </Box>
+//           )}
+
+//           {fileType === "excel" && (
+//             <Flex
+//               direction="column"
+//               align="center"
+//               gap={5}
+//               py={16}
+//               color="white"
+//             >
+//               <Icon as={FaFileExcel} fontSize="64px" color="#16a34a" />
+//               <Box textAlign="center">
+//                 <Text fontSize="16px" fontWeight={700} mb={2}>
+//                   {fileName}
+//                 </Text>
+//                 <Text fontSize="13px" color="rgba(255,255,255,.5)" mb={6}>
+//                   Excel files cannot be previewed in the browser.
+//                 </Text>
+//                 <Button
+//                   h="46px"
+//                   px={8}
+//                   borderRadius="12px"
+//                   bg="#16a34a"
+//                   color="white"
+//                   fontWeight={800}
+//                   leftIcon={<Icon as={FaDownload} />}
+//                   onClick={() => downloadFile(attachment)}
+//                   _hover={{ bg: "#15803d" }}
+//                 >
+//                   Download to View
+//                 </Button>
+//               </Box>
+//             </Flex>
+//           )}
+//         </ModalBody>
+//       </ModalContent>
+//     </Modal>
+//   );
+// }
 
 // // ── Single question editor row ─────────────────────────────────────────────────
 // function QuestionRow({ q, idx, onChange, onDelete }) {
@@ -242,6 +423,11 @@
 //     onOpen: openReject,
 //     onClose: closeReject,
 //   } = useDisclosure();
+//   const {
+//     isOpen: previewOpen,
+//     onOpen: openPreview,
+//     onClose: closePreview,
+//   } = useDisclosure();
 
 //   const [requests, setRequests] = useState([]);
 //   const [loading, setLoading] = useState(true);
@@ -250,8 +436,8 @@
 //   const [selected, setSelected] = useState(null);
 //   const [fullRequest, setFullRequest] = useState(null);
 //   const [loadingDetail, setLoadingDetail] = useState(false);
+//   const [previewFile, setPreviewFile] = useState(null); // attachment being previewed
 
-//   // Question editor state
 //   const [questions, setQuestions] = useState([]);
 //   const [adminNote, setAdminNote] = useState("");
 //   const [rejectReason, setRejectReason] = useState("");
@@ -259,7 +445,6 @@
 //   const [aiLoading, setAiLoading] = useState(false);
 //   const [aiPrompt, setAiPrompt] = useState("");
 
-//   // Guard
 //   useEffect(() => {
 //     if (!authLoading && user && !user.isAdmin) navigate("/");
 //   }, [user, authLoading, navigate]);
@@ -283,18 +468,22 @@
 //     if (!authLoading && user?.isAdmin) loadRequests();
 //   }, [loadRequests, authLoading, user]);
 
+//   // ── Open file preview ─────────────────────────────────────────────────────
+//   const handlePreviewFile = (att) => {
+//     setPreviewFile(att);
+//     openPreview();
+//   };
+
 //   const openDetail = async (req) => {
 //     setSelected(req);
 //     setQuestions([]);
 //     setAdminNote("");
 //     setAiPrompt("");
 //     onOpen();
-//     // Load full request with attachments
 //     setLoadingDetail(true);
 //     try {
 //       const res = await apiFetch(`/test-requests/admin/${req._id}`);
 //       setFullRequest(res.data);
-//       // Pre-fill AI prompt
 //       setAiPrompt(
 //         `Create ${res.data.totalQuestions} multiple choice questions for ${res.data.examType} exam.` +
 //           (res.data.subject ? ` Subject: ${res.data.subject}.` : "") +
@@ -303,7 +492,6 @@
 //             ? ` Special instructions: ${res.data.instructions}`
 //             : ""),
 //       );
-//       // Mark as processing if still pending
 //       if (req.status === "pending") {
 //         await apiFetch(`/test-requests/admin/${req._id}/processing`, {
 //           method: "PATCH",
@@ -321,12 +509,11 @@
 //     }
 //   };
 
-//   // ── AI Question Generation ─────────────────────────────────────────────────
+//   // ── AI generation ─────────────────────────────────────────────────────────
 //   const generateWithAI = async () => {
 //     if (!fullRequest) return;
 //     setAiLoading(true);
 //     try {
-//       // Build a rich prompt from the request + any text we can extract
 //       const systemPrompt = `You are an expert question paper setter for Indian competitive exams.
 // Generate exactly ${fullRequest.totalQuestions} high-quality multiple choice questions.
 // Format: Return ONLY valid JSON array, no markdown, no explanation outside JSON.
@@ -337,7 +524,7 @@
 //       const userContent =
 //         aiPrompt +
 //         (fullRequest.attachments?.length
-//           ? `\n\nNote: The coach has uploaded ${fullRequest.attachments.length} file(s) as reference material. Create questions based on typical ${fullRequest.examType} exam patterns for the given topics.`
+//           ? `\n\nNote: The coach has uploaded ${fullRequest.attachments.length} file(s) as reference material.`
 //           : "");
 
 //       const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -353,24 +540,18 @@
 
 //       const data = await response.json();
 //       const text = data.content?.map((c) => c.text || "").join("") || "";
-
-//       // Parse JSON — strip any accidental markdown fences
 //       const clean = text.replace(/```json|```/g, "").trim();
 //       let parsed;
 //       try {
 //         parsed = JSON.parse(clean);
 //       } catch {
-//         // Try to extract JSON array from response
-//         const match = clean.match(/\[[\s\S]*\]/);
-//         if (match) parsed = JSON.parse(match[0]);
+//         const m = clean.match(/\[[\s\S]*\]/);
+//         if (m) parsed = JSON.parse(m[0]);
 //         else throw new Error("Could not parse AI response as JSON");
 //       }
-
-//       if (!Array.isArray(parsed) || !parsed.length) {
+//       if (!Array.isArray(parsed) || !parsed.length)
 //         throw new Error("AI returned empty questions");
-//       }
 
-//       // Normalise
 //       const normalised = parsed.map((q) => ({
 //         qus: q.qus || q.question || "",
 //         options:
@@ -399,15 +580,12 @@
 //     }
 //   };
 
-//   // Generate from uploaded file content (for PDF/image — pass base64 to AI)
 //   const generateFromFile = async (attachment) => {
 //     if (!fullRequest) return;
 //     setAiLoading(true);
 //     try {
 //       let messages;
-
 //       if (attachment.fileType === "image") {
-//         // Vision API — pass image directly
 //         messages = [
 //           {
 //             role: "user",
@@ -422,13 +600,12 @@
 //               },
 //               {
 //                 type: "text",
-//                 text: `Based on this study material image, create ${fullRequest.totalQuestions} multiple choice questions for ${fullRequest.examType} exam. Difficulty: ${fullRequest.difficulty}. Return ONLY a JSON array: [{ "qus": "...", "options": ["A","B","C","D"], "answer": 0, "explanation": "..." }]`,
+//                 text: `Based on this study material, create ${fullRequest.totalQuestions} MCQs for ${fullRequest.examType} exam. Difficulty: ${fullRequest.difficulty}. Return ONLY JSON array: [{ "qus": "...", "options": ["A","B","C","D"], "answer": 0, "explanation": "..." }]`,
 //               },
 //             ],
 //           },
 //         ];
 //       } else if (attachment.fileType === "pdf") {
-//         // PDF as document
 //         messages = [
 //           {
 //             role: "user",
@@ -443,13 +620,12 @@
 //               },
 //               {
 //                 type: "text",
-//                 text: `Based on this PDF, create ${fullRequest.totalQuestions} multiple choice questions for ${fullRequest.examType} exam. Difficulty: ${fullRequest.difficulty}. ${fullRequest.instructions || ""}. Return ONLY a JSON array: [{ "qus": "...", "options": ["A","B","C","D"], "answer": 0, "explanation": "..." }]`,
+//                 text: `Based on this PDF, create ${fullRequest.totalQuestions} MCQs for ${fullRequest.examType} exam. Difficulty: ${fullRequest.difficulty}. ${fullRequest.instructions || ""}. Return ONLY JSON array: [{ "qus": "...", "options": ["A","B","C","D"], "answer": 0, "explanation": "..." }]`,
 //               },
 //             ],
 //           },
 //         ];
 //       } else {
-//         // Excel — treat as text prompt
 //         toast({
 //           title: "For Excel files, use the AI prompt instead",
 //           status: "info",
@@ -473,7 +649,6 @@
 //       const clean = text.replace(/```json|```/g, "").trim();
 //       const match = clean.match(/\[[\s\S]*\]/);
 //       const parsed = match ? JSON.parse(match[0]) : JSON.parse(clean);
-
 //       const normalised = parsed.map((q) => ({
 //         qus: q.qus || q.question || "",
 //         options:
@@ -501,25 +676,15 @@
 //     }
 //   };
 
-//   const addBlankQuestion = () => {
-//     setQuestions((prev) => [
-//       ...prev,
-//       {
-//         qus: "",
-//         options: ["", "", "", ""],
-//         answer: 0,
-//         explanation: "",
-//       },
+//   const addBlankQuestion = () =>
+//     setQuestions((p) => [
+//       ...p,
+//       { qus: "", options: ["", "", "", ""], answer: 0, explanation: "" },
 //     ]);
-//   };
-
-//   const updateQuestion = (idx, updated) => {
-//     setQuestions((prev) => prev.map((q, i) => (i === idx ? updated : q)));
-//   };
-
-//   const deleteQuestion = (idx) => {
-//     setQuestions((prev) => prev.filter((_, i) => i !== idx));
-//   };
+//   const updateQuestion = (idx, updated) =>
+//     setQuestions((p) => p.map((q, i) => (i === idx ? updated : q)));
+//   const deleteQuestion = (idx) =>
+//     setQuestions((p) => p.filter((_, i) => i !== idx));
 
 //   const handleSendTest = async () => {
 //     if (!selected || !questions.length) {
@@ -529,7 +694,6 @@
 //       });
 //       return;
 //     }
-//     // Validate
 //     const invalid = questions.findIndex(
 //       (q) => !q.qus?.trim() || q.options.some((o) => !o?.trim()),
 //     );
@@ -549,11 +713,7 @@
 //           body: JSON.stringify({ questions, adminNote }),
 //         },
 //       );
-//       toast({
-//         title: res.message,
-//         status: "success",
-//         duration: 5000,
-//       });
+//       toast({ title: res.message, status: "success", duration: 5000 });
 //       onClose();
 //       loadRequests();
 //     } catch (err) {
@@ -745,7 +905,6 @@
 //                 </Text>
 //               ))}
 //             </Flex>
-
 //             {requests.map((r, idx) => (
 //               <Flex
 //                 key={r._id}
@@ -811,7 +970,6 @@
 //                     )}
 //                   </Flex>
 //                 </Box>
-
 //                 <Box flex={2} display={{ base: "none", md: "block" }} minW={0}>
 //                   <Text
 //                     fontSize="13px"
@@ -825,7 +983,6 @@
 //                     {r.coachingId?.city || ""}
 //                   </Text>
 //                 </Box>
-
 //                 <Box flex={2} display={{ base: "none", md: "block" }}>
 //                   <Text fontSize="12px" color="#64748b">
 //                     {r.totalQuestions} Q • {r.timeLimitMin}min • {r.difficulty}
@@ -838,7 +995,6 @@
 //                     {r.visibility}
 //                   </Text>
 //                 </Box>
-
 //                 <Box flex={2} display={{ base: "none", md: "block" }}>
 //                   <Text fontSize="12px" color="#94a3b8">
 //                     {new Date(r.createdAt).toLocaleDateString("en-IN", {
@@ -848,11 +1004,9 @@
 //                     })}
 //                   </Text>
 //                 </Box>
-
 //                 <Box flex={2}>
 //                   <StatusBadge status={r.status} />
 //                 </Box>
-
 //                 <Flex flex={1} justify="flex-end">
 //                   <Button
 //                     size="sm"
@@ -877,7 +1031,7 @@
 //         )}
 //       </Box>
 
-//       {/* ── Detail / Build Test Modal ─────────────────────────────────────── */}
+//       {/* ── Detail / Build Test Modal ─────────────────────────────────────────── */}
 //       <Modal
 //         isOpen={isOpen}
 //         onClose={onClose}
@@ -892,7 +1046,6 @@
 //           mx="auto"
 //           my={{ base: 0, md: 4 }}
 //         >
-//           {/* Modal header */}
 //           <ModalHeader
 //             px={7}
 //             pt={7}
@@ -1010,7 +1163,7 @@
 //                         letterSpacing=".6px"
 //                         mb={1}
 //                       >
-//                         Admin Instructions
+//                         Instructions
 //                       </Text>
 //                       <Text fontSize="12px" color="#78350f" lineHeight={1.7}>
 //                         {fullRequest.instructions}
@@ -1031,61 +1184,172 @@
 //                       >
 //                         Uploaded Files ({fullRequest.attachments.length})
 //                       </Text>
-//                       <Stack spacing={2}>
+//                       <Stack spacing={3}>
 //                         {fullRequest.attachments.map((att, i) => (
 //                           <Box
 //                             key={i}
 //                             bg="#f8fafc"
-//                             borderRadius="10px"
+//                             borderRadius="12px"
 //                             border="1px solid #e2e8f0"
-//                             p={3}
+//                             overflow="hidden"
 //                           >
-//                             <Flex align="center" gap={2} mb={2}>
-//                               <FileIcon type={att.fileType} />
+//                             {/* File header — click to preview */}
+//                             <Flex
+//                               align="center"
+//                               gap={2}
+//                               px={3}
+//                               py={3}
+//                               cursor="pointer"
+//                               _hover={{ bg: "#f0f7ff" }}
+//                               transition="background .15s"
+//                               onClick={() => handlePreviewFile(att)}
+//                               borderBottom="1px solid #e2e8f0"
+//                             >
+//                               <FileIcon type={att.fileType} size="18px" />
 //                               <Box flex={1} minW={0}>
 //                                 <Text
 //                                   fontSize="12px"
-//                                   fontWeight={600}
+//                                   fontWeight={700}
 //                                   color="#0f172a"
 //                                   noOfLines={1}
 //                                 >
 //                                   {att.fileName}
 //                                 </Text>
 //                                 <Text fontSize="10px" color="#94a3b8">
-//                                   {att.fileType?.toUpperCase()}
+//                                   {att.fileType?.toUpperCase()} · click to
+//                                   preview
 //                                 </Text>
 //                               </Box>
+//                               <Icon
+//                                 as={FaExpand}
+//                                 fontSize="10px"
+//                                 color="#94a3b8"
+//                                 flexShrink={0}
+//                               />
 //                             </Flex>
-//                             {/* Preview image */}
+
+//                             {/* Image thumbnail — clickable */}
 //                             {att.fileType === "image" && (
-//                               <Box borderRadius="8px" overflow="hidden" mb={2}>
+//                               <Box
+//                                 cursor="pointer"
+//                                 onClick={() => handlePreviewFile(att)}
+//                                 overflow="hidden"
+//                                 maxH="160px"
+//                                 position="relative"
+//                                 _hover={{ opacity: 0.85 }}
+//                                 transition="opacity .15s"
+//                               >
 //                                 <img
 //                                   src={`data:image/jpeg;base64,${att.fileData}`}
 //                                   alt={att.fileName}
 //                                   style={{
 //                                     width: "100%",
-//                                     maxHeight: "200px",
-//                                     objectFit: "contain",
+//                                     maxHeight: "160px",
+//                                     objectFit: "cover",
 //                                     background: "#f1f5f9",
+//                                     display: "block",
 //                                   }}
+//                                 />
+//                                 {/* Hover overlay */}
+//                                 <Flex
+//                                   position="absolute"
+//                                   inset={0}
+//                                   align="center"
+//                                   justify="center"
+//                                   bg="rgba(0,0,0,.35)"
+//                                   opacity={0}
+//                                   _groupHover={{ opacity: 1 }}
+//                                 >
+//                                   <Icon
+//                                     as={FaExpand}
+//                                     color="white"
+//                                     fontSize="24px"
+//                                   />
+//                                 </Flex>
+//                               </Box>
+//                             )}
+
+//                             {/* PDF preview strip */}
+//                             {att.fileType === "pdf" && (
+//                               <Box
+//                                 cursor="pointer"
+//                                 onClick={() => handlePreviewFile(att)}
+//                                 h="80px"
+//                                 overflow="hidden"
+//                                 position="relative"
+//                                 _hover={{ opacity: 0.85 }}
+//                                 transition="opacity .15s"
+//                               >
+//                                 <iframe
+//                                   src={`data:application/pdf;base64,${att.fileData}`}
+//                                   width="100%"
+//                                   height="400px"
+//                                   style={{
+//                                     border: "none",
+//                                     pointerEvents: "none",
+//                                     marginTop: "-10px",
+//                                   }}
+//                                   title={att.fileName}
+//                                 />
+//                                 <Box
+//                                   position="absolute"
+//                                   inset={0}
+//                                   bg="transparent"
 //                                 />
 //                               </Box>
 //                             )}
-//                             <Button
-//                               size="xs"
-//                               leftIcon={<FaRobot />}
-//                               onClick={() => generateFromFile(att)}
-//                               isLoading={aiLoading}
-//                               bg="#f5f3ff"
-//                               color="#7c3aed"
-//                               borderRadius="7px"
-//                               fontWeight={700}
-//                               fontSize="11px"
-//                               w="full"
-//                               _hover={{ bg: "#ede9fe" }}
-//                             >
-//                               Generate from this file
-//                             </Button>
+
+//                             {/* Action buttons */}
+//                             <Flex gap={2} p={3}>
+//                               <Button
+//                                 size="xs"
+//                                 flex={1}
+//                                 h="30px"
+//                                 leftIcon={<Icon as={FaEye} fontSize="10px" />}
+//                                 onClick={() => handlePreviewFile(att)}
+//                                 bg="#eff6ff"
+//                                 color="#2563eb"
+//                                 borderRadius="7px"
+//                                 fontWeight={700}
+//                                 fontSize="11px"
+//                                 _hover={{ bg: "#dbeafe" }}
+//                               >
+//                                 View
+//                               </Button>
+//                               <Button
+//                                 size="xs"
+//                                 flex={1}
+//                                 h="30px"
+//                                 leftIcon={
+//                                   <Icon as={FaDownload} fontSize="10px" />
+//                                 }
+//                                 onClick={() => downloadFile(att)}
+//                                 bg="#f0fdf4"
+//                                 color="#15803d"
+//                                 borderRadius="7px"
+//                                 fontWeight={700}
+//                                 fontSize="11px"
+//                                 _hover={{ bg: "#dcfce7" }}
+//                               >
+//                                 Download
+//                               </Button>
+//                               <Button
+//                                 size="xs"
+//                                 flex={1}
+//                                 h="30px"
+//                                 leftIcon={<Icon as={FaRobot} fontSize="10px" />}
+//                                 onClick={() => generateFromFile(att)}
+//                                 isLoading={aiLoading}
+//                                 bg="#f5f3ff"
+//                                 color="#7c3aed"
+//                                 borderRadius="7px"
+//                                 fontWeight={700}
+//                                 fontSize="11px"
+//                                 _hover={{ bg: "#ede9fe" }}
+//                               >
+//                                 AI
+//                               </Button>
+//                             </Flex>
 //                           </Box>
 //                         ))}
 //                       </Stack>
@@ -1207,24 +1471,21 @@
 //                       </Text>
 //                     </Box>
 //                   ) : (
-//                     <Box>
-//                       {questions.map((q, idx) => (
-//                         <QuestionRow
-//                           key={idx}
-//                           q={q}
-//                           idx={idx}
-//                           onChange={updateQuestion}
-//                           onDelete={deleteQuestion}
-//                         />
-//                       ))}
-//                     </Box>
+//                     questions.map((q, idx) => (
+//                       <QuestionRow
+//                         key={idx}
+//                         q={q}
+//                         idx={idx}
+//                         onChange={updateQuestion}
+//                         onDelete={deleteQuestion}
+//                       />
+//                     ))
 //                   )}
 //                 </Box>
 //               </Flex>
 //             )}
 //           </ModalBody>
 
-//           {/* Footer actions */}
 //           {selected?.status !== "completed" && (
 //             <ModalFooter
 //               px={7}
@@ -1236,7 +1497,7 @@
 //               <Textarea
 //                 value={adminNote}
 //                 onChange={(e) => setAdminNote(e.target.value)}
-//                 placeholder="Optional note for the coaching (e.g. 'Created 25 questions from your PDF')"
+//                 placeholder="Optional note for the coaching…"
 //                 borderRadius="10px"
 //                 fontSize="13px"
 //                 rows={2}
@@ -1289,6 +1550,13 @@
 //         </ModalContent>
 //       </Modal>
 
+//       {/* ── File Preview Modal ─────────────────────────────────────────────── */}
+//       <FilePreviewModal
+//         attachment={previewFile}
+//         isOpen={previewOpen}
+//         onClose={closePreview}
+//       />
+
 //       {/* Reject dialog */}
 //       <AlertDialog
 //         isOpen={rejectOpen}
@@ -1312,7 +1580,7 @@
 //               <Textarea
 //                 value={rejectReason}
 //                 onChange={(e) => setRejectReason(e.target.value)}
-//                 placeholder="e.g. Please provide more specific topic details, current upload is unclear"
+//                 placeholder="e.g. Please provide more specific topic details…"
 //                 borderRadius="10px"
 //                 rows={3}
 //                 fontSize="13px"
@@ -1403,12 +1671,12 @@ import {
   FaHourglass,
   FaExpand,
   FaTimes,
+  FaLayerGroup,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
-// ── Status badge ──────────────────────────────────────────────────────────────
 const StatusBadge = ({ status }) => {
   const cfg = {
     pending: {
@@ -1456,7 +1724,6 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// ── File icon ─────────────────────────────────────────────────────────────────
 const FileIcon = ({ type, size = "16px" }) => {
   const map = { pdf: FaFilePdf, image: FaFileImage, excel: FaFileExcel };
   const colors = { pdf: "#ef4444", image: "#8b5cf6", excel: "#16a34a" };
@@ -1464,7 +1731,6 @@ const FileIcon = ({ type, size = "16px" }) => {
   return <Icon as={Ic} color={colors[type] || "#64748b"} fontSize={size} />;
 };
 
-// ── Download helper ───────────────────────────────────────────────────────────
 const downloadFile = (att) => {
   try {
     const mimeMap = {
@@ -1499,11 +1765,9 @@ const downloadFile = (att) => {
   }
 };
 
-// ── File Preview Modal ────────────────────────────────────────────────────────
 function FilePreviewModal({ attachment, isOpen, onClose }) {
   if (!attachment) return null;
   const { fileType, fileData, fileName } = attachment;
-
   return (
     <Modal
       isOpen={isOpen}
@@ -1520,7 +1784,6 @@ function FilePreviewModal({ attachment, isOpen, onClose }) {
         maxH="90vh"
         mx={4}
       >
-        {/* Header */}
         <ModalHeader
           px={6}
           py={4}
@@ -1581,8 +1844,6 @@ function FilePreviewModal({ attachment, isOpen, onClose }) {
             </Flex>
           </Flex>
         </ModalHeader>
-
-        {/* Preview body */}
         <ModalBody
           p={0}
           bg="#0f172a"
@@ -1606,7 +1867,6 @@ function FilePreviewModal({ attachment, isOpen, onClose }) {
               />
             </Box>
           )}
-
           {fileType === "pdf" && (
             <Box w="100%" h="75vh">
               <iframe
@@ -1618,7 +1878,6 @@ function FilePreviewModal({ attachment, isOpen, onClose }) {
               />
             </Box>
           )}
-
           {fileType === "excel" && (
             <Flex
               direction="column"
@@ -1657,7 +1916,6 @@ function FilePreviewModal({ attachment, isOpen, onClose }) {
   );
 }
 
-// ── Single question editor row ─────────────────────────────────────────────────
 function QuestionRow({ q, idx, onChange, onDelete }) {
   const sf = (k) => (e) => onChange(idx, { ...q, [k]: e.target.value });
   const sfOpt = (oi) => (e) => {
@@ -1665,7 +1923,6 @@ function QuestionRow({ q, idx, onChange, onDelete }) {
     opts[oi] = e.target.value;
     onChange(idx, { ...q, options: opts });
   };
-
   return (
     <Box
       bg="#f8fafc"
@@ -1695,7 +1952,6 @@ function QuestionRow({ q, idx, onChange, onDelete }) {
           <Icon as={FaTrash} fontSize="11px" />
         </Box>
       </Flex>
-
       <Textarea
         value={q.qus || ""}
         onChange={sf("qus")}
@@ -1708,7 +1964,6 @@ function QuestionRow({ q, idx, onChange, onDelete }) {
         borderColor="#e2e8f0"
         _focus={{ borderColor: "#4a72b8", boxShadow: "0 0 0 1px #4a72b8" }}
       />
-
       <Flex gap={2} flexWrap="wrap" mb={3}>
         {(q.options || ["", "", "", ""]).map((opt, oi) => (
           <Flex key={oi} align="center" gap={2} flex="1" minW="48%">
@@ -1747,7 +2002,6 @@ function QuestionRow({ q, idx, onChange, onDelete }) {
           </Flex>
         ))}
       </Flex>
-
       <Input
         value={q.explanation || ""}
         onChange={sf("explanation")}
@@ -1763,9 +2017,204 @@ function QuestionRow({ q, idx, onChange, onDelete }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// MAIN PAGE
-// ═══════════════════════════════════════════════════════════════════
+// ── Per-section question editor panel ─────────────────────────────────────────
+function SectionEditor({
+  section,
+  sectionIdx,
+  sectionQuestions,
+  setSectionQuestions,
+  fullRequest,
+  aiLoading,
+  setAiLoading,
+  toast,
+}) {
+  const sq = sectionQuestions[sectionIdx] || { questions: [] };
+  const setSecQ = (qs) =>
+    setSectionQuestions((prev) =>
+      prev.map((s, i) => (i === sectionIdx ? { questions: qs } : s)),
+    );
+
+  const generateSectionAI = async () => {
+    setAiLoading(true);
+    try {
+      const systemPrompt = `You are an expert question paper setter for Indian competitive exams.
+Generate exactly ${section.totalQuestions} high-quality MCQs for the subject: ${section.subject}.
+Exam: ${fullRequest.examType}. Difficulty: ${fullRequest.difficulty}.
+Return ONLY valid JSON array, no markdown: [{ "qus": "...", "options": ["A","B","C","D"], "answer": 0, "explanation": "..." }]`;
+
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 6000,
+          system: systemPrompt,
+          messages: [
+            {
+              role: "user",
+              content: `Generate ${section.totalQuestions} MCQs for ${section.subject}`,
+            },
+          ],
+        }),
+      });
+      const data = await response.json();
+      const text = data.content?.map((c) => c.text || "").join("") || "";
+      const clean = text.replace(/```json|```/g, "").trim();
+      const match = clean.match(/\[[\s\S]*\]/);
+      const parsed = match ? JSON.parse(match[0]) : JSON.parse(clean);
+      const normalised = parsed.map((q) => ({
+        qus: q.qus || q.question || "",
+        options:
+          Array.isArray(q.options) && q.options.length === 4
+            ? q.options
+            : ["Option A", "Option B", "Option C", "Option D"],
+        answer: typeof q.answer === "number" ? q.answer : 0,
+        explanation: q.explanation || "",
+      }));
+      setSecQ(normalised);
+      toast({
+        title: `✅ ${normalised.length} questions for ${section.subject}!`,
+        status: "success",
+        duration: 3000,
+      });
+    } catch (err) {
+      toast({
+        title: `AI Error: ${err.message}`,
+        status: "error",
+        duration: 4000,
+      });
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  return (
+    <Box
+      mb={6}
+      bg="#f8fafc"
+      borderRadius="14px"
+      border="1px solid #e2e8f0"
+      overflow="hidden"
+    >
+      {/* Section header */}
+      <Flex
+        align="center"
+        justify="space-between"
+        px={5}
+        py={3}
+        bg="white"
+        borderBottom="1px solid #e2e8f0"
+      >
+        <Flex align="center" gap={2}>
+          <Flex
+            w="26px"
+            h="26px"
+            bg="#eff6ff"
+            borderRadius="7px"
+            align="center"
+            justify="center"
+          >
+            <Text fontSize="11px" fontWeight={900} color="#2563eb">
+              {sectionIdx + 1}
+            </Text>
+          </Flex>
+          <Text
+            fontSize="13px"
+            fontWeight={800}
+            color="#0f172a"
+            textTransform="capitalize"
+          >
+            {section.subject || `Section ${sectionIdx + 1}`}
+          </Text>
+          <Text fontSize="11px" color="#94a3b8">
+            · {section.totalQuestions} questions requested
+          </Text>
+        </Flex>
+        <Flex align="center" gap={2}>
+          <Text
+            fontSize="11px"
+            fontWeight={700}
+            color={
+              sq.questions.length >= section.totalQuestions
+                ? "#16a34a"
+                : "#d97706"
+            }
+          >
+            {sq.questions.length}/{section.totalQuestions} added
+          </Text>
+          <Button
+            size="xs"
+            leftIcon={<Icon as={FaRobot} fontSize="9px" />}
+            onClick={generateSectionAI}
+            isLoading={aiLoading}
+            bg="#f5f3ff"
+            color="#7c3aed"
+            borderRadius="7px"
+            fontWeight={700}
+            fontSize="11px"
+            _hover={{ bg: "#ede9fe" }}
+          >
+            AI Generate
+          </Button>
+          <Button
+            size="xs"
+            leftIcon={<Icon as={FaPlus} fontSize="9px" />}
+            onClick={() =>
+              setSecQ([
+                ...sq.questions,
+                {
+                  qus: "",
+                  options: ["", "", "", ""],
+                  answer: 0,
+                  explanation: "",
+                },
+              ])
+            }
+            bg="#eff6ff"
+            color="#2563eb"
+            borderRadius="7px"
+            fontWeight={700}
+            fontSize="11px"
+            _hover={{ bg: "#dbeafe" }}
+          >
+            Add
+          </Button>
+        </Flex>
+      </Flex>
+
+      <Box p={4}>
+        {sq.questions.length === 0 ? (
+          <Box
+            py={8}
+            textAlign="center"
+            bg="white"
+            borderRadius="10px"
+            border="2px dashed #e2e8f0"
+          >
+            <Text fontSize="13px" color="#94a3b8">
+              No questions yet — use AI Generate or Add manually
+            </Text>
+          </Box>
+        ) : (
+          sq.questions.map((q, qi) => (
+            <QuestionRow
+              key={qi}
+              q={q}
+              idx={qi}
+              onChange={(i, updated) =>
+                setSecQ(sq.questions.map((qq, ii) => (ii === i ? updated : qq)))
+              }
+              onDelete={(i) =>
+                setSecQ(sq.questions.filter((_, ii) => ii !== i))
+              }
+            />
+          ))
+        )}
+      </Box>
+    </Box>
+  );
+}
+
 export default function AdminTestRequestsPage() {
   const navigate = useNavigate();
   const toast = useToast();
@@ -1790,9 +2239,13 @@ export default function AdminTestRequestsPage() {
   const [selected, setSelected] = useState(null);
   const [fullRequest, setFullRequest] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
-  const [previewFile, setPreviewFile] = useState(null); // attachment being previewed
+  const [previewFile, setPreviewFile] = useState(null);
 
+  // Flat question state (non-sectioned)
   const [questions, setQuestions] = useState([]);
+  // Per-section question state (sectioned)
+  const [sectionQuestions, setSectionQuestions] = useState([]);
+
   const [adminNote, setAdminNote] = useState("");
   const [rejectReason, setRejectReason] = useState("");
   const [acting, setActing] = useState(false);
@@ -1822,7 +2275,6 @@ export default function AdminTestRequestsPage() {
     if (!authLoading && user?.isAdmin) loadRequests();
   }, [loadRequests, authLoading, user]);
 
-  // ── Open file preview ─────────────────────────────────────────────────────
   const handlePreviewFile = (att) => {
     setPreviewFile(att);
     openPreview();
@@ -1831,6 +2283,7 @@ export default function AdminTestRequestsPage() {
   const openDetail = async (req) => {
     setSelected(req);
     setQuestions([]);
+    setSectionQuestions([]);
     setAdminNote("");
     setAiPrompt("");
     onOpen();
@@ -1838,6 +2291,12 @@ export default function AdminTestRequestsPage() {
     try {
       const res = await apiFetch(`/test-requests/admin/${req._id}`);
       setFullRequest(res.data);
+
+      // Initialise section question buckets
+      if (res.data.isSectioned && res.data.sections?.length) {
+        setSectionQuestions(res.data.sections.map(() => ({ questions: [] })));
+      }
+
       setAiPrompt(
         `Create ${res.data.totalQuestions} multiple choice questions for ${res.data.examType} exam.` +
           (res.data.subject ? ` Subject: ${res.data.subject}.` : "") +
@@ -1863,7 +2322,7 @@ export default function AdminTestRequestsPage() {
     }
   };
 
-  // ── AI generation ─────────────────────────────────────────────────────────
+  // ── AI generation (flat / non-sectioned) ─────────────────────────────────
   const generateWithAI = async () => {
     if (!fullRequest) return;
     setAiLoading(true);
@@ -1872,8 +2331,7 @@ export default function AdminTestRequestsPage() {
 Generate exactly ${fullRequest.totalQuestions} high-quality multiple choice questions.
 Format: Return ONLY valid JSON array, no markdown, no explanation outside JSON.
 Each question: { "qus": "question text", "options": ["A text","B text","C text","D text"], "answer": 0, "explanation": "brief explanation" }
-answer is 0-indexed (0=A, 1=B, 2=C, 3=D).
-Make questions accurate, clear, and appropriate for the exam level.`;
+answer is 0-indexed (0=A, 1=B, 2=C, 3=D).`;
 
       const userContent =
         aiPrompt +
@@ -1891,7 +2349,6 @@ Make questions accurate, clear, and appropriate for the exam level.`;
           messages: [{ role: "user", content: userContent }],
         }),
       });
-
       const data = await response.json();
       const text = data.content?.map((c) => c.text || "").join("") || "";
       const clean = text.replace(/```json|```/g, "").trim();
@@ -1905,7 +2362,6 @@ Make questions accurate, clear, and appropriate for the exam level.`;
       }
       if (!Array.isArray(parsed) || !parsed.length)
         throw new Error("AI returned empty questions");
-
       const normalised = parsed.map((q) => ({
         qus: q.qus || q.question || "",
         options:
@@ -1915,7 +2371,6 @@ Make questions accurate, clear, and appropriate for the exam level.`;
         answer: typeof q.answer === "number" ? q.answer : 0,
         explanation: q.explanation || "",
       }));
-
       setQuestions(normalised);
       toast({
         title: `✅ ${normalised.length} questions generated!`,
@@ -1987,7 +2442,6 @@ Make questions accurate, clear, and appropriate for the exam level.`;
         setAiLoading(false);
         return;
       }
-
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1997,7 +2451,6 @@ Make questions accurate, clear, and appropriate for the exam level.`;
           messages,
         }),
       });
-
       const data = await response.json();
       const text = data.content?.map((c) => c.text || "").join("") || "";
       const clean = text.replace(/```json|```/g, "").trim();
@@ -2012,7 +2465,6 @@ Make questions accurate, clear, and appropriate for the exam level.`;
         answer: typeof q.answer === "number" ? q.answer : 0,
         explanation: q.explanation || "",
       }));
-
       setQuestions(normalised);
       toast({
         title: `✅ ${normalised.length} questions generated from file!`,
@@ -2040,31 +2492,71 @@ Make questions accurate, clear, and appropriate for the exam level.`;
   const deleteQuestion = (idx) =>
     setQuestions((p) => p.filter((_, i) => i !== idx));
 
+  // ── Send test ──────────────────────────────────────────────────────────────
   const handleSendTest = async () => {
-    if (!selected || !questions.length) {
-      toast({
-        title: "Add at least 1 question before sending",
-        status: "warning",
-      });
-      return;
+    if (!selected) return;
+    const isSectioned = fullRequest?.isSectioned === true;
+
+    if (isSectioned) {
+      // Validate each section
+      for (let sIdx = 0; sIdx < (fullRequest.sections?.length || 0); sIdx++) {
+        const sq = sectionQuestions[sIdx];
+        if (!sq || sq.questions.length === 0) {
+          toast({
+            title: `Section "${fullRequest.sections[sIdx]?.subject || sIdx + 1}" has no questions`,
+            status: "warning",
+          });
+          return;
+        }
+        const invalid = sq.questions.findIndex(
+          (q) => !q.qus?.trim() || q.options.some((o) => !o?.trim()),
+        );
+        if (invalid !== -1) {
+          toast({
+            title: `Section "${fullRequest.sections[sIdx]?.subject}" — Q${invalid + 1} is incomplete`,
+            status: "warning",
+          });
+          return;
+        }
+      }
+    } else {
+      if (!questions.length) {
+        toast({
+          title: "Add at least 1 question before sending",
+          status: "warning",
+        });
+        return;
+      }
+      const invalid = questions.findIndex(
+        (q) => !q.qus?.trim() || q.options.some((o) => !o?.trim()),
+      );
+      if (invalid !== -1) {
+        toast({
+          title: `Question ${invalid + 1} is incomplete`,
+          status: "warning",
+        });
+        return;
+      }
     }
-    const invalid = questions.findIndex(
-      (q) => !q.qus?.trim() || q.options.some((o) => !o?.trim()),
-    );
-    if (invalid !== -1) {
-      toast({
-        title: `Question ${invalid + 1} is incomplete`,
-        status: "warning",
-      });
-      return;
-    }
+
     setActing(true);
     try {
+      const body = isSectioned
+        ? {
+            sections: sectionQuestions.map((sq, i) => ({
+              name: fullRequest.sections[i]?.subject || `Section ${i + 1}`,
+              subject: fullRequest.sections[i]?.subject || "",
+              questions: sq.questions,
+            })),
+            adminNote,
+          }
+        : { questions, adminNote };
+
       const res = await apiFetch(
         `/test-requests/admin/${selected._id}/create-test`,
         {
           method: "POST",
-          body: JSON.stringify({ questions, adminNote }),
+          body: JSON.stringify(body),
         },
       );
       toast({ title: res.message, status: "success", duration: 5000 });
@@ -2098,6 +2590,12 @@ Make questions accurate, clear, and appropriate for the exam level.`;
       setActing(false);
     }
   };
+
+  const isSectionedRequest = fullRequest?.isSectioned === true;
+  const totalSectionQCount = sectionQuestions.reduce(
+    (s, sq) => s + (sq.questions?.length || 0),
+    0,
+  );
 
   if (authLoading)
     return (
@@ -2259,6 +2757,7 @@ Make questions accurate, clear, and appropriate for the exam level.`;
                 </Text>
               ))}
             </Flex>
+
             {requests.map((r, idx) => (
               <Flex
                 key={r._id}
@@ -2274,14 +2773,33 @@ Make questions accurate, clear, and appropriate for the exam level.`;
                 flexWrap={{ base: "wrap", md: "nowrap" }}
               >
                 <Box flex={3} minW={0}>
-                  <Text
-                    fontSize="14px"
-                    fontWeight={700}
-                    color="#0f172a"
-                    noOfLines={1}
-                  >
-                    {r.title}
-                  </Text>
+                  <Flex align="center" gap={2}>
+                    <Text
+                      fontSize="14px"
+                      fontWeight={700}
+                      color="#0f172a"
+                      noOfLines={1}
+                    >
+                      {r.title}
+                    </Text>
+                    {r.isSectioned && (
+                      <Flex
+                        align="center"
+                        gap={1}
+                        bg="#eff6ff"
+                        color="#2563eb"
+                        px={2}
+                        py="1px"
+                        borderRadius="full"
+                        fontSize="9px"
+                        fontWeight={700}
+                        flexShrink={0}
+                      >
+                        <Icon as={FaLayerGroup} fontSize="8px" />
+                        {r.sections?.length || 0}s
+                      </Flex>
+                    )}
+                  </Flex>
                   <Flex gap={1.5} mt={1} flexWrap="wrap">
                     <Text
                       fontSize="9px"
@@ -2294,7 +2812,7 @@ Make questions accurate, clear, and appropriate for the exam level.`;
                     >
                       {r.examType}
                     </Text>
-                    {r.subject && (
+                    {!r.isSectioned && r.subject && (
                       <Text
                         fontSize="9px"
                         fontWeight={700}
@@ -2339,7 +2857,9 @@ Make questions accurate, clear, and appropriate for the exam level.`;
                 </Box>
                 <Box flex={2} display={{ base: "none", md: "block" }}>
                   <Text fontSize="12px" color="#64748b">
-                    {r.totalQuestions} Q • {r.timeLimitMin}min • {r.difficulty}
+                    {r.isSectioned
+                      ? `${r.sections?.length || 0} sections · ${r.totalQuestions}Q`
+                      : `${r.totalQuestions} Q · ${r.timeLimitMin}min · ${r.difficulty}`}
                   </Text>
                   <Text
                     fontSize="11px"
@@ -2385,7 +2905,7 @@ Make questions accurate, clear, and appropriate for the exam level.`;
         )}
       </Box>
 
-      {/* ── Detail / Build Test Modal ─────────────────────────────────────────── */}
+      {/* ── Detail / Build Test Modal ──────────────────────────────────────── */}
       <Modal
         isOpen={isOpen}
         onClose={onClose}
@@ -2410,9 +2930,27 @@ Make questions accurate, clear, and appropriate for the exam level.`;
           >
             <Flex align="center" justify="space-between">
               <Box>
-                <Text fontSize="18px" fontWeight={800} lineHeight={1.2}>
-                  {selected?.title}
-                </Text>
+                <Flex align="center" gap={2}>
+                  <Text fontSize="18px" fontWeight={800} lineHeight={1.2}>
+                    {selected?.title}
+                  </Text>
+                  {isSectionedRequest && (
+                    <Flex
+                      align="center"
+                      gap={1}
+                      bg="rgba(56,189,248,.2)"
+                      color="#38bdf8"
+                      px={2}
+                      py="2px"
+                      borderRadius="full"
+                      fontSize="11px"
+                      fontWeight={700}
+                    >
+                      <Icon as={FaLayerGroup} fontSize="10px" />
+                      {fullRequest?.sections?.length} Sections
+                    </Flex>
+                  )}
+                </Flex>
                 <Flex gap={2} mt={2} flexWrap="wrap" align="center">
                   {selected && <StatusBadge status={selected.status} />}
                   <Text fontSize="11px" color="rgba(255,255,255,.5)">
@@ -2436,7 +2974,7 @@ Make questions accurate, clear, and appropriate for the exam level.`;
               </Flex>
             ) : (
               <Flex h="full" direction={{ base: "column", lg: "row" }}>
-                {/* LEFT PANEL — Request info + attachments */}
+                {/* LEFT PANEL — request info + attachments */}
                 <Box
                   w={{ base: "100%", lg: "340px" }}
                   flexShrink={0}
@@ -2461,7 +2999,15 @@ Make questions accurate, clear, and appropriate for the exam level.`;
                     {fullRequest &&
                       [
                         ["Exam Type", fullRequest.examType],
-                        ["Subject", fullRequest.subject || "Any/Mixed"],
+                        [
+                          "Type",
+                          isSectionedRequest
+                            ? "Sectioned Test"
+                            : "Standard Test",
+                        ],
+                        ...(!isSectionedRequest
+                          ? [["Subject", fullRequest.subject || "Any/Mixed"]]
+                          : []),
                         ["Questions Needed", fullRequest.totalQuestions],
                         ["Time Limit", `${fullRequest.timeLimitMin} minutes`],
                         ["Difficulty", fullRequest.difficulty],
@@ -2500,6 +3046,70 @@ Make questions accurate, clear, and appropriate for the exam level.`;
                         </Flex>
                       ))}
                   </Stack>
+
+                  {/* Section breakdown */}
+                  {isSectionedRequest && fullRequest.sections?.length > 0 && (
+                    <Box mb={5}>
+                      <Text
+                        fontSize="11px"
+                        fontWeight={800}
+                        color="#94a3b8"
+                        textTransform="uppercase"
+                        letterSpacing="2px"
+                        mb={3}
+                      >
+                        Sections Requested
+                      </Text>
+                      <Stack spacing={2}>
+                        {fullRequest.sections.map((sec, i) => (
+                          <Flex
+                            key={i}
+                            align="center"
+                            justify="space-between"
+                            bg="#f0f7ff"
+                            borderRadius="8px"
+                            border="1px solid #bfdbfe"
+                            px={3}
+                            py={2}
+                          >
+                            <Flex align="center" gap={2}>
+                              <Flex
+                                w="20px"
+                                h="20px"
+                                bg="#2563eb"
+                                borderRadius="5px"
+                                align="center"
+                                justify="center"
+                              >
+                                <Text
+                                  fontSize="9px"
+                                  fontWeight={900}
+                                  color="white"
+                                >
+                                  {i + 1}
+                                </Text>
+                              </Flex>
+                              <Text
+                                fontSize="12px"
+                                fontWeight={700}
+                                color="#1e40af"
+                                textTransform="capitalize"
+                              >
+                                {sec.subject}
+                              </Text>
+                            </Flex>
+                            <Text
+                              fontSize="11px"
+                              color="#2563eb"
+                              fontWeight={600}
+                            >
+                              {sec.totalQuestions} Q
+                            </Text>
+                          </Flex>
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
 
                   {fullRequest?.instructions && (
                     <Box
@@ -2547,7 +3157,6 @@ Make questions accurate, clear, and appropriate for the exam level.`;
                             border="1px solid #e2e8f0"
                             overflow="hidden"
                           >
-                            {/* File header — click to preview */}
                             <Flex
                               align="center"
                               gap={2}
@@ -2581,8 +3190,6 @@ Make questions accurate, clear, and appropriate for the exam level.`;
                                 flexShrink={0}
                               />
                             </Flex>
-
-                            {/* Image thumbnail — clickable */}
                             {att.fileType === "image" && (
                               <Box
                                 cursor="pointer"
@@ -2604,26 +3211,8 @@ Make questions accurate, clear, and appropriate for the exam level.`;
                                     display: "block",
                                   }}
                                 />
-                                {/* Hover overlay */}
-                                <Flex
-                                  position="absolute"
-                                  inset={0}
-                                  align="center"
-                                  justify="center"
-                                  bg="rgba(0,0,0,.35)"
-                                  opacity={0}
-                                  _groupHover={{ opacity: 1 }}
-                                >
-                                  <Icon
-                                    as={FaExpand}
-                                    color="white"
-                                    fontSize="24px"
-                                  />
-                                </Flex>
                               </Box>
                             )}
-
-                            {/* PDF preview strip */}
                             {att.fileType === "pdf" && (
                               <Box
                                 cursor="pointer"
@@ -2652,8 +3241,6 @@ Make questions accurate, clear, and appropriate for the exam level.`;
                                 />
                               </Box>
                             )}
-
-                            {/* Action buttons */}
                             <Flex gap={2} p={3}>
                               <Button
                                 size="xs"
@@ -2687,22 +3274,26 @@ Make questions accurate, clear, and appropriate for the exam level.`;
                               >
                                 Download
                               </Button>
-                              <Button
-                                size="xs"
-                                flex={1}
-                                h="30px"
-                                leftIcon={<Icon as={FaRobot} fontSize="10px" />}
-                                onClick={() => generateFromFile(att)}
-                                isLoading={aiLoading}
-                                bg="#f5f3ff"
-                                color="#7c3aed"
-                                borderRadius="7px"
-                                fontWeight={700}
-                                fontSize="11px"
-                                _hover={{ bg: "#ede9fe" }}
-                              >
-                                AI
-                              </Button>
+                              {!isSectionedRequest && (
+                                <Button
+                                  size="xs"
+                                  flex={1}
+                                  h="30px"
+                                  leftIcon={
+                                    <Icon as={FaRobot} fontSize="10px" />
+                                  }
+                                  onClick={() => generateFromFile(att)}
+                                  isLoading={aiLoading}
+                                  bg="#f5f3ff"
+                                  color="#7c3aed"
+                                  borderRadius="7px"
+                                  fontWeight={700}
+                                  fontSize="11px"
+                                  _hover={{ bg: "#ede9fe" }}
+                                >
+                                  AI
+                                </Button>
+                              )}
                             </Flex>
                           </Box>
                         ))}
@@ -2711,129 +3302,169 @@ Make questions accurate, clear, and appropriate for the exam level.`;
                   )}
                 </Box>
 
-                {/* RIGHT PANEL — AI generation + question editor */}
+                {/* RIGHT PANEL — AI + question editor */}
                 <Box
                   flex={1}
                   p={6}
                   overflowY="auto"
                   maxH={{ lg: "calc(100vh - 200px)" }}
                 >
-                  {/* AI Prompt area */}
-                  <Box
-                    bg="linear-gradient(135deg,#f5f3ff,#ede9fe)"
-                    border="1px solid #c4b5fd"
-                    borderRadius="14px"
-                    p={5}
-                    mb={6}
-                  >
-                    <Flex align="center" gap={2} mb={3}>
-                      <Icon as={FaRobot} color="#7c3aed" fontSize="16px" />
-                      <Text fontSize="13px" fontWeight={800} color="#4c1d95">
-                        AI Question Generator
-                      </Text>
-                    </Flex>
-                    <Textarea
-                      value={aiPrompt}
-                      onChange={(e) => setAiPrompt(e.target.value)}
-                      placeholder="Describe what questions you want to generate…"
-                      borderRadius="10px"
-                      fontSize="13px"
-                      rows={3}
-                      resize="vertical"
-                      mb={3}
-                      bg="white"
-                      borderColor="#c4b5fd"
-                      _focus={{
-                        borderColor: "#7c3aed",
-                        boxShadow: "0 0 0 1px #7c3aed",
-                      }}
-                    />
-                    <Button
-                      leftIcon={<FaRobot />}
-                      onClick={generateWithAI}
-                      isLoading={aiLoading}
-                      loadingText="Generating questions…"
-                      bg="#7c3aed"
-                      color="white"
-                      borderRadius="10px"
-                      fontWeight={800}
-                      fontSize="13px"
-                      h="42px"
-                      _hover={{ bg: "#6d28d9" }}
-                      w={{ base: "full", sm: "auto" }}
-                    >
-                      Generate {fullRequest?.totalQuestions || 20} Questions
-                      with AI
-                    </Button>
-                    {questions.length > 0 && (
-                      <Text
-                        fontSize="12px"
-                        color="#6d28d9"
-                        mt={2}
-                        fontWeight={600}
-                      >
-                        ✓ {questions.length} questions ready — review below
-                        before sending
-                      </Text>
-                    )}
-                  </Box>
-
-                  {/* Question editor */}
-                  <Flex justify="space-between" align="center" mb={4}>
-                    <Text
-                      fontSize="11px"
-                      fontWeight={800}
-                      color="#94a3b8"
-                      textTransform="uppercase"
-                      letterSpacing="2px"
-                    >
-                      Questions ({questions.length})
-                    </Text>
-                    <Button
-                      size="sm"
-                      leftIcon={<FaPlus />}
-                      onClick={addBlankQuestion}
-                      variant="outline"
-                      borderRadius="8px"
-                      fontSize="12px"
-                      fontWeight={700}
-                      borderColor="#4a72b8"
-                      color="#4a72b8"
-                    >
-                      Add Manually
-                    </Button>
-                  </Flex>
-
-                  {questions.length === 0 ? (
+                  {/* AI prompt — only shown for non-sectioned, or as general reference */}
+                  {!isSectionedRequest && (
                     <Box
-                      py={12}
-                      textAlign="center"
-                      bg="#f8fafc"
+                      bg="linear-gradient(135deg,#f5f3ff,#ede9fe)"
+                      border="1px solid #c4b5fd"
                       borderRadius="14px"
-                      border="2px dashed #e2e8f0"
+                      p={5}
+                      mb={6}
                     >
-                      <Icon
-                        as={FaClipboardList}
-                        fontSize="36px"
-                        color="#e2e8f0"
-                        display="block"
-                        mx="auto"
+                      <Flex align="center" gap={2} mb={3}>
+                        <Icon as={FaRobot} color="#7c3aed" fontSize="16px" />
+                        <Text fontSize="13px" fontWeight={800} color="#4c1d95">
+                          AI Question Generator
+                        </Text>
+                      </Flex>
+                      <Textarea
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                        placeholder="Describe what questions you want to generate…"
+                        borderRadius="10px"
+                        fontSize="13px"
+                        rows={3}
+                        resize="vertical"
                         mb={3}
+                        bg="white"
+                        borderColor="#c4b5fd"
+                        _focus={{
+                          borderColor: "#7c3aed",
+                          boxShadow: "0 0 0 1px #7c3aed",
+                        }}
                       />
-                      <Text fontSize="14px" color="#94a3b8" fontWeight={600}>
-                        No questions yet — use AI or add manually
-                      </Text>
+                      <Button
+                        leftIcon={<FaRobot />}
+                        onClick={generateWithAI}
+                        isLoading={aiLoading}
+                        loadingText="Generating questions…"
+                        bg="#7c3aed"
+                        color="white"
+                        borderRadius="10px"
+                        fontWeight={800}
+                        fontSize="13px"
+                        h="42px"
+                        _hover={{ bg: "#6d28d9" }}
+                        w={{ base: "full", sm: "auto" }}
+                      >
+                        Generate {fullRequest?.totalQuestions || 20} Questions
+                        with AI
+                      </Button>
+                      {questions.length > 0 && (
+                        <Text
+                          fontSize="12px"
+                          color="#6d28d9"
+                          mt={2}
+                          fontWeight={600}
+                        >
+                          ✓ {questions.length} questions ready — review below
+                          before sending
+                        </Text>
+                      )}
+                    </Box>
+                  )}
+
+                  {/* SECTIONED: per-section editors */}
+                  {isSectionedRequest ? (
+                    <Box>
+                      <Flex align="center" gap={2} mb={5}>
+                        <Icon
+                          as={FaLayerGroup}
+                          color="#2563eb"
+                          fontSize="16px"
+                        />
+                        <Text fontSize="15px" fontWeight={800} color="#0f172a">
+                          Section Question Editors
+                        </Text>
+                        <Text fontSize="12px" color="#94a3b8">
+                          · {totalSectionQCount} questions added across{" "}
+                          {fullRequest?.sections?.length} sections
+                        </Text>
+                      </Flex>
+                      {fullRequest?.sections?.map((sec, sIdx) => (
+                        <SectionEditor
+                          key={sIdx}
+                          section={sec}
+                          sectionIdx={sIdx}
+                          sectionQuestions={sectionQuestions}
+                          setSectionQuestions={setSectionQuestions}
+                          fullRequest={fullRequest}
+                          aiLoading={aiLoading}
+                          setAiLoading={setAiLoading}
+                          toast={toast}
+                        />
+                      ))}
                     </Box>
                   ) : (
-                    questions.map((q, idx) => (
-                      <QuestionRow
-                        key={idx}
-                        q={q}
-                        idx={idx}
-                        onChange={updateQuestion}
-                        onDelete={deleteQuestion}
-                      />
-                    ))
+                    /* NON-SECTIONED: flat editor */
+                    <Box>
+                      <Flex justify="space-between" align="center" mb={4}>
+                        <Text
+                          fontSize="11px"
+                          fontWeight={800}
+                          color="#94a3b8"
+                          textTransform="uppercase"
+                          letterSpacing="2px"
+                        >
+                          Questions ({questions.length})
+                        </Text>
+                        <Button
+                          size="sm"
+                          leftIcon={<FaPlus />}
+                          onClick={addBlankQuestion}
+                          variant="outline"
+                          borderRadius="8px"
+                          fontSize="12px"
+                          fontWeight={700}
+                          borderColor="#4a72b8"
+                          color="#4a72b8"
+                        >
+                          Add Manually
+                        </Button>
+                      </Flex>
+                      {questions.length === 0 ? (
+                        <Box
+                          py={12}
+                          textAlign="center"
+                          bg="#f8fafc"
+                          borderRadius="14px"
+                          border="2px dashed #e2e8f0"
+                        >
+                          <Icon
+                            as={FaClipboardList}
+                            fontSize="36px"
+                            color="#e2e8f0"
+                            display="block"
+                            mx="auto"
+                            mb={3}
+                          />
+                          <Text
+                            fontSize="14px"
+                            color="#94a3b8"
+                            fontWeight={600}
+                          >
+                            No questions yet — use AI or add manually
+                          </Text>
+                        </Box>
+                      ) : (
+                        questions.map((q, idx) => (
+                          <QuestionRow
+                            key={idx}
+                            q={q}
+                            idx={idx}
+                            onChange={updateQuestion}
+                            onDelete={deleteQuestion}
+                          />
+                        ))
+                      )}
+                    </Box>
                   )}
                 </Box>
               </Flex>
@@ -2891,12 +3522,18 @@ Make questions accurate, clear, and appropriate for the exam level.`;
                   leftIcon={<FaPaperPlane />}
                   isLoading={acting}
                   loadingText="Sending…"
-                  isDisabled={questions.length === 0}
+                  isDisabled={
+                    isSectionedRequest
+                      ? sectionQuestions.some((sq) => sq.questions.length === 0)
+                      : questions.length === 0
+                  }
                   onClick={handleSendTest}
                   _hover={{ opacity: 0.9 }}
                   px={8}
                 >
-                  Send Test ({questions.length} Q)
+                  {isSectionedRequest
+                    ? `Send Test (${totalSectionQCount} Q, ${fullRequest?.sections?.length} sections)`
+                    : `Send Test (${questions.length} Q)`}
                 </Button>
               </Flex>
             </ModalFooter>
@@ -2904,7 +3541,6 @@ Make questions accurate, clear, and appropriate for the exam level.`;
         </ModalContent>
       </Modal>
 
-      {/* ── File Preview Modal ─────────────────────────────────────────────── */}
       <FilePreviewModal
         attachment={previewFile}
         isOpen={previewOpen}

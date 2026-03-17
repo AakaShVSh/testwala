@@ -30,7 +30,6 @@
 // import { useNavigate, useLocation } from "react-router-dom";
 // import { useAuth } from "../context/AuthContext";
 // import { resultsAPI } from "../services/api";
-// import { socket } from "../services/socket";
 // import ReportQuestionDropdown from "./ReportQuestionDropdown";
 // import {
 //   FaEraser,
@@ -247,11 +246,30 @@
 //   );
 //   const [reversesec, setreversesec] = useState(() => totalTimeInSeconds % 60);
 
-//   const [isFullscreenActive, setIsFullscreenActive] = useState(true);
+//   const [isFullscreenActive, setIsFullscreenActive] = useState(false);
 //   const [hasExitedFullscreen, setHasExitedFullscreen] = useState(false);
 //   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
 //   const cancelSubmitRef = useRef();
 //   const giveMarkRef = useRef(null);
+
+//   // ── Request fullscreen on mount ────────────────────────────────
+//   useEffect(() => {
+//     if (isMobile) return; // skip fullscreen enforcement on mobile
+//     const requestFS = async () => {
+//       const el = document.documentElement;
+//       try {
+//         if (el.requestFullscreen) await el.requestFullscreen();
+//         else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+//         else if (el.msRequestFullscreen) await el.msRequestFullscreen();
+//         setIsFullscreenActive(true);
+//       } catch {
+//         // Browser blocked auto-fullscreen — user will see the overlay prompt
+//         setIsFullscreenActive(false);
+//       }
+//     };
+//     requestFS();
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, []); // run once on mount
 
 //   const totalAnswered = answeredQuestion.length + markedAndAnswer.length;
 //   const progressPct =
@@ -614,12 +632,9 @@
 //           });
 //           apiPercentile = res.data?.percentile ?? res.percentile ?? null;
 //           savedResultId = res.data?._id ?? res._id ?? null;
-//           const coachingId = res.data?.coachingId ?? null;
-//           if (coachingId)
-//             socket.emit("test:submitted", {
-//               coachingId: coachingId.toString(),
-//               testId: testMeta.testId,
-//             });
+//           // NOTE: Do NOT emit any socket event here.
+//           // The backend emits "test:attempted" only on the student's first attempt.
+//           // Client-side emits would fire on every retake and pollute the leaderboard.
 //         } catch (err) {
 //           console.error("Save result error:", err);
 //         }
@@ -865,7 +880,7 @@
 //       fontFamily="'DM Sans',sans-serif"
 //       position="relative"
 //     >
-//       {!isMobile && !isFullscreenActive && hasExitedFullscreen && (
+//       {!isMobile && !isFullscreenActive && (
 //         <Box
 //           position="fixed"
 //           inset={0}
@@ -1528,7 +1543,7 @@
 
 // export default TakeTest;
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Button,
@@ -1573,6 +1588,7 @@ import {
   FaBookmark,
   FaClock,
   FaStopwatch,
+  FaLayerGroup,
 } from "react-icons/fa";
 
 const C = {
@@ -1696,12 +1712,11 @@ function TimerWidget({ h, m, s, isCountdown }) {
   );
 }
 
-// ── Per-question timer badge (counts UP from 0) ──────────────────
 function QuestionTimer({ elapsed }) {
   const pad = (n) => String(n).padStart(2, "0");
   const m = Math.floor(elapsed / 60);
   const s = elapsed % 60;
-  const hot = elapsed > 120; // turns amber after 2 min
+  const hot = elapsed > 120;
   return (
     <Flex
       align="center"
@@ -1737,11 +1752,59 @@ const TakeTest = ({ handleFullScreen }) => {
   const quest = location.state?.quest ?? [];
   const testMeta = location.state?.testMeta ?? {};
 
-  // question is the SHUFFLED array — this order is what the student sees.
-  // We store this exact array in the result (shuffledQuestions) so ResultPage
-  // can map allAnswers indices back to the correct questions.
-  const [question] = useState(() => [...quest].sort(() => Math.random() - 0.5));
+  // ── Sectioned metadata ────────────────────────────────────────────────────
+  const isSectioned = testMeta?.isSectioned === true;
+  const sectionMeta = Array.isArray(testMeta?.sections)
+    ? testMeta.sections
+    : [];
+
+  // ── Shuffle: within-section for sectioned, full shuffle for non-sectioned ──
+  const [question] = useState(() => {
+    if (!isSectioned || !sectionMeta.length) {
+      // Non-sectioned: shuffle all questions freely
+      return [...quest].sort(() => Math.random() - 0.5);
+    }
+    // Sectioned: shuffle each section's questions independently
+    // Section boundaries stay fixed so palette/navigation always works
+    let offset = 0;
+    const result = [];
+    sectionMeta.forEach((sec) => {
+      const count = sec.count || 0;
+      const slice = quest.slice(offset, offset + count);
+      const shuffled = [...slice].sort(() => Math.random() - 0.5);
+      result.push(...shuffled);
+      offset += count;
+    });
+    return result;
+  });
+
+  // ── Section boundary map ──────────────────────────────────────────────────
+  // sectionBoundaries[flatIdx] = { sectionIdx, sectionName, localIdx, sectionStart, sectionEnd }
+  const sectionBoundaries = React.useMemo(() => {
+    if (!isSectioned || !sectionMeta.length) return [];
+    const result = [];
+    let offset = 0;
+    sectionMeta.forEach((sec, sIdx) => {
+      const count = sec.count || 0;
+      for (let i = 0; i < count; i++) {
+        result.push({
+          sectionIdx: sIdx,
+          sectionName: sec.name || sec.subject || `Section ${sIdx + 1}`,
+          localIdx: i,
+          sectionStart: offset,
+          sectionEnd: offset + count - 1,
+        });
+      }
+      offset += count;
+    });
+    return result;
+  }, [isSectioned, sectionMeta]);
+
+  const getCurrentSectionIdx = (qIdx) =>
+    sectionBoundaries[qIdx]?.sectionIdx ?? 0;
+
   const [currentquestion, setcurrentquestion] = useState(0);
+  const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
   const [answeredQuestion, setAnsweredQuestion] = useState([]);
   const [markedAndAnswer, setMarkedAndAnswer] = useState([]);
   const [markedNotAnswer, setMarkedNotAnswer] = useState([]);
@@ -1756,7 +1819,6 @@ const TakeTest = ({ handleFullScreen }) => {
   const [correctAns, setCorrectAns] = useState([]);
   const [animKey, setAnimKey] = useState(0);
 
-  // ── Per-question time tracking ─────────────────────────────────
   const questionTimesRef = useRef({});
   const qStartTimeRef = useRef(Date.now());
   const [qElapsed, setQElapsed] = useState(0);
@@ -1782,24 +1844,21 @@ const TakeTest = ({ handleFullScreen }) => {
   const cancelSubmitRef = useRef();
   const giveMarkRef = useRef(null);
 
-  // ── Request fullscreen on mount ────────────────────────────────
+  // ── Request fullscreen on mount ───────────────────────────────────────────
   useEffect(() => {
-    if (isMobile) return; // skip fullscreen enforcement on mobile
+    if (isMobile) return;
+    const el = document.documentElement;
     const requestFS = async () => {
-      const el = document.documentElement;
       try {
         if (el.requestFullscreen) await el.requestFullscreen();
         else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-        else if (el.msRequestFullscreen) await el.msRequestFullscreen();
         setIsFullscreenActive(true);
       } catch {
-        // Browser blocked auto-fullscreen — user will see the overlay prompt
         setIsFullscreenActive(false);
       }
     };
     requestFS();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once on mount
+  }, []);
 
   const totalAnswered = answeredQuestion.length + markedAndAnswer.length;
   const progressPct =
@@ -1817,11 +1876,10 @@ const TakeTest = ({ handleFullScreen }) => {
     allAnsRef.current = allAns;
   }, [allAns]);
 
-  // ── Per-question stopwatch (1-second tick) ─────────────────────
+  // ── Per-question stopwatch ────────────────────────────────────────────────
   useEffect(() => {
     const t = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - qStartTimeRef.current) / 1000);
-      setQElapsed(elapsed);
+      setQElapsed(Math.floor((Date.now() - qStartTimeRef.current) / 1000));
     }, 1000);
     return () => clearInterval(t);
   }, [currentquestion]);
@@ -1832,7 +1890,7 @@ const TakeTest = ({ handleFullScreen }) => {
       (questionTimesRef.current[leavingIdx] || 0) + spent;
   };
 
-  // ── Fullscreen & security ──────────────────────────────────────
+  // ── Fullscreen & security ─────────────────────────────────────────────────
   useEffect(() => {
     let requesting = false;
     const requestFS = async () => {
@@ -1842,7 +1900,6 @@ const TakeTest = ({ handleFullScreen }) => {
       try {
         if (el.requestFullscreen) await el.requestFullscreen();
         else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-        else if (el.msRequestFullscreen) await el.msRequestFullscreen();
         setIsFullscreenActive(true);
       } catch {
         if (hasExitedFullscreen)
@@ -1857,9 +1914,7 @@ const TakeTest = ({ handleFullScreen }) => {
     };
     const onFSChange = () => {
       const active = !!(
-        document.fullscreenElement ||
-        document.webkitFullscreenElement ||
-        document.msFullscreenElement
+        document.fullscreenElement || document.webkitFullscreenElement
       );
       if (!active && isFullscreenActive) {
         setIsFullscreenActive(false);
@@ -1912,7 +1967,7 @@ const TakeTest = ({ handleFullScreen }) => {
     return () => document.removeEventListener("keydown", h);
   }, []);
 
-  // ── Test-level timer ──────────────────────────────────────────
+  // ── Test-level timer ──────────────────────────────────────────────────────
   useEffect(() => {
     const t = setTimeout(() => {
       if (isCountdown) {
@@ -1946,12 +2001,13 @@ const TakeTest = ({ handleFullScreen }) => {
     return () => clearTimeout(t);
   }, [hour, min, sec, reversehour, reversemin, reversesec, isCountdown]);
 
-  // ── Navigation ────────────────────────────────────────────────
+  // ── Navigation ────────────────────────────────────────────────────────────
   const goToQuestion = (idx) => {
     saveQuestionTime(currentquestion);
     qStartTimeRef.current = Date.now();
     setQElapsed(0);
     setcurrentquestion(idx);
+    if (isSectioned) setCurrentSectionIdx(getCurrentSectionIdx(idx));
     const savedIndex = allAnsRef.current[idx];
     setans(
       savedIndex !== undefined
@@ -1959,6 +2015,14 @@ const TakeTest = ({ handleFullScreen }) => {
         : null,
     );
     setAnimKey((k) => k + 1);
+  };
+
+  // Jump to first question of a section
+  const goToSection = (sIdx) => {
+    if (!isSectioned || !sectionMeta[sIdx]) return;
+    let offset = 0;
+    for (let i = 0; i < sIdx; i++) offset += sectionMeta[i]?.count || 0;
+    goToQuestion(offset);
   };
 
   const handlequestion = (con) => {
@@ -2122,10 +2186,33 @@ const TakeTest = ({ handleFullScreen }) => {
     setans(null);
   };
 
-  const giveMark = async () => {
-    // Save final question's time before submitting
-    saveQuestionTime(currentquestion);
+  // ── Per-section score computation ─────────────────────────────────────────
+  const computeSectionScores = () => {
+    if (!isSectioned || !sectionMeta.length) return [];
+    let offset = 0;
+    return sectionMeta.map((sec, sIdx) => {
+      const count = sec.count || 0;
+      let score = 0;
+      for (let i = 0; i < count; i++) {
+        const flatIdx = offset + i;
+        const chosen = allAnsRef.current[flatIdx];
+        if (chosen !== undefined && chosen === question[flatIdx]?.answer)
+          score++;
+      }
+      offset += count;
+      return {
+        name: sec.name || sec.subject || `Section ${sIdx + 1}`,
+        subject: sec.subject || "",
+        score,
+        total: count,
+        percentage: count > 0 ? Math.round((score / count) * 100) : 0,
+      };
+    });
+  };
 
+  // ── Submit ────────────────────────────────────────────────────────────────
+  const giveMark = async () => {
+    saveQuestionTime(currentquestion);
     try {
       const subject = testMeta?.subject || "";
       const category = testMeta?.category || subject;
@@ -2135,6 +2222,7 @@ const TakeTest = ({ handleFullScreen }) => {
         : hour * 3600 + min * 60 + sec;
       const scorePercentage =
         question.length > 0 ? Math.round((mark / question.length) * 100) : 0;
+      const sectionScores = computeSectionScores();
       let apiPercentile = null,
         savedResultId = null;
 
@@ -2154,17 +2242,11 @@ const TakeTest = ({ handleFullScreen }) => {
             notAnsweredQus: notAnswer,
             markedAndAnswered: markedAndAnswer,
             markedNotAnswered: markedNotAnswer,
-            // ── Store the shuffled question order ──────────────────────────
-            // allAnswers indices are based on this shuffled array.
-            // The backend saves this so ResultPage can reconstruct the correct
-            // answer↔question mapping when the owner views the result.
             shuffledQuestions: question,
+            sectionScores,
           });
           apiPercentile = res.data?.percentile ?? res.percentile ?? null;
           savedResultId = res.data?._id ?? res._id ?? null;
-          // NOTE: Do NOT emit any socket event here.
-          // The backend emits "test:attempted" only on the student's first attempt.
-          // Client-side emits would fire on every retake and pollute the leaderboard.
         } catch (err) {
           console.error("Save result error:", err);
         }
@@ -2187,8 +2269,9 @@ const TakeTest = ({ handleFullScreen }) => {
           percentile: apiPercentile,
           savedResultId,
           timeTaken,
-          // Pass the shuffled array so the student's own ResultPage also uses
-          // the correct question order (same as what was shown during the test)
+          isSectioned,
+          sectionMeta,
+          sectionScores,
           shuffledQuestions: question,
           questions: question,
           allAnswers: allAnsRef.current,
@@ -2229,6 +2312,66 @@ const TakeTest = ({ handleFullScreen }) => {
   });
   const letters = ["A", "B", "C", "D", "E", "F"];
 
+  // ── Section progress pills for header ─────────────────────────────────────
+  const SectionProgressBar = () => {
+    if (!isSectioned || !sectionMeta.length) return null;
+    return (
+      <Flex gap={1} align="center">
+        {sectionMeta.map((sec, sIdx) => {
+          const isActive = sIdx === currentSectionIdx;
+          const secStart = sectionBoundaries.findIndex(
+            (b) => b.sectionIdx === sIdx,
+          );
+          const secCount = sec.count || 0;
+          const secAnswered = Array.from(
+            { length: secCount },
+            (_, i) => secStart + i,
+          ).filter(
+            (fi) =>
+              answeredQuestion.includes(fi) || markedAndAnswer.includes(fi),
+          ).length;
+          return (
+            <Flex
+              key={sIdx}
+              direction="column"
+              align="center"
+              gap={1}
+              cursor="pointer"
+              onClick={() => goToSection(sIdx)}
+              px={2}
+            >
+              <Text
+                fontSize="9px"
+                fontWeight={isActive ? 800 : 600}
+                color={isActive ? "white" : "rgba(255,255,255,.5)"}
+                textTransform="capitalize"
+                noOfLines={1}
+                maxW="60px"
+              >
+                {sec.name || sec.subject || `S${sIdx + 1}`}
+              </Text>
+              <Box
+                w="40px"
+                h="3px"
+                bg="rgba(255,255,255,.15)"
+                borderRadius="full"
+                overflow="hidden"
+              >
+                <Box
+                  h="100%"
+                  bg={isActive ? "#38bdf8" : "rgba(255,255,255,.4)"}
+                  w={`${secCount > 0 ? Math.round((secAnswered / secCount) * 100) : 0}%`}
+                  borderRadius="full"
+                  transition="width .4s"
+                />
+              </Box>
+            </Flex>
+          );
+        })}
+      </Flex>
+    );
+  };
+
   const QuestionSidebar = () => (
     <Flex direction="column" h="100%" overflow="hidden">
       <Box
@@ -2247,9 +2390,65 @@ const TakeTest = ({ handleFullScreen }) => {
           Navigator
         </Text>
         <Text fontSize="11px" color="rgba(255,255,255,.4)" mt={0.5}>
-          {testMeta?.subject || "General"} · {question.length} Qs
+          {isSectioned
+            ? `${sectionMeta.length} Sections`
+            : testMeta?.subject || "General"}{" "}
+          · {question.length} Qs
         </Text>
       </Box>
+
+      {/* Section tabs */}
+      {isSectioned && sectionMeta.length > 0 && (
+        <Box
+          px={5}
+          py={3}
+          borderBottom="1px solid rgba(255,255,255,.07)"
+          flexShrink={0}
+        >
+          <Text
+            fontSize="9px"
+            fontWeight={800}
+            color="rgba(255,255,255,.4)"
+            textTransform="uppercase"
+            letterSpacing="1px"
+            mb={2}
+          >
+            Sections
+          </Text>
+          <Flex gap={1} flexWrap="wrap">
+            {sectionMeta.map((sec, sIdx) => {
+              const isActive = sIdx === currentSectionIdx;
+              return (
+                <Box
+                  key={sIdx}
+                  as="button"
+                  onClick={() => goToSection(sIdx)}
+                  px={2}
+                  py="3px"
+                  borderRadius="6px"
+                  fontSize="10px"
+                  fontWeight={700}
+                  bg={
+                    isActive ? "rgba(56,189,248,.3)" : "rgba(255,255,255,.08)"
+                  }
+                  color={isActive ? "#38bdf8" : "rgba(255,255,255,.6)"}
+                  border={
+                    isActive
+                      ? "1px solid rgba(56,189,248,.4)"
+                      : "1px solid rgba(255,255,255,.1)"
+                  }
+                  _hover={{ bg: "rgba(255,255,255,.15)" }}
+                  transition="all .12s"
+                  textTransform="capitalize"
+                >
+                  {sec.name || sec.subject || `S${sIdx + 1}`}
+                </Box>
+              );
+            })}
+          </Flex>
+        </Box>
+      )}
+
       <Box
         px={5}
         py={3}
@@ -2285,6 +2484,7 @@ const TakeTest = ({ handleFullScreen }) => {
           />
         </Box>
       </Box>
+
       <Box
         px={5}
         py={3}
@@ -2313,6 +2513,8 @@ const TakeTest = ({ handleFullScreen }) => {
           )}
         </Grid>
       </Box>
+
+      {/* Question palette — grouped by section if sectioned */}
       <Box
         flex={1}
         overflowY="auto"
@@ -2326,52 +2528,129 @@ const TakeTest = ({ handleFullScreen }) => {
           },
         }}
       >
-        <Grid templateColumns="repeat(5,1fr)" gap={2}>
-          {question.map((_, i) => {
-            const st = getQStatus(i, {
-              answeredQuestion,
-              markedAndAnswer,
-              markedNotAnswer,
-              notAnswer,
-            });
-            const s = STATUS_STYLE[st];
-            const cur = i === currentquestion;
-            return (
-              <Center
-                key={i}
-                w="100%"
-                h="36px"
-                cursor="pointer"
-                onClick={() => {
-                  goToQuestion(i);
-                  if (isMobile) onClose();
-                }}
-                bg={cur ? "rgba(255,255,255,.28)" : s.bg}
-                color={cur ? "white" : s.color}
-                borderRadius={s.radius}
-                border={
-                  cur
-                    ? "2px solid white"
-                    : st === "unvisited"
-                      ? "1px solid rgba(255,255,255,.18)"
-                      : "none"
-                }
-                fontSize="10px"
-                fontWeight={900}
-                transform={cur ? "scale(1.1)" : "scale(1)"}
-                boxShadow={cur ? "0 0 0 3px rgba(255,255,255,.25)" : "none"}
-                transition="all .15s"
-                _hover={{
-                  opacity: 0.85,
-                  transform: cur ? "scale(1.1)" : "scale(1.04)",
-                }}
-              >
-                {i + 1}
-              </Center>
+        {isSectioned && sectionMeta.length > 0 ? (
+          sectionMeta.map((sec, sIdx) => {
+            const secStart = sectionBoundaries.findIndex(
+              (b) => b.sectionIdx === sIdx,
             );
-          })}
-        </Grid>
+            const secCount = sec.count || 0;
+            const isActiveSection = sIdx === currentSectionIdx;
+            return (
+              <Box key={sIdx} mb={4}>
+                <Text
+                  fontSize="9px"
+                  fontWeight={800}
+                  color={
+                    isActiveSection
+                      ? "rgba(56,189,248,.9)"
+                      : "rgba(255,255,255,.4)"
+                  }
+                  textTransform="uppercase"
+                  letterSpacing="1px"
+                  mb={2}
+                >
+                  {sec.name || sec.subject || `Section ${sIdx + 1}`}
+                </Text>
+                <Grid templateColumns="repeat(5,1fr)" gap={2}>
+                  {Array.from({ length: secCount }, (_, i) => {
+                    const flatIdx = secStart + i;
+                    const st = getQStatus(flatIdx, {
+                      answeredQuestion,
+                      markedAndAnswer,
+                      markedNotAnswer,
+                      notAnswer,
+                    });
+                    const s = STATUS_STYLE[st];
+                    const cur = flatIdx === currentquestion;
+                    return (
+                      <Center
+                        key={flatIdx}
+                        w="100%"
+                        h="36px"
+                        cursor="pointer"
+                        onClick={() => {
+                          goToQuestion(flatIdx);
+                          if (isMobile) onClose();
+                        }}
+                        bg={cur ? "rgba(255,255,255,.28)" : s.bg}
+                        color={cur ? "white" : s.color}
+                        borderRadius={s.radius}
+                        border={
+                          cur
+                            ? "2px solid white"
+                            : st === "unvisited"
+                              ? "1px solid rgba(255,255,255,.18)"
+                              : "none"
+                        }
+                        fontSize="10px"
+                        fontWeight={900}
+                        transform={cur ? "scale(1.1)" : "scale(1)"}
+                        boxShadow={
+                          cur ? "0 0 0 3px rgba(255,255,255,.25)" : "none"
+                        }
+                        transition="all .15s"
+                        _hover={{
+                          opacity: 0.85,
+                          transform: cur ? "scale(1.1)" : "scale(1.04)",
+                        }}
+                      >
+                        {i + 1}
+                      </Center>
+                    );
+                  })}
+                </Grid>
+              </Box>
+            );
+          })
+        ) : (
+          <Grid templateColumns="repeat(5,1fr)" gap={2}>
+            {question.map((_, i) => {
+              const st = getQStatus(i, {
+                answeredQuestion,
+                markedAndAnswer,
+                markedNotAnswer,
+                notAnswer,
+              });
+              const s = STATUS_STYLE[st];
+              const cur = i === currentquestion;
+              return (
+                <Center
+                  key={i}
+                  w="100%"
+                  h="36px"
+                  cursor="pointer"
+                  onClick={() => {
+                    goToQuestion(i);
+                    if (isMobile) onClose();
+                  }}
+                  bg={cur ? "rgba(255,255,255,.28)" : s.bg}
+                  color={cur ? "white" : s.color}
+                  borderRadius={s.radius}
+                  border={
+                    cur
+                      ? "2px solid white"
+                      : st === "unvisited"
+                        ? "1px solid rgba(255,255,255,.18)"
+                        : "none"
+                  }
+                  fontSize="10px"
+                  fontWeight={900}
+                  transform={cur ? "scale(1.1)" : "scale(1)"}
+                  boxShadow={cur ? "0 0 0 3px rgba(255,255,255,.25)" : "none"}
+                  transition="all .15s"
+                  _hover={{
+                    opacity: 0.85,
+                    transform: cur ? "scale(1.1)" : "scale(1.04)",
+                  }}
+                >
+                  {i + 1}
+                </Center>
+              );
+            })}
+          </Grid>
+        )}
       </Box>
+
       <Box
         px={5}
         py={4}
@@ -2400,6 +2679,14 @@ const TakeTest = ({ handleFullScreen }) => {
       </Box>
     </Flex>
   );
+
+  const currentSecInfo = isSectioned && sectionBoundaries[currentquestion];
+  const localQNum = currentSecInfo
+    ? currentSecInfo.localIdx + 1
+    : currentquestion + 1;
+  const secTotal = currentSecInfo
+    ? sectionMeta[currentSecInfo.sectionIdx]?.count || 0
+    : question.length;
 
   return (
     <Box
@@ -2509,17 +2796,23 @@ const TakeTest = ({ handleFullScreen }) => {
               textTransform="uppercase"
               letterSpacing=".8px"
             >
-              {testMeta?.subject || "General"}
+              {isSectioned
+                ? `Section ${currentSectionIdx + 1}/${sectionMeta.length} · ${sectionMeta[currentSectionIdx]?.name || sectionMeta[currentSectionIdx]?.subject || ""}`
+                : testMeta?.subject || "General"}
             </Text>
           </Box>
         </Flex>
-        <TimerWidget
-          h={isCountdown ? reversehour : hour}
-          m={isCountdown ? reversemin : min}
-          s={isCountdown ? reversesec : sec}
-          isCountdown={isCountdown}
-        />
+
+        {/* Section progress pills — center */}
+        {isSectioned && <SectionProgressBar />}
+
         <HStack spacing={2}>
+          <TimerWidget
+            h={isCountdown ? reversehour : hour}
+            m={isCountdown ? reversemin : min}
+            s={isCountdown ? reversesec : sec}
+            isCountdown={isCountdown}
+          />
           {!isMobile && !isFullscreenActive && (
             <Button
               size="sm"
@@ -2576,7 +2869,7 @@ const TakeTest = ({ handleFullScreen }) => {
 
       <Flex flex={1} overflow="hidden">
         <Flex direction="column" flex={1} overflow="hidden">
-          {/* Sub-header with question status + per-question timer */}
+          {/* Sub-header */}
           <Flex
             px={{ base: 4, md: 6 }}
             py={3}
@@ -2586,7 +2879,28 @@ const TakeTest = ({ handleFullScreen }) => {
             borderBottom="1px solid #e8eef7"
             flexShrink={0}
           >
-            <Flex align="center" gap={3}>
+            <Flex align="center" gap={3} flexWrap="wrap">
+              {isSectioned && currentSecInfo && (
+                <Flex
+                  align="center"
+                  gap={1.5}
+                  bg="#eff6ff"
+                  border="1px solid #bfdbfe"
+                  px={3}
+                  py={1}
+                  borderRadius="8px"
+                >
+                  <Icon as={FaLayerGroup} fontSize="10px" color="#2563eb" />
+                  <Text
+                    fontSize="11px"
+                    fontWeight={700}
+                    color="#1e40af"
+                    textTransform="capitalize"
+                  >
+                    {currentSecInfo.sectionName}
+                  </Text>
+                </Flex>
+              )}
               <Box
                 bg="linear-gradient(135deg,#2563eb,#1e40af)"
                 px={3}
@@ -2599,7 +2913,9 @@ const TakeTest = ({ handleFullScreen }) => {
                   color="white"
                   letterSpacing=".3px"
                 >
-                  Q {currentquestion + 1} / {question.length}
+                  {isSectioned
+                    ? `Q ${localQNum}/${secTotal} (${currentquestion + 1}/${question.length} total)`
+                    : `Q ${currentquestion + 1} / ${question.length}`}
                 </Text>
               </Box>
               {currentStatus !== "unvisited" && (
@@ -2793,6 +3109,27 @@ const TakeTest = ({ handleFullScreen }) => {
                 </Button>
               </HStack>
               <HStack spacing={2}>
+                {/* Next Section button — appears at end of each section */}
+                {isSectioned &&
+                  currentSecInfo &&
+                  currentquestion === currentSecInfo.sectionEnd &&
+                  currentSectionIdx < sectionMeta.length - 1 && (
+                    <Button
+                      h="40px"
+                      px={4}
+                      borderRadius="11px"
+                      bg="linear-gradient(135deg,#0d9488,#0891b2)"
+                      color="white"
+                      fontWeight={800}
+                      fontSize="12px"
+                      rightIcon={<Icon as={FaLayerGroup} fontSize="10px" />}
+                      onClick={() => goToSection(currentSectionIdx + 1)}
+                      _hover={{ opacity: 0.9 }}
+                      transition="all .15s"
+                    >
+                      Next Section
+                    </Button>
+                  )}
                 <Button
                   h="40px"
                   px={5}
@@ -2835,6 +3172,7 @@ const TakeTest = ({ handleFullScreen }) => {
                 )}
               </HStack>
             </Flex>
+
             {isMobile && (
               <Flex mt={3} gap={1.5} flexWrap="wrap" justify="center">
                 {question.map((_, i) => {
@@ -2870,6 +3208,7 @@ const TakeTest = ({ handleFullScreen }) => {
           </Box>
         </Flex>
 
+        {/* Desktop sidebar */}
         {!isMobile && (
           <Box
             w="272px"
@@ -2885,6 +3224,7 @@ const TakeTest = ({ handleFullScreen }) => {
         )}
       </Flex>
 
+      {/* Mobile drawer */}
       {isMobile && (
         <Drawer onClose={onClose} isOpen={isOpen} size="xs" placement="right">
           <DrawerOverlay backdropFilter="blur(4px)" />
@@ -2900,6 +3240,7 @@ const TakeTest = ({ handleFullScreen }) => {
         </Drawer>
       )}
 
+      {/* Submit dialog */}
       <AlertDialog
         isOpen={isSubmitDialogOpen}
         leastDestructiveRef={cancelSubmitRef}
@@ -2943,6 +3284,63 @@ const TakeTest = ({ handleFullScreen }) => {
               </Flex>
             </Box>
             <AlertDialogBody p={5}>
+              {/* Section summary */}
+              {isSectioned && sectionMeta.length > 0 && (
+                <Box mb={4}>
+                  <Text
+                    fontSize="11px"
+                    fontWeight={700}
+                    color="#94a3b8"
+                    textTransform="uppercase"
+                    letterSpacing=".8px"
+                    mb={2}
+                  >
+                    Section Summary
+                  </Text>
+                  {sectionMeta.map((sec, sIdx) => {
+                    const secStart = sectionBoundaries.findIndex(
+                      (b) => b.sectionIdx === sIdx,
+                    );
+                    const secCount = sec.count || 0;
+                    const secAnswered = Array.from(
+                      { length: secCount },
+                      (_, i) => secStart + i,
+                    ).filter(
+                      (fi) =>
+                        answeredQuestion.includes(fi) ||
+                        markedAndAnswer.includes(fi),
+                    ).length;
+                    return (
+                      <Flex
+                        key={sIdx}
+                        justify="space-between"
+                        align="center"
+                        py={2}
+                        borderBottom="1px solid #f1f5f9"
+                      >
+                        <Text
+                          fontSize="12px"
+                          fontWeight={600}
+                          color="#374151"
+                          textTransform="capitalize"
+                        >
+                          {sec.name || sec.subject || `Section ${sIdx + 1}`}
+                        </Text>
+                        <Text
+                          fontSize="12px"
+                          fontWeight={700}
+                          color={
+                            secAnswered === secCount ? "#16a34a" : "#d97706"
+                          }
+                        >
+                          {secAnswered}/{secCount} answered
+                        </Text>
+                      </Flex>
+                    );
+                  })}
+                </Box>
+              )}
+
               <Grid templateColumns="repeat(3,1fr)" gap={3} mb={4}>
                 {[
                   {
