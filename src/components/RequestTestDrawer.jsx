@@ -3454,6 +3454,7 @@ export function MyTestRequests({ coachingId, onRequestTest }) {
               </Flex>
             );
           })}
+          <AdsterraBanner/>
         </Box>
       )}
 

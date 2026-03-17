@@ -2416,6 +2416,7 @@ import {
 import { apiFetch } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { socket } from "../services/socket";
+import AdsterraBanner from "./AdsterraBanner";
 
 const LANGUAGES = [
   {
@@ -4941,6 +4942,7 @@ export default function TestDetailPage() {
                 ))}
           </Box>
         )}
+        <AdsterraBanner/>
       </Box>
 
       {/* Password modal */}
