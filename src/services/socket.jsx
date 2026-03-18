@@ -14,7 +14,7 @@
  */
 import { io } from "socket.io-client";
 
-const SOCKET_URL = process.env.REACT_APP_API_BASE;
+const SOCKET_URL =process.env.REACT_APP_API_BASE;
 
 export const socket = io(SOCKET_URL, {
   autoConnect: true,

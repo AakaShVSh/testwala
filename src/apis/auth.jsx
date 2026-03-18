@@ -13,7 +13,7 @@
 import axios from "axios";
 
 
-const BASE = process.env.REACT_APP_API_BASE;
+const BASE = "https://testwala-backend.onrender.com";
 // "http://localhost:80"; // change to https://testwala-backend.onrender.com for prod
 
 
