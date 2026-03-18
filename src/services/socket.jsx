@@ -14,7 +14,8 @@
  */
 import { io } from "socket.io-client";
 
-const SOCKET_URL = process.env.REACT_APP_API_BASE;
+const SOCKET_URL =
+  process.env.REACT_APP_BACKEND_URL || "https://testwala-backend.onrender.com";
 
 export const socket = io(SOCKET_URL, {
   autoConnect: true,

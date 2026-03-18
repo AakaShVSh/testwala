@@ -180,6 +180,7 @@
 //     </AuthProvider>
 //   );
 // }
+
 import React, { useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
@@ -205,9 +206,8 @@ import SavedPage from "./SavedData";
 import SaveQuestion from "./SaveQuestion";
 import AdminCoachingPage from "./AdminCoachingPage";
 import AdminTestRequestsPage from "./AdminTestRequestsPage";
-import AdminCoachingDashboard from "./AdminCoachingDashboard"; // ← new
 
-const BASE_URL = process.env.REACT_APP_API_BASE;
+const BASE_URL = "https://testwala-backend.onrender.com";
 
 function AppShell() {
   const location = useLocation();
@@ -270,13 +270,10 @@ function AppShell() {
       {!hideLayout && <Navbar />}
       <ScrollToTop />
       <Routes>
-        {/* Public */}
         <Route path="/" element={<Home setchoosesub={setchoosesub} />} />
         <Route path="/auth/signin" element={<Signin />} />
         <Route path="/auth/signup" element={<Signup />} />
         <Route path="/auth/forgotPassword" element={<ForgotPassword />} />
-
-        {/* Test flow */}
         <Route
           path="/test"
           element={<TakeTest handleFullScreen={handleFullScreen} />}
@@ -305,24 +302,17 @@ function AppShell() {
             />
           }
         />
-
-        {/* ── Admin ───────────────────────────────────────────────────── */}
-        {/* Full coaching dashboard — list + detail + tests + students   */}
-        <Route path="/admin/coaching" element={<AdminCoachingDashboard />} />
-        {/* Legacy coaching requests page (kept for backwards compat)   */}
-        <Route path="/admin/coaching-legacy" element={<AdminCoachingPage />} />
-        {/* Test creation requests */}
+        {/* Admin */}
+        <Route path="/admin/coaching" element={<AdminCoachingPage />} />
         <Route
           path="/admin/test-requests"
           element={<AdminTestRequestsPage />}
         />
-
         {/* Tests & Coaching */}
         <Route path="/tests/token/:token" element={<TokenTestPage />} />
         <Route path="/tests/:id" element={<TestDetailPage />} />
         <Route path="/coaching" element={<CoachingPage />} />
         <Route path="/coaching/:slug" element={<CoachingPage />} />
-
         {/* Protected */}
         <Route
           path="/UserTestData"
