@@ -3,8 +3,7 @@ import { setCookies } from "../helpers/cookies";
 import { setLocalStorage } from "../helpers/localStorage";
 
 
-const BASE_URL = "https://testwala-backend.onrender.com";
-// "http://localhost:80"; // change to https://testwala-backend.onrender.com for prod
+const BASE_URL = process.env.REACT_APP_API_BASE;
 
 
 // ─── AUTH ────────────────────────────────────────────────────────────────────
