@@ -1573,6 +1573,7 @@ import {
   AlertDialogOverlay,
   Icon,
   IconButton,
+  Divider,
 } from "@chakra-ui/react";
 import ModalPause from "./ModalPause";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -1591,28 +1592,98 @@ import {
   FaBookmark,
   FaClock,
   FaLayerGroup,
+  FaFlag,
+  FaStopwatch,
+  FaEllipsisV,
+  FaBars,
+  FaTimes,
 } from "react-icons/fa";
+import {
+  MdOutlineBookmarkBorder,
+  MdBookmark,
+  MdOutlineReport,
+} from "react-icons/md";
 
-/* ─── Design tokens ─────────────────────────────────────────────────────── */
-const T = {
-  navy: "#0b1e3d",
-  navyMid: "#132952",
+/* ─── Color tokens — user's palette ─────────────────────────────────────── */
+const C = {
+  // Backgrounds (dark)
+  bg: "#0b1e3d", // deep navy — main bg
+  bgCard: "#132952", // mid navy — cards / header
+  bgElevated: "#1a3a6e", // lighter navy — elevated surfaces
+  bgOption: "#0f2240", // option card bg
+  bgLine: "rgba(255,255,255,.07)",
+
+  // Accents
   blue: "#2563eb",
   blueDk: "#1e40af",
+  blueGlow: "rgba(37,99,235,.35)",
   teal: "#0d9488",
   tealDk: "#0f766e",
+  tealGlow: "rgba(13,148,136,.35)",
+
+  // Status
   green: "#16a34a",
+  greenBg: "rgba(22,163,74,.18)",
   red: "#dc2626",
+  redBg: "rgba(220,38,38,.18)",
   purple: "#7c3aed",
+  purpleBg: "rgba(124,58,237,.18)",
   amber: "#d97706",
-  muted: "#64748b",
-  text: "#0f172a",
-  sub: "#475569",
-  border: "#e2e8f0",
-  surface: "#f8fafc",
+  amberBg: "rgba(217,119,6,.18)",
+  sky: "#38bdf8",
+
+  // Text
+  textPrimary: "#f1f5f9",
+  textSecondary: "rgba(255,255,255,.55)",
+  textMuted: "rgba(255,255,255,.3)",
+  textDim: "rgba(255,255,255,.18)",
+
+  // Border
+  border: "rgba(255,255,255,.09)",
+  borderMid: "rgba(255,255,255,.14)",
 };
 
 const pad = (n) => String(n).padStart(2, "0");
+const LETTERS = ["A", "B", "C", "D", "E", "F"];
+
+/* ─── Status config ──────────────────────────────────────────────────────── */
+const STATUS = {
+  answered: {
+    palBg: "#16a34a",
+    palRadius: "10px 10px 3px 3px",
+    textColor: "#16a34a",
+    chipBg: "rgba(22,163,74,.18)",
+    label: "Answered",
+  },
+  skipped: {
+    palBg: "#dc2626",
+    palRadius: "3px 3px 10px 10px",
+    textColor: "#dc2626",
+    chipBg: "rgba(220,38,38,.18)",
+    label: "Not Answered",
+  },
+  marked: {
+    palBg: "#7c3aed",
+    palRadius: "50%",
+    textColor: "#7c3aed",
+    chipBg: "rgba(124,58,237,.18)",
+    label: "Marked",
+  },
+  markedAnswered: {
+    palBg: "#d97706",
+    palRadius: "50%",
+    textColor: "#d97706",
+    chipBg: "rgba(217,119,6,.18)",
+    label: "Marked & Ans.",
+  },
+  unvisited: {
+    palBg: "transparent",
+    palRadius: "8px",
+    textColor: C.textMuted,
+    chipBg: "rgba(255,255,255,.06)",
+    label: "Not Visited",
+  },
+};
 
 const getQStatus = (
   i,
@@ -1625,66 +1696,19 @@ const getQStatus = (
   return "unvisited";
 };
 
-const STATUS = {
-  answered: {
-    bg: "#dcfce7",
-    dot: "#16a34a",
-    text: "#15803d",
-    label: "Answered",
-    palBg: "#16a34a",
-    palRadius: "10px 10px 3px 3px",
-  },
-  skipped: {
-    bg: "#fee2e2",
-    dot: "#dc2626",
-    text: "#b91c1c",
-    label: "Not Answered",
-    palBg: "#dc2626",
-    palRadius: "3px 3px 10px 10px",
-  },
-  marked: {
-    bg: "#ede9fe",
-    dot: "#7c3aed",
-    text: "#6d28d9",
-    label: "Marked",
-    palBg: "#7c3aed",
-    palRadius: "50%",
-  },
-  markedAnswered: {
-    bg: "#fef3c7",
-    dot: "#d97706",
-    text: "#b45309",
-    label: "Marked & Ans.",
-    palBg: "#d97706",
-    palRadius: "50%",
-  },
-  unvisited: {
-    bg: "#f1f5f9",
-    dot: "#94a3b8",
-    text: "#64748b",
-    label: "Not Visited",
-    palBg: "rgba(255,255,255,.08)",
-    palRadius: "8px",
-  },
-};
-
-const LETTERS = ["A", "B", "C", "D", "E", "F"];
-
 /* ─── Palette Bubble ─────────────────────────────────────────────────────── */
-const Bubble = ({ flatIdx, label, isCurrent, status, onClick }) => {
+const Bubble = ({ label, isCurrent, status, onClick }) => {
   const s = STATUS[status];
   return (
     <Center
       w="36px"
       h="36px"
-      bg={isCurrent ? T.blue : s.palBg}
+      cursor="pointer"
+      flexShrink={0}
+      bg={isCurrent ? C.blue : s.palBg}
       borderRadius={isCurrent ? "10px" : s.palRadius}
       color={
-        isCurrent
-          ? "white"
-          : status === "unvisited"
-            ? "rgba(255,255,255,.5)"
-            : "white"
+        isCurrent ? "white" : status === "unvisited" ? C.textMuted : "white"
       }
       fontSize="11px"
       fontWeight={900}
@@ -1692,55 +1716,22 @@ const Bubble = ({ flatIdx, label, isCurrent, status, onClick }) => {
         isCurrent
           ? "2px solid white"
           : status === "unvisited"
-            ? "1px solid rgba(255,255,255,.15)"
+            ? `1px solid ${C.borderMid}`
             : "none"
       }
-      boxShadow={isCurrent ? "0 4px 14px rgba(37,99,235,.4)" : "none"}
+      boxShadow={isCurrent ? `0 4px 16px ${C.blueGlow}` : "none"}
       transform={isCurrent ? "scale(1.1)" : "scale(1)"}
-      transition="all .15s cubic-bezier(.4,0,.2,1)"
-      cursor="pointer"
+      transition="all .14s cubic-bezier(.4,0,.2,1)"
       onClick={onClick}
-      _active={{ transform: "scale(.93)" }}
-      flexShrink={0}
+      _active={{ transform: "scale(.92)", transition: "transform .07s" }}
     >
       {label}
     </Center>
   );
 };
 
-/* ─── Stat box ───────────────────────────────────────────────────────────── */
-const StatBox = ({ value, label, color, bg }) => (
-  <Box
-    bg={bg}
-    borderRadius="14px"
-    p={{ base: "10px 6px", md: "14px 10px" }}
-    textAlign="center"
-    flex={1}
-  >
-    <Text
-      fontSize={{ base: "22px", md: "26px" }}
-      fontWeight={900}
-      color={color}
-      lineHeight="1"
-      letterSpacing="-1.5px"
-    >
-      {value}
-    </Text>
-    <Text
-      fontSize={{ base: "9px", md: "10px" }}
-      color={T.muted}
-      fontWeight={700}
-      mt="5px"
-      textTransform="uppercase"
-      letterSpacing=".5px"
-    >
-      {label}
-    </Text>
-  </Box>
-);
-
 /* ══════════════════════════════════════════════════════════════════════════
-   MAIN COMPONENT
+   TAKE TEST
 ══════════════════════════════════════════════════════════════════════════ */
 const TakeTest = ({ handleFullScreen }) => {
   const navigate = useNavigate();
@@ -1758,7 +1749,7 @@ const TakeTest = ({ handleFullScreen }) => {
     ? testMeta.sections
     : [];
 
-  /* ── Shuffle ──────────────────────────────────────────────────────────── */
+  /* Shuffle */
   const [question] = useState(() => {
     if (!isSectioned || !sectionMeta.length)
       return [...quest].sort(() => Math.random() - 0.5);
@@ -1776,7 +1767,7 @@ const TakeTest = ({ handleFullScreen }) => {
     return result;
   });
 
-  /* ── Section boundaries ───────────────────────────────────────────────── */
+  /* Section boundaries */
   const sectionBoundaries = useMemo(() => {
     if (!isSectioned || !sectionMeta.length) return [];
     const result = [];
@@ -1796,7 +1787,7 @@ const TakeTest = ({ handleFullScreen }) => {
     return result;
   }, [isSectioned, sectionMeta]);
 
-  /* ── Core state ───────────────────────────────────────────────────────── */
+  /* Core state */
   const [currentQ, setCurrentQ] = useState(0);
   const [currentSec, setCurrentSec] = useState(0);
   const [answeredQuestion, setAnsweredQuestion] = useState([]);
@@ -1836,7 +1827,7 @@ const TakeTest = ({ handleFullScreen }) => {
   const cancelRef = useRef();
   const giveMarkRef = useRef(null);
 
-  /* ── Derived ──────────────────────────────────────────────────────────── */
+  /* Derived */
   const totalAnswered = answeredQuestion.length + markedAndAnswer.length;
   const progressPct =
     question.length > 0
@@ -1865,12 +1856,14 @@ const TakeTest = ({ handleFullScreen }) => {
   const remSec = timerH * 3600 + timerM * 60 + timerS;
   const timerUrgent = isCountdown && remSec <= 300;
   const timerWarn = isCountdown && remSec <= 600 && !timerUrgent;
+  const isMarked =
+    markedNotAnswer.includes(currentQ) || markedAndAnswer.includes(currentQ);
 
   useEffect(() => {
     allAnsRef.current = allAns;
   }, [allAns]);
 
-  /* ── Fullscreen on mount ──────────────────────────────────────────────── */
+  /* Fullscreen on mount */
   useEffect(() => {
     if (isMobile) return;
     const el = document.documentElement;
@@ -1885,7 +1878,7 @@ const TakeTest = ({ handleFullScreen }) => {
     })();
   }, []);
 
-  /* ── Per-Q stopwatch ──────────────────────────────────────────────────── */
+  /* Per-Q stopwatch */
   useEffect(() => {
     const t = setInterval(
       () =>
@@ -1901,7 +1894,7 @@ const TakeTest = ({ handleFullScreen }) => {
       (questionTimesRef.current[idx] || 0) + spent;
   };
 
-  /* ── Security & fullscreen ────────────────────────────────────────────── */
+  /* Security */
   useEffect(() => {
     let requesting = false;
     const requestFS = async () => {
@@ -1967,7 +1960,6 @@ const TakeTest = ({ handleFullScreen }) => {
     document.addEventListener("contextmenu", h);
     return () => document.removeEventListener("contextmenu", h);
   }, []);
-
   useEffect(() => {
     const h = (e) => {
       if (e.key === "F11" || e.key === "Escape") e.preventDefault();
@@ -1978,7 +1970,7 @@ const TakeTest = ({ handleFullScreen }) => {
     return () => document.removeEventListener("keydown", h);
   }, []);
 
-  /* ── Timer ────────────────────────────────────────────────────────────── */
+  /* Timer */
   useEffect(() => {
     const t = setTimeout(() => {
       if (isCountdown) {
@@ -2012,7 +2004,7 @@ const TakeTest = ({ handleFullScreen }) => {
     return () => clearTimeout(t);
   }, [hour, min, sec, rh, rm, rs, isCountdown]);
 
-  /* ── Navigation ───────────────────────────────────────────────────────── */
+  /* Navigation */
   const goToQuestion = useCallback(
     (idx) => {
       saveQTime(currentQ);
@@ -2217,7 +2209,7 @@ const TakeTest = ({ handleFullScreen }) => {
           apiPercentile = res.data?.percentile ?? res.percentile ?? null;
           savedResultId = res.data?._id ?? res._id ?? null;
         } catch (err) {
-          console.error("Save result error:", err);
+          console.error(err);
         }
       }
       if (document.exitFullscreen) document.exitFullscreen();
@@ -2253,7 +2245,7 @@ const TakeTest = ({ handleFullScreen }) => {
         },
       });
     } catch (err) {
-      console.error("Submit error:", err);
+      console.error(err);
       navigate("/test-result", { replace: true });
     }
   };
@@ -2271,39 +2263,72 @@ const TakeTest = ({ handleFullScreen }) => {
     }
   };
 
-  /* ── Navigator panel (shared between drawer & desktop sidebar) ────────── */
-  const NavigatorPanel = () => (
-    <Flex direction="column" h="100%" bg={T.navy} overflow="hidden">
-      {/* Header */}
-      <Box
+  /* ── Right Drawer — Navigator (palette only, right side) ─────────────── */
+  const RightDrawer = () => (
+    <Flex direction="column" h="100%" overflow="hidden">
+      {/* Drawer header */}
+      <Flex
         px={5}
         pt={5}
         pb={4}
+        align="center"
+        justify="space-between"
+        borderBottom={`1px solid ${C.bgLine}`}
         flexShrink={0}
-        borderBottom="1px solid rgba(255,255,255,.07)"
       >
-        <Text
-          fontSize="13px"
-          fontWeight={800}
-          color="white"
-          letterSpacing="-.2px"
-        >
-          Question Navigator
-        </Text>
-        <Text fontSize="11px" color="rgba(255,255,255,.35)" mt={0.5}>
-          {totalAnswered}/{question.length} answered · {progressPct}% done
-        </Text>
-        {/* Mini progress */}
+        <Box>
+          <Text
+            fontSize="14px"
+            fontWeight={800}
+            color={C.textPrimary}
+            letterSpacing="-.2px"
+          >
+            Question Palette
+          </Text>
+          <Text fontSize="11px" color={C.textMuted} mt={0.5}>
+            {totalAnswered}/{question.length} answered
+          </Text>
+        </Box>
+        <IconButton
+          icon={<Icon as={FaTimes} fontSize="13px" />}
+          onClick={onClose}
+          h="32px"
+          w="32px"
+          minW="32px"
+          borderRadius="8px"
+          bg="rgba(255,255,255,.07)"
+          color={C.textSecondary}
+          aria-label="Close"
+          border={`1px solid ${C.border}`}
+          _hover={{ bg: "rgba(255,255,255,.12)" }}
+        />
+      </Flex>
+
+      {/* Progress bar */}
+      <Box px={5} py={3} flexShrink={0} borderBottom={`1px solid ${C.bgLine}`}>
+        <Flex justify="space-between" mb={1.5}>
+          <Text
+            fontSize="10px"
+            fontWeight={700}
+            color={C.textMuted}
+            textTransform="uppercase"
+            letterSpacing=".8px"
+          >
+            Progress
+          </Text>
+          <Text fontSize="10px" fontWeight={900} color={C.sky}>
+            {progressPct}%
+          </Text>
+        </Flex>
         <Box
-          h="3px"
+          h="4px"
           bg="rgba(255,255,255,.08)"
           borderRadius="full"
           overflow="hidden"
-          mt={2.5}
         >
           <Box
             h="100%"
-            bg="linear-gradient(90deg,#14b8a6,#38bdf8)"
+            bg={`linear-gradient(90deg,${C.teal},${C.sky})`}
             w={`${progressPct}%`}
             borderRadius="full"
             transition="width .5s ease"
@@ -2312,13 +2337,8 @@ const TakeTest = ({ handleFullScreen }) => {
       </Box>
 
       {/* Legend */}
-      <Box
-        px={5}
-        py={3}
-        flexShrink={0}
-        borderBottom="1px solid rgba(255,255,255,.06)"
-      >
-        <Grid templateColumns="1fr 1fr" rowGap={1.5} columnGap={4}>
+      <Box px={5} py={3} flexShrink={0} borderBottom={`1px solid ${C.bgLine}`}>
+        <Grid templateColumns="1fr 1fr" rowGap={2} columnGap={4}>
           {Object.entries(STATUS).map(([key, s]) => {
             const count =
               key === "answered"
@@ -2333,26 +2353,34 @@ const TakeTest = ({ handleFullScreen }) => {
             return (
               <Flex key={key} align="center" gap={2}>
                 <Box
-                  w="10px"
-                  h="10px"
-                  borderRadius="3px"
-                  bg={s.dot}
+                  w="12px"
+                  h="12px"
                   flexShrink={0}
+                  flexShrink={0}
+                  bg={key === "unvisited" ? "transparent" : s.palBg}
+                  border={
+                    key === "unvisited" ? `1.5px solid ${C.borderMid}` : "none"
+                  }
+                  borderRadius={
+                    s.palRadius === "50%"
+                      ? "50%"
+                      : key === "answered"
+                        ? "4px 4px 1px 1px"
+                        : key === "skipped"
+                          ? "1px 1px 4px 4px"
+                          : "3px"
+                  }
                 />
                 <Text
                   fontSize="10px"
-                  color="rgba(255,255,255,.4)"
+                  color={C.textSecondary}
                   fontWeight={500}
                   flex={1}
                   noOfLines={1}
                 >
                   {s.label}
                 </Text>
-                <Text
-                  fontSize="10px"
-                  fontWeight={900}
-                  color="rgba(255,255,255,.65)"
-                >
+                <Text fontSize="10px" fontWeight={900} color={C.textPrimary}>
                   {count}
                 </Text>
               </Flex>
@@ -2361,14 +2389,24 @@ const TakeTest = ({ handleFullScreen }) => {
         </Grid>
       </Box>
 
-      {/* Section tabs */}
+      {/* Section tabs — ONLY in drawer */}
       {isSectioned && sectionMeta.length > 0 && (
         <Box
           px={5}
           py={3}
           flexShrink={0}
-          borderBottom="1px solid rgba(255,255,255,.06)"
+          borderBottom={`1px solid ${C.bgLine}`}
         >
+          <Text
+            fontSize="9px"
+            fontWeight={800}
+            color={C.textMuted}
+            textTransform="uppercase"
+            letterSpacing="1px"
+            mb={2}
+          >
+            Sections
+          </Text>
           <Flex gap={1.5} flexWrap="wrap">
             {sectionMeta.map((sec, sIdx) => {
               const isActive = sIdx === currentSec;
@@ -2378,22 +2416,20 @@ const TakeTest = ({ handleFullScreen }) => {
                   as="button"
                   onClick={() => {
                     goToSection(sIdx);
-                    if (isMobile) onClose();
+                    onClose();
                   }}
-                  px={2.5}
-                  py="5px"
+                  px={3}
+                  py="6px"
                   borderRadius="8px"
                   fontSize="11px"
                   fontWeight={700}
                   bg={
-                    isActive ? "rgba(56,189,248,.2)" : "rgba(255,255,255,.07)"
+                    isActive ? `rgba(56,189,248,.18)` : "rgba(255,255,255,.06)"
                   }
-                  color={isActive ? "#7dd3fc" : "rgba(255,255,255,.45)"}
+                  color={isActive ? C.sky : C.textSecondary}
                   border="1px solid"
-                  borderColor={
-                    isActive ? "rgba(56,189,248,.3)" : "rgba(255,255,255,.08)"
-                  }
-                  _hover={{ bg: "rgba(255,255,255,.12)" }}
+                  borderColor={isActive ? "rgba(56,189,248,.35)" : C.border}
+                  _hover={{ bg: "rgba(255,255,255,.1)" }}
                   transition="all .12s"
                   textTransform="capitalize"
                 >
@@ -2405,7 +2441,7 @@ const TakeTest = ({ handleFullScreen }) => {
         </Box>
       )}
 
-      {/* Palette */}
+      {/* Palette grid */}
       <Box
         flex={1}
         overflowY="auto"
@@ -2430,14 +2466,14 @@ const TakeTest = ({ handleFullScreen }) => {
               <Box key={sIdx} mb={5}>
                 <Flex align="center" gap={2} mb={3}>
                   {isActiveSec && (
-                    <Box w="3px" h="10px" bg="#38bdf8" borderRadius="full" />
+                    <Box w="3px" h="10px" bg={C.sky} borderRadius="full" />
                   )}
                   <Text
                     fontSize="9px"
                     fontWeight={800}
                     letterSpacing="1px"
                     textTransform="uppercase"
-                    color={isActiveSec ? "#7dd3fc" : "rgba(255,255,255,.3)"}
+                    color={isActiveSec ? C.sky : C.textMuted}
                   >
                     {sec.name || sec.subject || `Section ${sIdx + 1}`}
                   </Text>
@@ -2454,13 +2490,12 @@ const TakeTest = ({ handleFullScreen }) => {
                     return (
                       <Bubble
                         key={fi}
-                        flatIdx={fi}
                         label={i + 1}
                         isCurrent={fi === currentQ}
                         status={st}
                         onClick={() => {
                           goToQuestion(fi);
-                          if (isMobile) onClose();
+                          onClose();
                         }}
                       />
                     );
@@ -2481,13 +2516,12 @@ const TakeTest = ({ handleFullScreen }) => {
               return (
                 <Bubble
                   key={i}
-                  flatIdx={i}
                   label={i + 1}
                   isCurrent={i === currentQ}
                   status={st}
                   onClick={() => {
                     goToQuestion(i);
-                    if (isMobile) onClose();
+                    onClose();
                   }}
                 />
               );
@@ -2497,26 +2531,21 @@ const TakeTest = ({ handleFullScreen }) => {
       </Box>
 
       {/* Submit */}
-      <Box
-        px={5}
-        py={4}
-        flexShrink={0}
-        borderTop="1px solid rgba(255,255,255,.07)"
-      >
+      <Box px={5} py={4} flexShrink={0} borderTop={`1px solid ${C.bgLine}`}>
         <Button
           w="full"
           h="46px"
           borderRadius="14px"
-          bg="linear-gradient(135deg,#0d9488,#0891b2)"
+          bg={`linear-gradient(135deg,${C.teal},${C.tealDk})`}
           color="white"
           fontWeight={800}
           fontSize="13px"
           leftIcon={<Icon as={FaPaperPlane} fontSize="12px" />}
           onClick={() => {
             setSubmitOpen(true);
-            if (isMobile) onClose();
+            onClose();
           }}
-          _hover={{ opacity: 0.9, boxShadow: "0 8px 24px rgba(13,148,136,.4)" }}
+          _hover={{ opacity: 0.9, boxShadow: `0 8px 24px ${C.tealGlow}` }}
           transition="all .15s"
         >
           Submit Test
@@ -2525,20 +2554,21 @@ const TakeTest = ({ handleFullScreen }) => {
     </Flex>
   );
 
-  /* ══════════════════════════════════════════════════════════════════════
+  /* ════════════════════════════════════════════════════════════════════════
      RENDER
-  ══════════════════════════════════════════════════════════════════════ */
+  ════════════════════════════════════════════════════════════════════════ */
   return (
     <Box
       h="100dvh"
       display="flex"
       flexDirection="column"
-      bg={T.surface}
-      fontFamily="'DM Sans', 'Segoe UI', sans-serif"
+      bg={C.bg}
+      fontFamily="'DM Sans','Segoe UI',sans-serif"
       position="relative"
       overflow="hidden"
+      color={C.textPrimary}
     >
-      {/* ── Desktop fullscreen overlay ──────────────────────────────────── */}
+      {/* Desktop fullscreen overlay */}
       {!isMobile && !fsActive && (
         <Box
           position="fixed"
@@ -2565,20 +2595,18 @@ const TakeTest = ({ handleFullScreen }) => {
                 maxW="340px"
                 lineHeight="1.7"
               >
-                Exam integrity requires fullscreen mode. Click anywhere to
-                continue.
+                Exam integrity requires fullscreen mode. Click to continue.
               </Text>
             </Box>
             <Button
               h="50px"
               px={8}
               borderRadius="14px"
-              bg="linear-gradient(135deg,#2563eb,#1e40af)"
+              bg={`linear-gradient(135deg,${C.blue},${C.blueDk})`}
               color="white"
               fontWeight={800}
               leftIcon={<Icon as={FaExpand} />}
               _hover={{ opacity: 0.9 }}
-              transition="all .2s"
             >
               Re-enter Fullscreen
             </Button>
@@ -2586,87 +2614,65 @@ const TakeTest = ({ handleFullScreen }) => {
         </Box>
       )}
 
-      {/* ════════════════════════════════════════════════════════════════
-          HEADER
-      ════════════════════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════════
+          HEADER ROW 1 — Timer · Test Name · Menu
+      ══════════════════════════════════════════════════════════════ */}
       <Box
-        bg={T.navy}
+        bg={C.bgCard}
         flexShrink={0}
+        borderBottom={`1px solid ${C.bgLine}`}
+        boxShadow="0 2px 16px rgba(11,30,61,.45)"
         zIndex={10}
         position="relative"
-        boxShadow="0 1px 0 rgba(255,255,255,.05), 0 4px 20px rgba(11,30,61,.4)"
       >
-        {/* Main row */}
+        {/* Row 1: timer + title + icons */}
         <Flex
           px={{ base: 4, md: 5 }}
-          h={{ base: "54px", md: "60px" }}
+          h={{ base: "54px", md: "58px" }}
           align="center"
-          justify="space-between"
           gap={3}
         >
-          {/* Title */}
-          <Box minW={0} flex={1}>
-            <Text
-              fontSize={{ base: "13px", md: "14px" }}
-              fontWeight={800}
-              color="white"
-              letterSpacing="-.3px"
-              lineHeight="1.2"
-              noOfLines={1}
-            >
-              {testMeta?.testTitle || "Exam"}
-            </Text>
-            <Text
-              fontSize="10px"
-              color="rgba(255,255,255,.32)"
-              fontWeight={500}
-              noOfLines={1}
-              display={{ base: "block", md: "block" }}
-            >
-              {isSectioned && currentSecInfo
-                ? currentSecInfo.sectionName
-                : testMeta?.subject || ""}
-            </Text>
-          </Box>
-
-          {/* Timer — hero element */}
+          {/* Timer pill — leading element like the reference */}
           <Flex
             align="center"
-            gap={{ base: 1.5, md: 2 }}
+            gap={2}
+            flexShrink={0}
             bg={
               timerUrgent
-                ? "rgba(239,68,68,.18)"
+                ? C.redBg
                 : timerWarn
-                  ? "rgba(245,158,11,.12)"
-                  : "rgba(255,255,255,.08)"
+                  ? C.amberBg
+                  : "rgba(255,255,255,.07)"
             }
             border="1px solid"
             borderColor={
               timerUrgent
-                ? "rgba(239,68,68,.4)"
+                ? "rgba(220,38,38,.4)"
                 : timerWarn
-                  ? "rgba(245,158,11,.3)"
-                  : "rgba(255,255,255,.12)"
+                  ? "rgba(217,119,6,.4)"
+                  : C.border
             }
-            borderRadius={{ base: "10px", md: "12px" }}
-            px={{ base: 3, md: 4 }}
-            py={{ base: "8px", md: "10px" }}
+            borderRadius="10px"
+            px={{ base: 3, md: 3.5 }}
+            py={{ base: "7px", md: "8px" }}
             transition="all .4s"
-            flexShrink={0}
           >
-            <Icon
-              as={FaClock}
-              fontSize={{ base: "10px", md: "11px" }}
-              color={
+            <Box
+              w={{ base: "7px", md: "8px" }}
+              h={{ base: "7px", md: "8px" }}
+              borderRadius="50%"
+              bg={timerUrgent ? "#ef4444" : timerWarn ? C.amber : C.sky}
+              boxShadow={
                 timerUrgent
-                  ? "#fca5a5"
+                  ? "0 0 6px #ef4444"
                   : timerWarn
-                    ? "#fde68a"
-                    : "rgba(255,255,255,.38)"
+                    ? `0 0 6px ${C.amber}`
+                    : `0 0 6px ${C.sky}`
               }
+              flexShrink={0}
             />
             <Text
-              fontSize={{ base: "16px", md: "18px" }}
+              fontSize={{ base: "15px", md: "17px" }}
               fontWeight={900}
               letterSpacing={{ base: "1.5px", md: "2px" }}
               lineHeight="1"
@@ -2677,8 +2683,32 @@ const TakeTest = ({ handleFullScreen }) => {
             </Text>
           </Flex>
 
-          {/* Controls */}
-          <HStack spacing={{ base: 1.5, md: 2 }} flexShrink={0}>
+          {/* Test name */}
+          <Box flex={1} minW={0}>
+            <Text
+              fontSize={{ base: "12px", md: "13px" }}
+              fontWeight={700}
+              color={C.textSecondary}
+              noOfLines={1}
+              lineHeight="1.3"
+            >
+              {testMeta?.testTitle || "Exam"}
+            </Text>
+            {!isSectioned && testMeta?.subject && (
+              <Text
+                fontSize="10px"
+                color={C.textMuted}
+                noOfLines={1}
+                fontWeight={500}
+              >
+                {testMeta.subject}
+              </Text>
+            )}
+          </Box>
+
+          {/* Right icons */}
+          <HStack spacing={2} flexShrink={0}>
+            {/* Pause */}
             <ModalPause
               markedAndAnswer={markedAndAnswer}
               question={question}
@@ -2686,19 +2716,21 @@ const TakeTest = ({ handleFullScreen }) => {
               notAnswer={notAnswer}
               answered={answeredQuestion}
             />
+            {/* Navigator (right drawer) */}
             <IconButton
-              icon={<Icon as={FaListUl} fontSize="13px" />}
+              icon={<Icon as={FaBars} fontSize="14px" />}
               onClick={onOpen}
               h={{ base: "34px", md: "36px" }}
               w={{ base: "34px", md: "36px" }}
               minW="auto"
               borderRadius="9px"
-              bg="rgba(255,255,255,.08)"
-              border="1px solid rgba(255,255,255,.1)"
-              color="white"
-              aria-label="Open Navigator"
-              _hover={{ bg: "rgba(255,255,255,.14)" }}
+              bg="rgba(255,255,255,.07)"
+              border={`1px solid ${C.border}`}
+              color={C.textSecondary}
+              aria-label="Navigator"
+              _hover={{ bg: "rgba(255,255,255,.12)", color: "white" }}
             />
+            {/* Fullscreen (desktop when not active) */}
             {!isMobile && !fsActive && (
               <IconButton
                 icon={<Icon as={FaExpand} fontSize="11px" />}
@@ -2707,217 +2739,288 @@ const TakeTest = ({ handleFullScreen }) => {
                 w="36px"
                 minW="auto"
                 borderRadius="9px"
-                bg="rgba(255,255,255,.08)"
-                border="1px solid rgba(255,255,255,.1)"
-                color="white"
+                bg="rgba(255,255,255,.07)"
+                border={`1px solid ${C.border}`}
+                color={C.textSecondary}
                 aria-label="Fullscreen"
-                _hover={{ bg: "rgba(255,255,255,.14)" }}
+                _hover={{ bg: "rgba(255,255,255,.12)" }}
               />
             )}
           </HStack>
         </Flex>
 
-        {/* Progress line */}
-        <Box h="2px" bg="rgba(255,255,255,.06)">
+        {/* ── SECTION TABS — horizontal scrollable, only for sectioned tests ── */}
+        {isSectioned && sectionMeta.length > 0 && (
+          <Box
+            borderTop={`1px solid ${C.bgLine}`}
+            overflowX="auto"
+            css={{
+              "&::-webkit-scrollbar": { display: "none" },
+              scrollbarWidth: "none",
+            }}
+          >
+            <Flex px={{ base: 4, md: 5 }} gap={0} w="max-content" minW="100%">
+              {sectionMeta.map((sec, sIdx) => {
+                const isActive = sIdx === currentSec;
+                const secStart = sectionBoundaries.findIndex(
+                  (b) => b.sectionIdx === sIdx,
+                );
+                const secCount = sec.count || 0;
+                const secAns = Array.from(
+                  { length: secCount },
+                  (_, i) => secStart + i,
+                ).filter(
+                  (fi) =>
+                    answeredQuestion.includes(fi) ||
+                    markedAndAnswer.includes(fi),
+                ).length;
+                return (
+                  <Box
+                    key={sIdx}
+                    as="button"
+                    onClick={() => goToSection(sIdx)}
+                    position="relative"
+                    px={{ base: 4, md: 5 }}
+                    py={3}
+                    flexShrink={0}
+                    transition="all .15s"
+                  >
+                    <Text
+                      fontSize={{ base: "12px", md: "13px" }}
+                      fontWeight={isActive ? 800 : 600}
+                      color={isActive ? "white" : C.textSecondary}
+                      noOfLines={1}
+                      transition="color .15s"
+                    >
+                      {sec.name || sec.subject || `Section ${sIdx + 1}`}
+                    </Text>
+                    {/* Active underline */}
+                    {isActive && (
+                      <Box
+                        position="absolute"
+                        bottom="0"
+                        left="16px"
+                        right="16px"
+                        h="2.5px"
+                        bg={C.blue}
+                        borderRadius="full"
+                      />
+                    )}
+                    {/* Answered count badge */}
+                    <Text
+                      fontSize="9px"
+                      fontWeight={700}
+                      color={isActive ? C.sky : C.textMuted}
+                      mt={0.5}
+                      textAlign="center"
+                    >
+                      {secAns}/{secCount}
+                    </Text>
+                  </Box>
+                );
+              })}
+            </Flex>
+          </Box>
+        )}
+
+        {/* Thin progress line at very bottom of header */}
+        <Box h="2px" bg="rgba(255,255,255,.05)">
           <Box
             h="100%"
-            bg="linear-gradient(90deg,#38bdf8,#14b8a6)"
+            bg={`linear-gradient(90deg,${C.blue},${C.teal})`}
             w={`${progressPct}%`}
             transition="width .6s ease"
           />
         </Box>
-
-        {/* Sub-row: Q badge + status + answered count */}
-        <Flex
-          px={{ base: 4, md: 5 }}
-          py={{ base: "8px", md: "10px" }}
-          align="center"
-          justify="space-between"
-          borderTop="1px solid rgba(255,255,255,.05)"
-        >
-          <HStack spacing={2}>
-            <Box bg="rgba(37,99,235,.4)" px={2.5} py="3px" borderRadius="7px">
-              <Text
-                fontSize={{ base: "11px", md: "12px" }}
-                fontWeight={900}
-                color="white"
-                letterSpacing=".3px"
-              >
-                {isSectioned
-                  ? `Q ${localQNum}/${secTotal}`
-                  : `Q ${currentQ + 1}/${question.length}`}
-              </Text>
-            </Box>
-            {currentStatus !== "unvisited" && (
-              <Box
-                bg={`${STATUS[currentStatus].dot}25`}
-                px={2}
-                py="3px"
-                borderRadius="6px"
-              >
-                <Text
-                  fontSize="10px"
-                  fontWeight={700}
-                  color={STATUS[currentStatus].dot}
-                >
-                  {STATUS[currentStatus].label}
-                </Text>
-              </Box>
-            )}
-          </HStack>
-
-          {/* Right: different info per platform */}
-          {isMobile ? (
-            <Text
-              fontSize="10px"
-              color="rgba(255,255,255,.35)"
-              fontWeight={600}
-            >
-              {totalAnswered}/{question.length} done
-            </Text>
-          ) : (
-            <Flex align="center" gap={1.5}>
-              <Text
-                fontSize="10px"
-                color="rgba(255,255,255,.3)"
-                fontWeight={600}
-              >
-                On this Q:
-              </Text>
-              <Text
-                fontSize="10px"
-                fontWeight={800}
-                color="rgba(255,255,255,.5)"
-                fontFamily="'JetBrains Mono',monospace"
-              >
-                {qElapsed >= 60
-                  ? `${Math.floor(qElapsed / 60)}m ${pad(qElapsed % 60)}s`
-                  : `${qElapsed}s`}
-              </Text>
-            </Flex>
-          )}
-        </Flex>
       </Box>
 
-      {/* ════════════════════════════════════════════════════════════════
-          BODY
-      ════════════════════════════════════════════════════════════════ */}
+      {/* ══════════════════════════════════════════════════════════════
+          QUESTION META ROW  — Q number · per-Q timer · bookmark · report
+      ══════════════════════════════════════════════════════════════ */}
+      <Flex
+        px={{ base: 4, md: 5 }}
+        py={{ base: "10px", md: "11px" }}
+        align="center"
+        justify="space-between"
+        bg={C.bgCard}
+        borderBottom={`1px solid ${C.bgLine}`}
+        flexShrink={0}
+      >
+        <HStack spacing={3}>
+          {/* Q number badge */}
+          <Center
+            bg={C.blue}
+            borderRadius="8px"
+            w={{ base: "28px", md: "30px" }}
+            h={{ base: "28px", md: "30px" }}
+            flexShrink={0}
+          >
+            <Text
+              fontSize={{ base: "11px", md: "12px" }}
+              fontWeight={900}
+              color="white"
+            >
+              {isSectioned ? localQNum : currentQ + 1}
+            </Text>
+          </Center>
+
+          {/* Divider */}
+          <Box w="1px" h="16px" bg={C.bgLine} />
+
+          {/* Per-question timer */}
+          <Flex align="center" gap={1.5}>
+            <Icon
+              as={FaStopwatch}
+              fontSize="10px"
+              color={qElapsed > 120 ? C.amber : C.textMuted}
+            />
+            <Text
+              fontSize={{ base: "12px", md: "13px" }}
+              fontWeight={700}
+              color={qElapsed > 120 ? C.amber : C.textSecondary}
+              fontFamily="'JetBrains Mono',monospace"
+            >
+              {pad(Math.floor(qElapsed / 60))}:{pad(qElapsed % 60)}
+            </Text>
+          </Flex>
+
+          {/* Total answered pill */}
+          <Flex
+            align="center"
+            gap={1.5}
+            bg="rgba(255,255,255,.06)"
+            borderRadius="7px"
+            px={2.5}
+            py="3px"
+          >
+            <Text fontSize="10px" fontWeight={600} color={C.textMuted}>
+              Answered:
+            </Text>
+            <Text fontSize="10px" fontWeight={900} color={C.sky}>
+              {totalAnswered}
+            </Text>
+          </Flex>
+        </HStack>
+
+        {/* Right: bookmark, report */}
+        <HStack spacing={2}>
+          <IconButton
+            icon={
+              <Icon
+                as={isMarked ? MdBookmark : MdOutlineBookmarkBorder}
+                fontSize="17px"
+              />
+            }
+            onClick={markedQuestion}
+            h="30px"
+            w="30px"
+            minW="30px"
+            borderRadius="7px"
+            bg={isMarked ? C.amberBg : "transparent"}
+            color={isMarked ? C.amber : C.textMuted}
+            aria-label="Mark for review"
+            border={isMarked ? `1px solid rgba(217,119,6,.35)` : "none"}
+            _hover={{ bg: C.amberBg, color: C.amber }}
+            transition="all .15s"
+          />
+          <IconButton
+            icon={<Icon as={MdOutlineReport} fontSize="16px" />}
+            h="30px"
+            w="30px"
+            minW="30px"
+            borderRadius="7px"
+            bg="transparent"
+            color={C.textMuted}
+            aria-label="Report"
+            _hover={{ bg: "rgba(220,38,38,.12)", color: "#f87171" }}
+          />
+          {!isMobile && <ReportQuestionDropdown />}
+        </HStack>
+      </Flex>
+
+      {/* ══════════════════════════════════════════════════════════════
+          MAIN BODY
+      ══════════════════════════════════════════════════════════════ */}
       <Flex flex={1} overflow="hidden">
-        {/* ── Content column ─────────────────────────────────────────── */}
         <Flex direction="column" flex={1} overflow="hidden" minW={0}>
-          {/* Scrollable: question + options */}
+          {/* Scrollable question + options */}
           <Box
             flex={1}
             overflowY="auto"
-            px={{ base: 4, md: 6 }}
+            px={{ base: 4, md: 5 }}
             pt={{ base: 5, md: 6 }}
-            pb={{ base: 3, md: 4 }}
+            pb={{ base: 4, md: 5 }}
             css={{
               "&::-webkit-scrollbar": { width: "3px" },
               "&::-webkit-scrollbar-thumb": {
-                background: "#dde3ed",
+                background: "rgba(255,255,255,.12)",
                 borderRadius: "4px",
               },
             }}
           >
-            {/* Question card */}
-            <Box
-              bg="white"
-              borderRadius={{ base: "18px", md: "20px" }}
-              border="1px solid"
-              borderColor={T.border}
-              p={{ base: "18px", sm: "20px", md: "26px" }}
-              mb={{ base: 4, md: 5 }}
-              boxShadow="0 2px 8px rgba(0,0,0,.05)"
-            >
-              <Flex align="flex-start" gap={3}>
-                <Center
-                  w={{ base: "28px", md: "32px" }}
-                  h={{ base: "28px", md: "32px" }}
-                  bg="linear-gradient(135deg,#2563eb,#1e40af)"
-                  borderRadius="9px"
-                  flexShrink={0}
-                >
-                  <Text fontSize="11px" fontWeight={900} color="white">
-                    {currentQ + 1}
-                  </Text>
-                </Center>
-                <Text
-                  fontSize={{ base: "15px", md: "16px" }}
-                  lineHeight={{ base: "1.7", md: "1.75" }}
-                  color={T.text}
-                  fontWeight={500}
-                  flex={1}
-                >
-                  {question[currentQ]?.qus}
-                </Text>
-              </Flex>
-
-              {/* Report dropdown — subtle, desktop only */}
-              {!isMobile && (
-                <Flex justify="flex-end" mt={3}>
-                  <ReportQuestionDropdown />
-                </Flex>
-              )}
+            {/* Question text */}
+            <Box mb={{ base: 5, md: 6 }}>
+              <Text
+                fontSize={{ base: "15px", md: "16px" }}
+                lineHeight={{ base: "1.75", md: "1.8" }}
+                color={C.textPrimary}
+                fontWeight={400}
+                letterSpacing=".1px"
+              >
+                {question[currentQ]?.qus}
+              </Text>
             </Box>
 
             {/* Options */}
-            <VStack spacing={{ base: 3, md: "14px" }} align="stretch">
+            <VStack spacing={{ base: "10px", md: "12px" }} align="stretch">
               {question[currentQ]?.options.map((opt, i) => {
                 const sel = answer === opt;
                 return (
                   <Box
                     key={`${animKey}-${i}`}
-                    bg="white"
-                    borderRadius={{ base: "14px", md: "16px" }}
+                    borderRadius={{ base: "12px", md: "14px" }}
                     border="1.5px solid"
-                    borderColor={sel ? T.blue : T.border}
+                    borderColor={sel ? C.blue : C.border}
+                    bg={sel ? `rgba(37,99,235,.15)` : C.bgCard}
                     boxShadow={
                       sel
-                        ? `0 0 0 3px rgba(37,99,235,.1), 0 4px 16px rgba(37,99,235,.08)`
-                        : "0 1px 4px rgba(0,0,0,.04)"
+                        ? `0 0 0 1px ${C.blue}, 0 4px 20px ${C.blueGlow}`
+                        : "none"
                     }
                     cursor="pointer"
-                    transition="all .16s cubic-bezier(.4,0,.2,1)"
+                    transition="all .15s cubic-bezier(.4,0,.2,1)"
                     _hover={{
-                      borderColor: sel ? T.blue : "#94a3b8",
-                      transform: "translateY(-1px)",
-                      boxShadow: sel
-                        ? `0 0 0 3px rgba(37,99,235,.1), 0 4px 16px rgba(37,99,235,.1)`
-                        : "0 4px 14px rgba(0,0,0,.07)",
+                      borderColor: sel ? C.blue : C.borderMid,
+                      bg: sel ? `rgba(37,99,235,.18)` : C.bgElevated,
                     }}
                     _active={{
                       transform: "scale(.99)",
-                      transition: "transform .08s",
+                      transition: "transform .07s",
                     }}
                     onClick={() => handleAnswer(opt, i)}
-                    role="button"
-                    aria-pressed={sel}
                   >
                     <Flex
                       align="center"
-                      gap={{ base: 3, md: 4 }}
-                      p={{
-                        base: "13px 14px",
-                        sm: "14px 16px",
-                        md: "15px 18px",
-                      }}
+                      gap={3}
+                      p={{ base: "13px 14px", md: "14px 18px" }}
                     >
+                      {/* Letter */}
                       <Center
-                        w={{ base: "32px", md: "36px" }}
-                        h={{ base: "32px", md: "36px" }}
-                        borderRadius={{ base: "9px", md: "10px" }}
+                        w={{ base: "32px", md: "34px" }}
+                        h={{ base: "32px", md: "34px" }}
+                        borderRadius="8px"
                         flexShrink={0}
-                        bg={sel ? T.blue : T.surface}
-                        color={sel ? "white" : T.muted}
+                        bg={sel ? C.blue : "rgba(255,255,255,.07)"}
+                        color={sel ? "white" : C.textSecondary}
                         fontSize={{ base: "12px", md: "13px" }}
                         fontWeight={900}
+                        border={sel ? "none" : `1px solid ${C.border}`}
                         transition="all .15s"
                       >
                         {sel ? (
                           <Icon
                             as={FaCheckCircle}
-                            fontSize={{ base: "13px", md: "15px" }}
+                            fontSize={{ base: "13px", md: "14px" }}
                           />
                         ) : (
                           LETTERS[i] || i + 1
@@ -2926,8 +3029,8 @@ const TakeTest = ({ handleFullScreen }) => {
                       <Text
                         fontSize={{ base: "14px", md: "15px" }}
                         fontWeight={sel ? 600 : 400}
-                        color={sel ? T.blue : T.text}
-                        lineHeight={{ base: "1.55", md: "1.6" }}
+                        color={sel ? "white" : C.textPrimary}
+                        lineHeight="1.55"
                         flex={1}
                       >
                         {opt}
@@ -2938,116 +3041,120 @@ const TakeTest = ({ handleFullScreen }) => {
               })}
             </VStack>
 
-            <Box h={{ base: "10px", md: "14px" }} />
+            <Box h={{ base: "12px", md: "16px" }} />
           </Box>
 
           {/* ════════════════════════════════════════════════════════
-              ACTION BAR
+              BOTTOM ACTION BAR
           ════════════════════════════════════════════════════════ */}
-          <Box
-            bg="white"
-            borderTop="1px solid #edf2f7"
-            boxShadow="0 -2px 12px rgba(0,0,0,.04)"
-            flexShrink={0}
-          >
-            {/* ── MOBILE: focused, thumb-friendly layout ────────────── */}
+          <Box bg={C.bgCard} borderTop={`1px solid ${C.bgLine}`} flexShrink={0}>
+            {/* ── MOBILE ────────────────────────────────────────────── */}
             {isMobile && (
-              <Box px={4} pt={3} pb={`max(12px, env(safe-area-inset-bottom))`}>
-                {/* Primary: Save & Next */}
-                <Button
-                  w="full"
-                  h="52px"
-                  borderRadius="16px"
-                  bg="linear-gradient(135deg,#2563eb,#1e40af)"
-                  color="white"
-                  fontWeight={800}
-                  fontSize="16px"
-                  rightIcon={<Icon as={FaChevronRight} fontSize="13px" />}
-                  onClick={handleSaveNext}
-                  boxShadow="0 4px 20px rgba(37,99,235,.32)"
-                  _hover={{ opacity: 0.95 }}
-                  _active={{
-                    transform: "scale(.98)",
-                    transition: "transform .08s",
-                  }}
-                  transition="all .15s"
-                  mb={2.5}
-                >
-                  Save & Next
-                </Button>
-
-                {/* Secondary row: Prev, Review, Clear, Submit */}
-                <Grid templateColumns="1fr 1fr 1fr 1fr" gap={2}>
+              <Box px={4} pt={3} pb={`max(14px, env(safe-area-inset-bottom))`}>
+                {/* Row 1: 3 utility buttons */}
+                <Flex gap={2} mb={2.5}>
                   <Button
-                    h="42px"
-                    borderRadius="12px"
-                    bg={T.surface}
-                    color={T.sub}
-                    border="1px solid"
-                    borderColor={T.border}
+                    flex={1}
+                    h="40px"
+                    borderRadius="10px"
+                    bg="rgba(255,255,255,.06)"
+                    color={C.textSecondary}
+                    border={`1px solid ${C.border}`}
                     fontWeight={700}
                     fontSize="12px"
                     leftIcon={<Icon as={FaChevronLeft} fontSize="9px" />}
                     isDisabled={currentQ === 0}
                     onClick={() => goToQuestion(currentQ - 1)}
-                    _hover={{ bg: "#edf2f7" }}
-                    _disabled={{ opacity: 0.38 }}
-                    px={1}
+                    _hover={{ bg: "rgba(255,255,255,.1)" }}
+                    _disabled={{ opacity: 0.35 }}
                   >
                     Prev
                   </Button>
 
+                  {/* Mark for Review — matches reference style */}
                   <Button
-                    h="42px"
-                    borderRadius="12px"
-                    bg="#faf5ff"
-                    color={T.purple}
-                    border="1px solid #e9d5ff"
+                    flex={2}
+                    h="40px"
+                    borderRadius="10px"
+                    bg={isMarked ? C.amberBg : "rgba(255,255,255,.06)"}
+                    color={isMarked ? C.amber : C.textSecondary}
+                    border={`1px solid ${isMarked ? "rgba(217,119,6,.35)" : C.border}`}
                     fontWeight={700}
                     fontSize="12px"
-                    leftIcon={<Icon as={FaBookmark} fontSize="9px" />}
+                    leftIcon={
+                      <Icon
+                        as={isMarked ? MdBookmark : MdOutlineBookmarkBorder}
+                        fontSize="14px"
+                      />
+                    }
                     onClick={markedQuestion}
-                    _hover={{ bg: "#f3e8ff" }}
-                    px={1}
+                    _hover={{ bg: C.amberBg, color: C.amber }}
+                    transition="all .15s"
                   >
-                    Review
+                    Mark For Review
                   </Button>
 
                   <Button
-                    h="42px"
-                    borderRadius="12px"
-                    bg="#fffbeb"
-                    color={T.amber}
-                    border="1px solid #fde68a"
+                    flex={1}
+                    h="40px"
+                    borderRadius="10px"
+                    bg="rgba(255,255,255,.06)"
+                    color={C.textSecondary}
+                    border={`1px solid ${C.border}`}
                     fontWeight={700}
                     fontSize="12px"
                     leftIcon={<Icon as={FaEraser} fontSize="9px" />}
                     onClick={handleClearAnswer}
-                    _hover={{ bg: "#fef9c3" }}
-                    px={1}
+                    _hover={{ bg: "rgba(255,255,255,.1)" }}
                   >
                     Clear
                   </Button>
+                </Flex>
+
+                {/* Row 2: Save & Next (primary) + Submit */}
+                <Flex gap={2}>
+                  <Button
+                    flex={3}
+                    h="50px"
+                    borderRadius="14px"
+                    bg={`linear-gradient(135deg,${C.blue},${C.blueDk})`}
+                    color="white"
+                    fontWeight={800}
+                    fontSize="15px"
+                    rightIcon={<Icon as={FaChevronRight} fontSize="13px" />}
+                    onClick={handleSaveNext}
+                    boxShadow={`0 4px 20px ${C.blueGlow}`}
+                    _hover={{ opacity: 0.95 }}
+                    _active={{
+                      transform: "scale(.98)",
+                      transition: "transform .08s",
+                    }}
+                    transition="all .15s"
+                  >
+                    Save & Next
+                  </Button>
 
                   <Button
-                    h="42px"
-                    borderRadius="12px"
-                    bg="linear-gradient(135deg,#0d9488,#0891b2)"
-                    color="white"
-                    fontWeight={700}
+                    flex={1}
+                    h="50px"
+                    borderRadius="14px"
+                    bg={`rgba(13,148,136,.18)`}
+                    color={C.teal}
+                    border={`1.5px solid rgba(13,148,136,.35)`}
+                    fontWeight={800}
                     fontSize="12px"
-                    leftIcon={<Icon as={FaPaperPlane} fontSize="9px" />}
+                    leftIcon={<Icon as={FaPaperPlane} fontSize="11px" />}
                     onClick={() => setSubmitOpen(true)}
-                    _hover={{ opacity: 0.9 }}
-                    px={1}
+                    _hover={{ bg: "rgba(13,148,136,.25)" }}
+                    transition="all .15s"
                   >
                     Submit
                   </Button>
-                </Grid>
+                </Flex>
               </Box>
             )}
 
-            {/* ── DESKTOP: full action row ──────────────────────────── */}
+            {/* ── DESKTOP ───────────────────────────────────────────── */}
             {!isMobile && (
               <Flex
                 px={6}
@@ -3061,14 +3168,15 @@ const TakeTest = ({ handleFullScreen }) => {
                     h="42px"
                     px={4}
                     borderRadius="11px"
-                    bg="#f1f5f9"
-                    color={T.muted}
+                    bg="rgba(255,255,255,.07)"
+                    color={C.textSecondary}
+                    border={`1px solid ${C.border}`}
                     fontWeight={700}
                     fontSize="13px"
                     leftIcon={<Icon as={FaChevronLeft} fontSize="10px" />}
                     isDisabled={currentQ === 0}
                     onClick={() => goToQuestion(currentQ - 1)}
-                    _hover={{ bg: "#e2e8f0" }}
+                    _hover={{ bg: "rgba(255,255,255,.12)" }}
                     _disabled={{ opacity: 0.4 }}
                   >
                     Prev
@@ -3077,14 +3185,20 @@ const TakeTest = ({ handleFullScreen }) => {
                     h="42px"
                     px={4}
                     borderRadius="11px"
-                    bg="#faf5ff"
-                    color={T.purple}
-                    border="1px solid #e9d5ff"
+                    bg={isMarked ? C.amberBg : "rgba(255,255,255,.07)"}
+                    color={isMarked ? C.amber : C.textSecondary}
+                    border={`1px solid ${isMarked ? "rgba(217,119,6,.35)" : C.border}`}
                     fontWeight={700}
                     fontSize="13px"
-                    leftIcon={<Icon as={FaBookmark} fontSize="10px" />}
+                    leftIcon={
+                      <Icon
+                        as={isMarked ? MdBookmark : MdOutlineBookmarkBorder}
+                        fontSize="14px"
+                      />
+                    }
                     onClick={markedQuestion}
-                    _hover={{ bg: "#f3e8ff" }}
+                    _hover={{ bg: C.amberBg, color: C.amber }}
+                    transition="all .15s"
                   >
                     Mark for Review
                   </Button>
@@ -3092,14 +3206,14 @@ const TakeTest = ({ handleFullScreen }) => {
                     h="42px"
                     px={4}
                     borderRadius="11px"
-                    bg="#fff7ed"
-                    color={T.amber}
-                    border="1px solid #fed7aa"
+                    bg="rgba(255,255,255,.07)"
+                    color={C.textSecondary}
+                    border={`1px solid ${C.border}`}
                     fontWeight={700}
                     fontSize="13px"
                     leftIcon={<Icon as={FaEraser} fontSize="10px" />}
                     onClick={handleClearAnswer}
-                    _hover={{ bg: "#ffedd5" }}
+                    _hover={{ bg: "rgba(255,255,255,.1)" }}
                   >
                     Clear
                   </Button>
@@ -3114,23 +3228,23 @@ const TakeTest = ({ handleFullScreen }) => {
                         h="42px"
                         px={5}
                         borderRadius="11px"
-                        bg="rgba(13,148,136,.1)"
-                        color={T.teal}
-                        border="1px solid rgba(13,148,136,.22)"
+                        bg={`rgba(13,148,136,.14)`}
+                        color={C.teal}
+                        border={`1px solid rgba(13,148,136,.25)`}
                         fontWeight={800}
                         fontSize="13px"
                         rightIcon={<Icon as={FaLayerGroup} fontSize="10px" />}
                         onClick={() => goToSection(currentSec + 1)}
-                        _hover={{ bg: "rgba(13,148,136,.18)" }}
+                        _hover={{ bg: "rgba(13,148,136,.22)" }}
                       >
                         Next Section
                       </Button>
                     )}
                   <Button
                     h="42px"
-                    px={6}
+                    px={7}
                     borderRadius="11px"
-                    bg="linear-gradient(135deg,#2563eb,#1e40af)"
+                    bg={`linear-gradient(135deg,${C.blue},${C.blueDk})`}
                     color="white"
                     fontWeight={800}
                     fontSize="13px"
@@ -3138,7 +3252,7 @@ const TakeTest = ({ handleFullScreen }) => {
                     onClick={handleSaveNext}
                     _hover={{
                       opacity: 0.9,
-                      boxShadow: "0 6px 20px rgba(37,99,235,.35)",
+                      boxShadow: `0 6px 20px ${C.blueGlow}`,
                     }}
                     transition="all .15s"
                   >
@@ -3148,7 +3262,7 @@ const TakeTest = ({ handleFullScreen }) => {
                     h="42px"
                     px={5}
                     borderRadius="11px"
-                    bg="linear-gradient(135deg,#0d9488,#0891b2)"
+                    bg={`linear-gradient(135deg,${C.teal},${C.tealDk})`}
                     color="white"
                     fontWeight={800}
                     fontSize="13px"
@@ -3156,7 +3270,7 @@ const TakeTest = ({ handleFullScreen }) => {
                     onClick={() => setSubmitOpen(true)}
                     _hover={{
                       opacity: 0.9,
-                      boxShadow: "0 6px 20px rgba(13,148,136,.35)",
+                      boxShadow: `0 6px 20px ${C.tealGlow}`,
                     }}
                     transition="all .15s"
                   >
@@ -3168,43 +3282,29 @@ const TakeTest = ({ handleFullScreen }) => {
           </Box>
         </Flex>
 
-        {/* ── Desktop sidebar ──────────────────────────────────────────── */}
+        {/* Desktop sidebar */}
         {!isMobile && (
           <Box
-            w={{ md: "268px", lg: "290px" }}
+            w={{ md: "276px", lg: "296px" }}
             flexShrink={0}
-            bg={T.navy}
-            borderLeft="1px solid rgba(255,255,255,.06)"
+            bg={C.bgCard}
+            borderLeft={`1px solid ${C.bgLine}`}
             display="flex"
             flexDirection="column"
             overflow="hidden"
           >
-            <NavigatorPanel />
+            <RightDrawer />
           </Box>
         )}
       </Flex>
 
-      {/* ── Mobile navigator drawer (slides up from bottom) ──────────────── */}
+      {/* ── RIGHT DRAWER (mobile) ────────────────────────────────────────── */}
       {isMobile && (
-        <Drawer onClose={onClose} isOpen={isOpen} placement="bottom">
-          <DrawerOverlay backdropFilter="blur(4px)" bg="rgba(11,30,61,.5)" />
-          <DrawerContent
-            bg={T.navy}
-            borderTopLeftRadius="24px"
-            borderTopRightRadius="24px"
-            maxH="85dvh"
-          >
-            {/* Handle */}
-            <Box py={3} display="flex" justifyContent="center" flexShrink={0}>
-              <Box
-                w="36px"
-                h="4px"
-                bg="rgba(255,255,255,.2)"
-                borderRadius="full"
-              />
-            </Box>
+        <Drawer onClose={onClose} isOpen={isOpen} placement="right" size="xs">
+          <DrawerOverlay backdropFilter="blur(4px)" bg="rgba(11,30,61,.6)" />
+          <DrawerContent bg={C.bgCard} maxW="300px">
             <DrawerBody p={0}>
-              <NavigatorPanel />
+              <RightDrawer />
             </DrawerBody>
           </DrawerContent>
         </Drawer>
@@ -3220,29 +3320,33 @@ const TakeTest = ({ handleFullScreen }) => {
         isCentered
         motionPreset="slideInBottom"
       >
-        <AlertDialogOverlay backdropFilter="blur(8px)" bg="rgba(11,30,61,.65)">
+        <AlertDialogOverlay backdropFilter="blur(8px)" bg="rgba(11,30,61,.7)">
           <AlertDialogContent
             mx={4}
             maxW={{ base: "calc(100vw - 32px)", sm: "420px" }}
+            bg={C.bgCard}
             borderRadius="24px"
             overflow="hidden"
-            fontFamily="'DM Sans', system-ui, sans-serif"
-            boxShadow="0 32px 80px rgba(0,0,0,.28)"
+            fontFamily="'DM Sans',system-ui,sans-serif"
+            boxShadow={`0 32px 80px rgba(11,30,61,.6), 0 0 0 1px ${C.border}`}
+            color={C.textPrimary}
           >
             <Box
-              bg={`linear-gradient(135deg,${T.navy},${T.navyMid})`}
+              bg={`linear-gradient(135deg,${C.bg},${C.bgCard})`}
               px={6}
               py={5}
+              borderBottom={`1px solid ${C.bgLine}`}
             >
               <Flex align="center" gap={3}>
                 <Center
                   w="42px"
                   h="42px"
-                  bg="rgba(255,255,255,.1)"
+                  bg="rgba(255,255,255,.08)"
                   borderRadius="12px"
+                  border={`1px solid ${C.border}`}
                   flexShrink={0}
                 >
-                  <Icon as={FaPaperPlane} color="white" fontSize="15px" />
+                  <Icon as={FaPaperPlane} color={C.teal} fontSize="15px" />
                 </Center>
                 <Box>
                   <Text
@@ -3253,8 +3357,8 @@ const TakeTest = ({ handleFullScreen }) => {
                   >
                     Submit Test?
                   </Text>
-                  <Text fontSize="11px" color="rgba(255,255,255,.38)" mt={0.5}>
-                    This cannot be undone
+                  <Text fontSize="11px" color={C.textMuted} mt={0.5}>
+                    This action cannot be undone
                   </Text>
                 </Box>
               </Flex>
@@ -3263,11 +3367,17 @@ const TakeTest = ({ handleFullScreen }) => {
             <AlertDialogBody p={5}>
               {/* Section summary */}
               {isSectioned && sectionMeta.length > 0 && (
-                <Box mb={4} bg={T.surface} borderRadius="14px" p={4}>
+                <Box
+                  mb={4}
+                  bg={C.bg}
+                  borderRadius="14px"
+                  p={4}
+                  border={`1px solid ${C.bgLine}`}
+                >
                   <Text
                     fontSize="10px"
                     fontWeight={800}
-                    color={T.muted}
+                    color={C.textMuted}
                     textTransform="uppercase"
                     letterSpacing=".8px"
                     mb={3}
@@ -3298,7 +3408,7 @@ const TakeTest = ({ handleFullScreen }) => {
                           <Text
                             fontSize="12px"
                             fontWeight={600}
-                            color={T.text}
+                            color={C.textPrimary}
                             textTransform="capitalize"
                           >
                             {sec.name || sec.subject || `Section ${sIdx + 1}`}
@@ -3306,23 +3416,22 @@ const TakeTest = ({ handleFullScreen }) => {
                           <Text
                             fontSize="12px"
                             fontWeight={700}
-                            color={secAns === secCount ? T.green : T.amber}
+                            color={secAns === secCount ? C.green : C.amber}
                           >
                             {secAns}/{secCount}
                           </Text>
                         </Flex>
                         <Box
-                          h="4px"
-                          bg="#e2e8f0"
+                          h="3px"
+                          bg="rgba(255,255,255,.08)"
                           borderRadius="full"
                           overflow="hidden"
                         >
                           <Box
                             h="100%"
-                            bg={secAns === secCount ? T.green : T.amber}
+                            bg={secAns === secCount ? C.green : C.amber}
                             w={`${pct}%`}
                             borderRadius="full"
-                            transition="width .4s"
                           />
                         </Box>
                       </Box>
@@ -3332,51 +3441,77 @@ const TakeTest = ({ handleFullScreen }) => {
               )}
 
               {/* Stats */}
-              <HStack spacing={2} mb={4}>
-                <StatBox
-                  value={question.length}
-                  label="Total"
-                  color={T.blue}
-                  bg="#eff6ff"
-                />
-                <StatBox
-                  value={answeredQuestion.length}
-                  label="Done"
-                  color={T.green}
-                  bg="#f0fdf4"
-                />
-                <StatBox
-                  value={notAnswer.length}
-                  label="Skipped"
-                  color={T.red}
-                  bg="#fef2f2"
-                />
-                <StatBox
-                  value={unvisited}
-                  label="Unseen"
-                  color={T.muted}
-                  bg={T.surface}
-                />
-              </HStack>
+              <Grid templateColumns="repeat(4,1fr)" gap={2} mb={4}>
+                {[
+                  {
+                    v: question.length,
+                    l: "Total",
+                    c: C.blue,
+                    bg: "rgba(37,99,235,.15)",
+                  },
+                  {
+                    v: answeredQuestion.length,
+                    l: "Answered",
+                    c: C.green,
+                    bg: C.greenBg,
+                  },
+                  { v: notAnswer.length, l: "Skipped", c: C.red, bg: C.redBg },
+                  {
+                    v: unvisited,
+                    l: "Unseen",
+                    c: C.textMuted,
+                    bg: "rgba(255,255,255,.06)",
+                  },
+                ].map(({ v, l, c, bg }) => (
+                  <Box
+                    key={l}
+                    bg={bg}
+                    borderRadius="12px"
+                    p={3}
+                    textAlign="center"
+                    border={`1px solid ${C.bgLine}`}
+                  >
+                    <Text
+                      fontSize={{ base: "20px", md: "22px" }}
+                      fontWeight={900}
+                      color={c}
+                      lineHeight="1"
+                      letterSpacing="-1px"
+                    >
+                      {v}
+                    </Text>
+                    <Text
+                      fontSize="9px"
+                      color={C.textMuted}
+                      fontWeight={700}
+                      mt="5px"
+                      textTransform="uppercase"
+                      letterSpacing=".5px"
+                    >
+                      {l}
+                    </Text>
+                  </Box>
+                ))}
+              </Grid>
 
               {/* Warning */}
               <Flex
                 align="center"
                 gap={2.5}
-                bg="#fffbeb"
+                bg={C.amberBg}
                 borderRadius="12px"
                 p={3.5}
-                border="1px solid #fde68a"
+                border="1px solid rgba(217,119,6,.3)"
               >
                 <Icon
                   as={FaExclamationTriangle}
-                  color={T.amber}
+                  color={C.amber}
                   fontSize="13px"
                   flexShrink={0}
                 />
                 <Text
                   fontSize="12px"
-                  color="#92400e"
+                  color="#fde68a"
                   fontWeight={600}
                   lineHeight="1.5"
                 >
@@ -3391,12 +3526,13 @@ const TakeTest = ({ handleFullScreen }) => {
                 flex={1}
                 h="48px"
                 borderRadius="13px"
-                bg="#f1f5f9"
-                color={T.muted}
+                bg="rgba(255,255,255,.07)"
+                color={C.textSecondary}
+                border={`1px solid ${C.border}`}
                 fontWeight={700}
                 fontSize="14px"
                 onClick={() => setSubmitOpen(false)}
-                _hover={{ bg: "#e2e8f0" }}
+                _hover={{ bg: "rgba(255,255,255,.12)" }}
               >
                 Cancel
               </Button>
@@ -3404,7 +3540,7 @@ const TakeTest = ({ handleFullScreen }) => {
                 flex={1}
                 h="48px"
                 borderRadius="13px"
-                bg="linear-gradient(135deg,#0d9488,#0891b2)"
+                bg={`linear-gradient(135deg,${C.teal},${C.tealDk})`}
                 color="white"
                 fontWeight={800}
                 fontSize="14px"
@@ -3413,10 +3549,7 @@ const TakeTest = ({ handleFullScreen }) => {
                   setSubmitOpen(false);
                   giveMark();
                 }}
-                _hover={{
-                  opacity: 0.9,
-                  boxShadow: "0 8px 24px rgba(13,148,136,.4)",
-                }}
+                _hover={{ opacity: 0.9, boxShadow: `0 8px 24px ${C.tealGlow}` }}
                 transition="all .15s"
               >
                 Submit Test
