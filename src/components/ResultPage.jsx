@@ -716,7 +716,7 @@
 //   );
 // }
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
   Flex,
@@ -731,7 +731,9 @@ import {
   Tab,
   TabPanel,
   VStack,
+  HStack,
   Spinner,
+  Divider,
 } from "@chakra-ui/react";
 import { Doughnut } from "react-chartjs-2";
 import {
@@ -762,6 +764,9 @@ import {
   FaCalendarAlt,
   FaExternalLinkAlt,
   FaLayerGroup,
+  FaBullseye,
+  FaAward,
+  FaMedal,
 } from "react-icons/fa";
 import { FiAlertCircle, FiTarget, FiAward } from "react-icons/fi";
 import { apiFetch } from "../services/api";
@@ -777,6 +782,7 @@ ChartJS.register(
   Legend,
 );
 
+/* ─── Helpers ────────────────────────────────────────────────────────────── */
 const fmtTime = (s) => {
   if (!s && s !== 0) return "—";
   const h = Math.floor(s / 3600),
@@ -793,9 +799,14 @@ const fmtQTime = (s) => {
     sec = s % 60;
   return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
 };
-const pctColor = (p) => (p >= 70 ? "#16a34a" : p >= 40 ? "#d97706" : "#ef4444");
-const pctBg = (p) => (p >= 70 ? "#f0fdf4" : p >= 40 ? "#fffbeb" : "#fef2f2");
-const pctLabel = (p) =>
+
+/* ─── Score colour helpers ───────────────────────────────────────────────── */
+const scoreColor = (p) =>
+  p >= 70 ? "#16a34a" : p >= 40 ? "#d97706" : "#ef4444";
+const scoreBg = (p) => (p >= 70 ? "#f0fdf4" : p >= 40 ? "#fffbeb" : "#fef2f2");
+const scoreBorder = (p) =>
+  p >= 70 ? "#bbf7d0" : p >= 40 ? "#fde68a" : "#fecaca";
+const scoreLabel = (p) =>
   p >= 80
     ? "Excellent 🌟"
     : p >= 60
@@ -804,80 +815,144 @@ const pctLabel = (p) =>
         ? "Average 📈"
         : "Needs Work 💪";
 
-// ── Section score card ────────────────────────────────────────────────────────
+/* ─── Accuracy: correct / (correct + wrong) — skipped don't count ─────────
+   This is the standard exam accuracy formula.
+   If a student answered 5, got 3 right → accuracy = 3/5 = 60%
+   NOT 3/totalQuestions which incorrectly penalises for skipping.          */
+const calcAccuracy = (correct, wrong) => {
+  const attempted = correct + wrong;
+  if (attempted === 0) return 0;
+  return Math.round((correct / attempted) * 100);
+};
+
+/* ─── Score percentage: correct / totalQuestions ────────────────────────── */
+const calcScorePct = (correct, total) =>
+  total > 0 ? Math.round((correct / total) * 100) : 0;
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Section Score Card
+══════════════════════════════════════════════════════════════════════════ */
 function SectionScoreCard({ section, index }) {
   const pct = section.percentage ?? 0;
   return (
     <Box
       bg="white"
-      borderRadius="14px"
-      border="1.5px solid #e2e8f0"
-      boxShadow="0 2px 8px rgba(0,0,0,.04)"
-      p={4}
+      borderRadius="16px"
+      border="1.5px solid"
+      borderColor={scoreBorder(pct)}
+      boxShadow="0 2px 10px rgba(0,0,0,.05)"
       overflow="hidden"
     >
-      <Box h="3px" bg={pctBg(pct)} mb={3}>
+      {/* Top colour bar */}
+      <Box h="4px" bg={scoreBg(pct)}>
         <Box
           h="100%"
           w={`${pct}%`}
-          bg={pctColor(pct)}
+          bg={scoreColor(pct)}
           borderRadius="full"
-          style={{ transition: "width 1s ease" }}
+          style={{ transition: "width 1.2s ease" }}
         />
       </Box>
-      <Flex align="center" gap={2} mb={2}>
-        <Flex
-          w="22px"
-          h="22px"
-          bg="#eff6ff"
-          borderRadius="6px"
-          align="center"
-          justify="center"
-          flexShrink={0}
-        >
-          <Text fontSize="10px" fontWeight={900} color="#2563eb">
-            {index + 1}
+      <Box p={4}>
+        <Flex align="center" gap={2} mb={3}>
+          <Center
+            w="24px"
+            h="24px"
+            bg="#eff6ff"
+            borderRadius="7px"
+            flexShrink={0}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <Text fontSize="10px" fontWeight={900} color="#2563eb">
+              {index + 1}
+            </Text>
+          </Center>
+          <Text
+            fontSize="13px"
+            fontWeight={800}
+            color="#0f172a"
+            textTransform="capitalize"
+            noOfLines={1}
+            flex={1}
+          >
+            {section.name || section.subject || `Section ${index + 1}`}
           </Text>
         </Flex>
-        <Text
-          fontSize="13px"
-          fontWeight={800}
-          color="#0f172a"
-          textTransform="capitalize"
-          noOfLines={1}
+        <Flex align="baseline" gap={2} mb={2}>
+          <Text
+            fontSize="30px"
+            fontWeight={900}
+            color={scoreColor(pct)}
+            lineHeight={1}
+          >
+            {pct}%
+          </Text>
+          <Text fontSize="12px" color="#64748b" fontWeight={500}>
+            {section.score}/{section.total} correct
+          </Text>
+        </Flex>
+        <Badge
+          px={2.5}
+          py={0.5}
+          borderRadius="full"
+          fontSize="10px"
+          fontWeight={700}
+          bg={scoreBg(pct)}
+          color={scoreColor(pct)}
         >
-          {section.name || section.subject}
-        </Text>
-      </Flex>
-      <Flex align="baseline" gap={2} mb={1}>
-        <Text
-          fontSize="28px"
-          fontWeight={900}
-          color={pctColor(pct)}
-          lineHeight={1}
-        >
-          {pct}%
-        </Text>
-        <Text fontSize="12px" color="#64748b">
-          {section.score}/{section.total} correct
-        </Text>
-      </Flex>
-      <Badge
-        px={2}
-        py={0.5}
-        borderRadius="full"
-        fontSize="10px"
-        fontWeight={700}
-        bg={pctBg(pct)}
-        color={pctColor(pct)}
-      >
-        {pctLabel(pct)}
-      </Badge>
+          {scoreLabel(pct)}
+        </Badge>
+      </Box>
     </Box>
   );
 }
 
-// ── QuestionCard ──────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════════════
+   Stat Card
+══════════════════════════════════════════════════════════════════════════ */
+function StatCard({ label, value, sub, color, bg, border, icon }) {
+  return (
+    <Box
+      bg={bg}
+      border="1.5px solid"
+      borderColor={border}
+      borderRadius="14px"
+      p={{ base: 4, md: 5 }}
+    >
+      <Flex align="center" gap={2} mb={2}>
+        <Icon as={icon} color={color} fontSize="13px" />
+        <Text
+          fontSize="10px"
+          fontWeight={700}
+          color={color}
+          textTransform="uppercase"
+          letterSpacing=".7px"
+        >
+          {label}
+        </Text>
+      </Flex>
+      <Text
+        fontSize={{ base: "24px", md: "28px" }}
+        fontWeight={900}
+        color={color}
+        lineHeight={1}
+      >
+        {value}
+      </Text>
+      {sub && (
+        <Text fontSize="11px" color={color} opacity={0.65} mt={1.5}>
+          {sub}
+        </Text>
+      )}
+    </Box>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Question Card
+══════════════════════════════════════════════════════════════════════════ */
 function QuestionCard({
   question,
   index,
@@ -904,7 +979,7 @@ function QuestionCard({
     return "notVisited";
   };
 
-  const STATUS = {
+  const STATUS_CFG = {
     correct: {
       label: "Correct",
       color: "#16a34a",
@@ -957,19 +1032,28 @@ function QuestionCard({
   };
 
   const status = getStatus();
-  const cfg = STATUS[status];
-  const userAnswerIdx = allAnswers[index] ?? allAnswers[String(index)];
+  const cfg = STATUS_CFG[status];
+
+  /* ── Answer resolution ──────────────────────────────────────────────────
+     allAnswers can be a plain object OR a Mongo Map serialised as an object.
+     Keys may be numbers or strings. Normalise both.                        */
+  const userAnswerIdx = allAnswers?.[index] ?? allAnswers?.[String(index)];
   const userAnswerText =
     userAnswerIdx !== undefined && userAnswerIdx !== null
       ? question.options?.[userAnswerIdx]
       : null;
+
+  /* answer field in DB is 0-based index */
   const correctIdx =
-    typeof question.answer === "number" ? question.answer : question.answer - 1;
-  const correctText = question.options?.[correctIdx];
+    typeof question.answer === "number"
+      ? question.answer
+      : Number(question.answer);
+  const correctText = question.options?.[correctIdx] ?? "—";
+
   const timeTaken =
     questionTimes?.[index] ?? questionTimes?.[String(index)] ?? null;
   const timeStr = fmtQTime(timeTaken);
-  const answerLabel = isOwnerView ? "Student's Answer" : "Your Answer";
+  const ansLabel = isOwnerView ? "Student's Answer" : "Your Answer";
 
   return (
     <Box
@@ -981,16 +1065,19 @@ function QuestionCard({
       mb={3}
       boxShadow="0 2px 8px rgba(0,0,0,.04)"
     >
+      {/* Card header */}
       <Flex
         align="center"
         justify="space-between"
-        px={5}
+        px={{ base: 4, md: 5 }}
         py={3}
         borderBottom="1px solid"
         borderColor={cfg.border}
         bg={cfg.bg}
+        flexWrap="wrap"
+        gap={2}
       >
-        <Flex align="center" gap={3}>
+        <Flex align="center" gap={2.5} flexWrap="wrap">
           <Flex
             w="28px"
             h="28px"
@@ -1000,6 +1087,7 @@ function QuestionCard({
             justify="center"
             border="1.5px solid"
             borderColor={cfg.border}
+            flexShrink={0}
           >
             <Text fontSize="12px" fontWeight={800} color={cfg.color}>
               {index + 1}
@@ -1038,7 +1126,7 @@ function QuestionCard({
             </Flex>
           )}
         </Flex>
-        <Flex align="center" gap={2}>
+        <Flex align="center" gap={2} flexShrink={0}>
           {timeStr && (
             <Flex
               align="center"
@@ -1071,16 +1159,20 @@ function QuestionCard({
           )}
         </Flex>
       </Flex>
-      <Box px={5} py={4}>
+
+      {/* Card body */}
+      <Box px={{ base: 4, md: 5 }} py={4}>
         <Text
           fontSize="14px"
-          fontWeight={600}
+          fontWeight={500}
           color="#1e293b"
           mb={4}
-          lineHeight="1.7"
+          lineHeight="1.75"
         >
           {question.qus}
         </Text>
+
+        {/* Options */}
         <VStack spacing={2} align="stretch" mb={4}>
           {question.options?.map((opt, i) => {
             const isCorrect = i === correctIdx;
@@ -1124,7 +1216,7 @@ function QuestionCard({
                 >
                   {opt}
                 </Text>
-                <Flex gap={1.5} flexShrink={0}>
+                <Flex gap={1.5} flexShrink={0} flexWrap="wrap">
                   {isCorrect && (
                     <Badge
                       bg="#f0fdf4"
@@ -1136,7 +1228,7 @@ function QuestionCard({
                       py={0.5}
                       borderRadius="full"
                     >
-                      ✓ Correct Answer
+                      ✓ Correct
                     </Badge>
                   )}
                   {isUserPick && isCorrect && (
@@ -1150,7 +1242,7 @@ function QuestionCard({
                       py={0.5}
                       borderRadius="full"
                     >
-                      {answerLabel}
+                      {ansLabel}
                     </Badge>
                   )}
                   {isWrongPick && (
@@ -1164,7 +1256,7 @@ function QuestionCard({
                       py={0.5}
                       borderRadius="full"
                     >
-                      ✗ {answerLabel}
+                      ✗ {ansLabel}
                     </Badge>
                   )}
                 </Flex>
@@ -1172,16 +1264,19 @@ function QuestionCard({
             );
           })}
         </VStack>
-        <Flex gap={6} mb={question.explanation ? 3 : 0} flexWrap="wrap">
+
+        {/* Answer summary row */}
+        <Flex gap={6} flexWrap="wrap" mb={question.explanation ? 3 : 0}>
           <Box>
             <Text
-              fontSize="11px"
+              fontSize="10px"
               color="#94a3b8"
-              fontWeight={600}
+              fontWeight={700}
               textTransform="uppercase"
+              letterSpacing=".7px"
               mb={1}
             >
-              {answerLabel}
+              {ansLabel}
             </Text>
             <Text
               fontSize="13px"
@@ -1199,19 +1294,22 @@ function QuestionCard({
           </Box>
           <Box>
             <Text
-              fontSize="11px"
+              fontSize="10px"
               color="#94a3b8"
-              fontWeight={600}
+              fontWeight={700}
               textTransform="uppercase"
+              letterSpacing=".7px"
               mb={1}
             >
               Correct Answer
             </Text>
             <Text fontSize="13px" fontWeight={700} color="#16a34a">
-              {correctText || "—"}
+              {correctText}
             </Text>
           </Box>
         </Flex>
+
+        {/* Explanation */}
         {question.explanation && (
           <Box
             mt={3}
@@ -1223,10 +1321,11 @@ function QuestionCard({
             <Flex align="center" gap={2} mb={1.5}>
               <Icon as={FiAlertCircle} color="#4a72b8" fontSize="14px" />
               <Text
-                fontSize="11px"
+                fontSize="10px"
                 fontWeight={700}
                 color="#1e3a5f"
                 textTransform="uppercase"
+                letterSpacing=".7px"
               >
                 Explanation
               </Text>
@@ -1241,38 +1340,9 @@ function QuestionCard({
   );
 }
 
-function StatBox({ label, value, sub, color, bg, border, icon }) {
-  return (
-    <Box
-      bg={bg}
-      border="1.5px solid"
-      borderColor={border}
-      borderRadius="14px"
-      p={4}
-    >
-      <Flex align="center" gap={2} mb={2}>
-        <Icon as={icon} color={color} fontSize="14px" />
-        <Text
-          fontSize="11px"
-          fontWeight={700}
-          color={color}
-          textTransform="uppercase"
-        >
-          {label}
-        </Text>
-      </Flex>
-      <Text fontSize="26px" fontWeight={900} color={color} lineHeight={1}>
-        {value}
-      </Text>
-      {sub && (
-        <Text fontSize="11px" color={color} opacity={0.7} mt={1}>
-          {sub}
-        </Text>
-      )}
-    </Box>
-  );
-}
-
+/* ══════════════════════════════════════════════════════════════════════════
+   All Attempts Panel
+══════════════════════════════════════════════════════════════════════════ */
 function AllAttemptsPanel({
   allAttempts,
   currentResultId,
@@ -1287,9 +1357,10 @@ function AllAttemptsPanel({
   const [loadingId, setLoadingId] = useState(null);
   const attempts = allAttempts || [];
   if (attempts.length <= 1) return null;
+
   const attemptLabel = (idx) => (idx === 0 ? "1st Attempt" : `Retake ${idx}`);
 
-  const handleSelectAttempt = async (attempt) => {
+  const handleSelect = async (attempt) => {
     if (String(attempt._id) === String(currentResultId)) return;
     setLoadingId(attempt._id);
     try {
@@ -1305,6 +1376,7 @@ function AllAttemptsPanel({
         Array.isArray(r.shuffledQuestions) && r.shuffledQuestions.length > 0
           ? r.shuffledQuestions
           : [];
+
       navigate("/test-result", {
         replace: true,
         state: {
@@ -1319,10 +1391,10 @@ function AllAttemptsPanel({
           resultId: String(attempt._id),
           isSectioned: r.testId?.isSectioned || false,
           sectionScores: toArr(r.sectionScores),
+          /* ── score: prefer r.correct, fall back to correctQus.length ── */
           score:
             r.correct ??
-            (Array.isArray(r.correctQus) ? r.correctQus.length : 0) ??
-            0,
+            (Array.isArray(r.correctQus) ? r.correctQus.length : 0),
           totalQuestions: originalQs.length || r.totalQuestions || 0,
           scorePercentage: r.scorePercentage ?? r.percentage ?? 0,
           percentile: r.percentile ?? null,
@@ -1338,25 +1410,22 @@ function AllAttemptsPanel({
               ? r.questionTimes
               : {},
           correctQus: toArr(r.correctQus),
-          wrongansqus: toArr(r.wrongansqus).length
-            ? toArr(r.wrongansqus)
-            : toArr(r.wrongQus),
-          answeredQuestion: toArr(r.answeredQuestion).length
-            ? toArr(r.answeredQuestion)
-            : toArr(r.answeredQus).length
-              ? toArr(r.answeredQus)
-              : toArr(r.answered),
-          notAnswer: toArr(r.notAnswer).length
-            ? toArr(r.notAnswer)
-            : toArr(r.notAnsweredQus).length
-              ? toArr(r.notAnsweredQus)
-              : toArr(r.skipped),
-          markedAndAnswer: toArr(r.markedAndAnswer).length
-            ? toArr(r.markedAndAnswer)
-            : toArr(r.markedAndAnswered),
-          markedNotAnswer: toArr(r.markedNotAnswer).length
-            ? toArr(r.markedNotAnswer)
-            : toArr(r.markedNotAnswered),
+          /* ── wrongansqus: DB stores as wrongQus ── */
+          wrongansqus: toArr(r.wrongQus).length
+            ? toArr(r.wrongQus)
+            : toArr(r.wrongansqus),
+          answeredQuestion: toArr(r.answeredQus).length
+            ? toArr(r.answeredQus)
+            : toArr(r.answeredQuestion),
+          notAnswer: toArr(r.notAnsweredQus).length
+            ? toArr(r.notAnsweredQus)
+            : toArr(r.notAnswer),
+          markedAndAnswer: toArr(r.markedAndAnswered).length
+            ? toArr(r.markedAndAnswered)
+            : toArr(r.markedAndAnswer),
+          markedNotAnswer: toArr(r.markedNotAnswered).length
+            ? toArr(r.markedNotAnswered)
+            : toArr(r.markedNotAnswer),
         },
       });
     } catch {
@@ -1432,7 +1501,7 @@ function AllAttemptsPanel({
         >
           <Icon as={FaTrophy} fontSize="9px" color="#92400e" />
           <Text fontSize="11px" fontWeight={700} color="#92400e">
-            1st Attempt counts in leaderboard
+            1st attempt counts in leaderboard
           </Text>
         </Flex>
       </Flex>
@@ -1442,7 +1511,6 @@ function AllAttemptsPanel({
         const isCurrent = String(attempt._id) === String(currentResultId);
         const isFirst = idx === 0;
         const isLoading = String(loadingId) === String(attempt._id);
-        const label = attemptLabel(idx);
         const date = attempt.createdAt
           ? new Date(attempt.createdAt).toLocaleDateString("en-IN", {
               day: "2-digit",
@@ -1456,13 +1524,6 @@ function AllAttemptsPanel({
               minute: "2-digit",
             })
           : null;
-        const rowBg = isCurrent ? "#eff6ff" : "white";
-        const accentColor = isFirst ? "#d97706" : "#7c3aed";
-        const accentBg = isFirst ? "#fefce8" : "#f5f3ff";
-        const accentBorder = isFirst ? "#fde68a" : "#ddd6fe";
-        const borderLeft = isCurrent
-          ? `3px solid ${isFirst ? "#d97706" : "#2563eb"}`
-          : "3px solid transparent";
 
         return (
           <Flex
@@ -1474,14 +1535,16 @@ function AllAttemptsPanel({
             borderBottom={
               idx < attempts.length - 1 ? "1px solid #f8fafc" : "none"
             }
-            bg={rowBg}
-            borderLeft={borderLeft}
+            bg={isCurrent ? "#eff6ff" : "white"}
+            borderLeft={
+              isCurrent
+                ? `3px solid ${isFirst ? "#d97706" : "#2563eb"}`
+                : "3px solid transparent"
+            }
             cursor={isCurrent ? "default" : "pointer"}
             _hover={!isCurrent ? { bg: "#f8faff" } : {}}
             transition="background .15s"
-            onClick={() =>
-              !isCurrent && !isLoading && handleSelectAttempt(attempt)
-            }
+            onClick={() => !isCurrent && !isLoading && handleSelect(attempt)}
             opacity={isLoading ? 0.65 : 1}
             flexWrap={{ base: "wrap", sm: "nowrap" }}
           >
@@ -1489,10 +1552,24 @@ function AllAttemptsPanel({
               align="center"
               gap={2}
               flexShrink={0}
-              bg={isCurrent ? (isFirst ? "#fef3c7" : "#eff6ff") : accentBg}
+              bg={
+                isCurrent
+                  ? isFirst
+                    ? "#fef3c7"
+                    : "#eff6ff"
+                  : isFirst
+                    ? "#fefce8"
+                    : "#f5f3ff"
+              }
               border="1px solid"
               borderColor={
-                isCurrent ? (isFirst ? "#fbbf24" : "#bfdbfe") : accentBorder
+                isCurrent
+                  ? isFirst
+                    ? "#fbbf24"
+                    : "#bfdbfe"
+                  : isFirst
+                    ? "#fde68a"
+                    : "#ddd6fe"
               }
               px={3}
               py="5px"
@@ -1500,35 +1577,41 @@ function AllAttemptsPanel({
               minW="110px"
               justify="center"
             >
-              {isFirst ? (
-                <Icon
-                  as={FaTrophy}
-                  fontSize="10px"
-                  color={isCurrent ? "#d97706" : "#92400e"}
-                />
-              ) : (
-                <Icon
-                  as={FaRedoAlt}
-                  fontSize="10px"
-                  color={isCurrent ? "#2563eb" : "#7c3aed"}
-                />
-              )}
+              <Icon
+                as={isFirst ? FaTrophy : FaRedoAlt}
+                fontSize="10px"
+                color={
+                  isCurrent
+                    ? isFirst
+                      ? "#d97706"
+                      : "#2563eb"
+                    : isFirst
+                      ? "#92400e"
+                      : "#7c3aed"
+                }
+              />
               <Text
                 fontSize="11px"
                 fontWeight={800}
                 whiteSpace="nowrap"
                 color={
-                  isCurrent ? (isFirst ? "#92400e" : "#1d4ed8") : accentColor
+                  isCurrent
+                    ? isFirst
+                      ? "#92400e"
+                      : "#1d4ed8"
+                    : isFirst
+                      ? "#92400e"
+                      : "#6d28d9"
                 }
               >
-                {label}
+                {attemptLabel(idx)}
               </Text>
             </Flex>
-            <Box minW="52px" flexShrink={0}>
+            <Box minW="60px" flexShrink={0}>
               <Text
                 fontSize="17px"
                 fontWeight={800}
-                color={pctColor(pct)}
+                color={scoreColor(pct)}
                 lineHeight="1"
               >
                 {pct.toFixed(0)}%
@@ -1601,11 +1684,15 @@ function AllAttemptsPanel({
   );
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   RESULT PAGE
+══════════════════════════════════════════════════════════════════════════ */
 export default function ResultPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const s = location.state || {};
 
+  /* ── Identity ─────────────────────────────────────────────────────────── */
   const isOwnerView = s.viewingAs === "owner";
   const studentName = s.studentName || null;
   const studentId = s.studentId || null;
@@ -1614,27 +1701,25 @@ export default function ResultPage() {
   const backUrl = s.backUrl || null;
   const allAttempts = Array.isArray(s.allAttempts) ? s.allAttempts : [];
 
-  // Sectioned data
+  /* ── Sectioned ────────────────────────────────────────────────────────── */
   const isSectioned = s.isSectioned === true;
   const sectionScores = Array.isArray(s.sectionScores) ? s.sectionScores : [];
   const sectionMeta = Array.isArray(s.sectionMeta) ? s.sectionMeta : [];
 
+  /* ── Meta ─────────────────────────────────────────────────────────────── */
   const testTitle = s.testTitle || s.category || s.subject || "Test";
-  const score = s.score ?? 0;
-  const totalQuestions = s.totalQuestions ?? 0;
-  const scorePercentage =
-    s.scorePercentage ??
-    (totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0);
-  const percentile = s.percentile ?? null;
   const timeTaken = s.timeTaken ?? 0;
 
+  /* ── Questions ────────────────────────────────────────────────────────── */
   const questions =
     Array.isArray(s.shuffledQuestions) && s.shuffledQuestions.length > 0
       ? s.shuffledQuestions
       : Array.isArray(s.questions)
         ? s.questions
         : [];
+  const totalQuestions = questions.length || s.totalQuestions || 0;
 
+  /* ── Answer arrays — normalise all to plain arrays ───────────────────── */
   const allAnswers =
     s.allAnswers && typeof s.allAnswers === "object" ? s.allAnswers : {};
   const questionTimes =
@@ -1654,39 +1739,75 @@ export default function ResultPage() {
     ? s.markedNotAnswer
     : [];
 
+  /* ══════════════════════════════════════════════════════════════════════
+     SCORING — single source of truth
+     ─────────────────────────────────────────────────────────────────────
+     correctCount  = questions answered correctly
+     wrongCount    = questions answered wrongly
+     skippedCount  = questions not attempted (notAnswer array)
+     markedCount   = questions marked for review (either with or without answer)
+     notVisited    = questions never opened
+
+     scorePercentage = correctCount / totalQuestions × 100
+       (standard exam scoring — full denominator)
+
+     accuracy = correctCount / (correctCount + wrongCount) × 100
+       (only over attempted questions — skips don't punish accuracy)
+  ══════════════════════════════════════════════════════════════════════ */
   const correctCount = correctQus.length;
   const wrongCount = wrongansqus.length;
   const skippedCount = notAnswer.length;
   const markedCount = markedAndAnswer.length + markedNotAnswer.length;
-  const accuracy =
-    totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
-  const pct = Math.round(scorePercentage);
-  const allIndices = questions.map((_, i) => i);
-  const markedAll = [...markedAndAnswer, ...markedNotAnswer];
+  const notVisited = Math.max(
+    0,
+    totalQuestions -
+      (answeredQuestion.length +
+        notAnswer.length +
+        markedAndAnswer.length +
+        markedNotAnswer.length),
+  );
 
-  // Build a flat section label map: questionIndex → sectionName
-  const sectionLabelMap = React.useMemo(() => {
+  /* Use correctCount as authoritative score (not s.score which may lag) */
+  const score = correctCount;
+  const scorePercentage =
+    s.scorePercentage ?? calcScorePct(score, totalQuestions);
+  const pct = Math.round(scorePercentage);
+
+  /* Accuracy: correct / attempted (not / total) */
+  const accuracy = calcAccuracy(correctCount, wrongCount);
+
+  /* Percentile from API (may be null) */
+  const percentile = s.percentile ?? null;
+
+  /* Time per question average */
+  const avgTimePerQ =
+    totalQuestions > 0 && timeTaken > 0
+      ? Math.round(timeTaken / totalQuestions)
+      : 0;
+
+  /* ── Section label map ─────────────────────────────────────────────────── */
+  const sectionLabelMap = useMemo(() => {
     if (!isSectioned || !sectionMeta.length) return {};
     const map = {};
     let offset = 0;
     sectionMeta.forEach((sec) => {
       const count = sec.count || 0;
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < count; i++)
         map[offset + i] = sec.name || sec.subject || "";
-      }
       offset += count;
     });
     return map;
   }, [isSectioned, sectionMeta]);
 
-  const donut = {
-    labels: ["Correct", "Wrong", "Skipped"],
+  /* ── Donut chart ─────────────────────────────────────────────────────── */
+  const donutData = {
+    labels: ["Correct", "Wrong", "Skipped", "Not Visited"],
     datasets: [
       {
-        data: [correctCount, wrongCount, skippedCount],
-        backgroundColor: ["#4ade80", "#f87171", "#cbd5e1"],
+        data: [correctCount, wrongCount, skippedCount, notVisited],
+        backgroundColor: ["#4ade80", "#f87171", "#cbd5e1", "#e2e8f0"],
         borderWidth: 0,
-        cutout: "72%",
+        cutout: "74%",
       },
     ],
   };
@@ -1695,6 +1816,10 @@ export default function ResultPage() {
     maintainAspectRatio: false,
     plugins: { legend: { display: false }, tooltip: { padding: 10 } },
   };
+
+  /* ── Question review tabs ─────────────────────────────────────────────── */
+  const allIndices = questions.map((_, i) => i);
+  const markedAll = [...new Set([...markedAndAnswer, ...markedNotAnswer])];
 
   const TABS = [
     { label: "All", count: totalQuestions, indices: allIndices },
@@ -1709,7 +1834,8 @@ export default function ResultPage() {
     },
   ];
 
-  if (!s.score && !s.questions) {
+  /* ── Empty state ─────────────────────────────────────────────────────── */
+  if (!s.questions && !s.shuffledQuestions && s.score === undefined) {
     return (
       <Flex
         minH="100vh"
@@ -1718,7 +1844,6 @@ export default function ResultPage() {
         direction="column"
         gap={4}
         bg="#f8fafc"
-        fontFamily="'Sora',sans-serif"
       >
         <Icon as={FaChartBar} fontSize="48px" color="#e2e8f0" />
         <Text fontSize="16px" fontWeight={700} color="#374151">
@@ -1731,12 +1856,14 @@ export default function ResultPage() {
           as="button"
           px={6}
           py={3}
-          bg="#4a72b8"
+          bg="#0f1e3a"
           color="white"
           borderRadius="10px"
           fontWeight={700}
           fontSize="14px"
           onClick={() => navigate("/coaching")}
+          _hover={{ opacity: 0.9 }}
+          transition="opacity .2s"
         >
           Browse Tests
         </Box>
@@ -1744,8 +1871,12 @@ export default function ResultPage() {
     );
   }
 
+  /* ══════════════════════════════════════════════════════════════════════
+     RENDER
+  ══════════════════════════════════════════════════════════════════════ */
   return (
-    <Box minH="100vh" bg="#f1f5f9" fontFamily="'Sora',sans-serif">
+    <Box minH="100vh" bg="#f1f5f9" fontFamily="'DM Sans','Segoe UI',sans-serif">
+      {/* Owner banner */}
       {isOwnerView && (
         <Box bg="#1e3a5f" px={{ base: 4, md: 8 }} py={3}>
           <Flex maxW="1200px" mx="auto" align="center" gap={3} flexWrap="wrap">
@@ -1792,13 +1923,20 @@ export default function ResultPage() {
         </Box>
       )}
 
+      {/* Page header */}
       <Box
-        bg="linear-gradient(135deg,#0f1e3a,#1e3a5f,#2d5fa8)"
+        bg="linear-gradient(135deg,#0b1e3d,#132952,#1a3a6e)"
         px={{ base: 4, md: 8 }}
         py={5}
       >
-        <Flex maxW="1200px" mx="auto" align="center" justify="space-between">
-          <Flex align="center" gap={3}>
+        <Flex
+          maxW="1200px"
+          mx="auto"
+          align="center"
+          justify="space-between"
+          gap={3}
+        >
+          <Flex align="center" gap={3} flex={1} minW={0}>
             <Box
               cursor="pointer"
               onClick={() =>
@@ -1808,13 +1946,13 @@ export default function ResultPage() {
                     : navigate(-1)
                   : navigate("/")
               }
-              color="rgba(255,255,255,.5)"
+              color="rgba(255,255,255,.45)"
               _hover={{ color: "white" }}
             >
               <Icon as={FaArrowLeft} fontSize="14px" />
             </Box>
-            <Box>
-              <Flex align="center" gap={2}>
+            <Box minW={0}>
+              <Flex align="center" gap={2} flexWrap="wrap">
                 <Text
                   fontSize={{ base: "15px", md: "18px" }}
                   fontWeight={800}
@@ -1837,11 +1975,11 @@ export default function ResultPage() {
                     flexShrink={0}
                   >
                     <Icon as={FaLayerGroup} fontSize="9px" />
-                    {sectionScores.length}s
+                    {sectionScores.length} sections
                   </Flex>
                 )}
               </Flex>
-              <Text fontSize="12px" color="rgba(255,255,255,.5)">
+              <Text fontSize="12px" color="rgba(255,255,255,.45)">
                 {isOwnerView
                   ? `${studentName || "Student"}'s Result`
                   : "Test Result"}
@@ -1889,7 +2027,9 @@ export default function ResultPage() {
       </Box>
 
       <Box maxW="1200px" mx="auto" px={{ base: 3, md: 8 }} py={6}>
-        {/* Score Hero */}
+        {/* ════════════════════════════════════════════════════════════════
+            SCORE HERO CARD
+        ════════════════════════════════════════════════════════════════ */}
         <Box
           bg="white"
           borderRadius="20px"
@@ -1898,140 +2038,542 @@ export default function ResultPage() {
           overflow="hidden"
           mb={5}
         >
-          <Box h="5px" bg={pctBg(pct)}>
+          {/* Top score bar */}
+          <Box h="5px" bg={scoreBg(pct)}>
             <Box
               h="100%"
               w={`${pct}%`}
-              bg={pctColor(pct)}
+              bg={scoreColor(pct)}
               borderRadius="full"
-              style={{ transition: "width 1s ease" }}
+              style={{ transition: "width 1.2s ease" }}
             />
           </Box>
-          <Flex
-            direction={{ base: "column", md: "row" }}
-            align="center"
-            px={{ base: 5, md: 8 }}
-            py={{ base: 6, md: 8 }}
-            gap={{ base: 6, md: 10 }}
-          >
-            <Box flexShrink={0} position="relative" w="160px" h="160px">
-              <Doughnut data={donut} options={donutOpts} />
-              <Flex
-                position="absolute"
-                top="50%"
-                left="50%"
-                transform="translate(-50%,-50%)"
-                direction="column"
-                align="center"
+
+          <Box px={{ base: 5, md: 8 }} py={{ base: 6, md: 8 }}>
+            <Flex
+              direction={{ base: "column", md: "row" }}
+              align={{ base: "center", md: "flex-start" }}
+              gap={{ base: 6, md: 10 }}
+            >
+              {/* Donut */}
+              <Box
+                flexShrink={0}
+                position="relative"
+                w={{ base: "140px", md: "160px" }}
+                h={{ base: "140px", md: "160px" }}
               >
+                <Doughnut data={donutData} options={donutOpts} />
+                <Flex
+                  position="absolute"
+                  top="50%"
+                  left="50%"
+                  transform="translate(-50%,-50%)"
+                  direction="column"
+                  align="center"
+                >
+                  <Text
+                    fontSize={{ base: "24px", md: "28px" }}
+                    fontWeight={900}
+                    color={scoreColor(pct)}
+                    lineHeight={1}
+                  >
+                    {pct}%
+                  </Text>
+                  <Text
+                    fontSize="10px"
+                    color="#94a3b8"
+                    fontWeight={600}
+                    mt={0.5}
+                  >
+                    Score
+                  </Text>
+                </Flex>
+              </Box>
+
+              {/* Right side */}
+              <Box flex={1} w="100%">
+                {/* Score fraction + label */}
+                <Flex align="center" gap={3} mb={2} flexWrap="wrap">
+                  <Text
+                    fontSize={{ base: "26px", md: "32px" }}
+                    fontWeight={900}
+                    color="#0f172a"
+                    lineHeight={1}
+                  >
+                    {score}
+                    <Text
+                      as="span"
+                      fontSize={{ base: "16px", md: "20px" }}
+                      color="#94a3b8"
+                      fontWeight={600}
+                    >
+                      /{totalQuestions}
+                    </Text>
+                  </Text>
+                  <Badge
+                    px={3}
+                    py={1}
+                    borderRadius="full"
+                    fontSize="12px"
+                    fontWeight={700}
+                    bg={scoreBg(pct)}
+                    color={scoreColor(pct)}
+                  >
+                    {scoreLabel(pct)}
+                  </Badge>
+                </Flex>
+
+                {/* Percentile row */}
+                {percentile !== null && (
+                  <Flex align="center" gap={2} mb={4} flexWrap="wrap">
+                    <Flex
+                      align="center"
+                      gap={1.5}
+                      px={3}
+                      py={1.5}
+                      bg="#fefce8"
+                      border="1px solid #fde68a"
+                      borderRadius="10px"
+                    >
+                      <Icon as={FaTrophy} color="#d97706" fontSize="13px" />
+                      <Text fontSize="13px" fontWeight={700} color="#92400e">
+                        Percentile:{" "}
+                        {typeof percentile === "number"
+                          ? `${percentile.toFixed(1)}%`
+                          : percentile}
+                      </Text>
+                    </Flex>
+                    <Text fontSize="12px" color="#64748b">
+                      Better than{" "}
+                      {typeof percentile === "number"
+                        ? `${percentile.toFixed(0)}%`
+                        : percentile}{" "}
+                      of all students
+                    </Text>
+                  </Flex>
+                )}
+
+                {/* 4-stat grid */}
+                <Grid
+                  templateColumns={{
+                    base: "repeat(2,1fr)",
+                    sm: "repeat(4,1fr)",
+                  }}
+                  gap={3}
+                >
+                  <StatCard
+                    label="Correct"
+                    value={correctCount}
+                    color="#16a34a"
+                    bg="#f0fdf4"
+                    border="#bbf7d0"
+                    icon={FaCheckCircle}
+                  />
+                  <StatCard
+                    label="Wrong"
+                    value={wrongCount}
+                    color="#ef4444"
+                    bg="#fef2f2"
+                    border="#fecaca"
+                    icon={FaTimesCircle}
+                  />
+                  <StatCard
+                    label="Skipped"
+                    value={skippedCount}
+                    color="#64748b"
+                    bg="#f8fafc"
+                    border="#e2e8f0"
+                    icon={FaCircle}
+                  />
+                  <StatCard
+                    label="Marked"
+                    value={markedCount}
+                    color="#7c3aed"
+                    bg="#f5f3ff"
+                    border="#ddd6fe"
+                    icon={FaFlag}
+                  />
+                </Grid>
+              </Box>
+            </Flex>
+          </Box>
+        </Box>
+
+        {/* ════════════════════════════════════════════════════════════════
+            3-METRIC ROW  — Time · Accuracy · Ranking
+            Each metric is correctly computed and labelled.
+        ════════════════════════════════════════════════════════════════ */}
+        <Grid
+          templateColumns={{ base: "1fr", md: "repeat(3,1fr)" }}
+          gap={4}
+          mb={5}
+        >
+          {/* ── Time Details ── */}
+          <Box
+            bg="white"
+            borderRadius="16px"
+            border="1px solid #e2e8f0"
+            boxShadow="0 2px 12px rgba(0,0,0,.04)"
+            p={5}
+          >
+            <Flex align="center" gap={2} mb={4}>
+              <Flex
+                w="36px"
+                h="36px"
+                bg="#eff6ff"
+                borderRadius="10px"
+                align="center"
+                justify="center"
+                flexShrink={0}
+              >
+                <Icon as={FaClock} color="#2563eb" fontSize="16px" />
+              </Flex>
+              <Box>
+                <Text fontSize="14px" fontWeight={800} color="#0f172a">
+                  Time Details
+                </Text>
+                <Text fontSize="11px" color="#94a3b8">
+                  How you spent your time
+                </Text>
+              </Box>
+            </Flex>
+            <VStack
+              align="stretch"
+              spacing={3}
+              divider={<Divider borderColor="#f1f5f9" />}
+            >
+              <Flex justify="space-between" align="center">
+                <Text fontSize="13px" color="#64748b">
+                  Total Time Taken
+                </Text>
+                <Text fontSize="13px" fontWeight={800} color="#374151">
+                  {fmtTime(timeTaken)}
+                </Text>
+              </Flex>
+              {avgTimePerQ > 0 && (
+                <Flex justify="space-between" align="center">
+                  <Text fontSize="13px" color="#64748b">
+                    Avg. Per Question
+                  </Text>
+                  <Text fontSize="13px" fontWeight={700} color="#374151">
+                    {fmtTime(avgTimePerQ)}
+                  </Text>
+                </Flex>
+              )}
+              <Flex justify="space-between" align="center">
+                <Text fontSize="13px" color="#64748b">
+                  Questions Attempted
+                </Text>
+                <Text fontSize="13px" fontWeight={700} color="#374151">
+                  {answeredQuestion.length + markedAndAnswer.length}
+                  <Text as="span" color="#94a3b8" fontWeight={500}>
+                    {" "}
+                    / {totalQuestions}
+                  </Text>
+                </Text>
+              </Flex>
+              <Flex justify="space-between" align="center">
+                <Text fontSize="13px" color="#64748b">
+                  Completion
+                </Text>
+                <Flex align="center" gap={2}>
+                  <Box
+                    w="60px"
+                    h="5px"
+                    bg="#f1f5f9"
+                    borderRadius="full"
+                    overflow="hidden"
+                  >
+                    <Box
+                      h="100%"
+                      bg="#2563eb"
+                      w={`${totalQuestions > 0 ? Math.round(((answeredQuestion.length + markedAndAnswer.length) / totalQuestions) * 100) : 0}%`}
+                      borderRadius="full"
+                    />
+                  </Box>
+                  <Text fontSize="13px" fontWeight={700} color="#374151">
+                    {totalQuestions > 0
+                      ? Math.round(
+                          ((answeredQuestion.length + markedAndAnswer.length) /
+                            totalQuestions) *
+                            100,
+                        )
+                      : 0}
+                    %
+                  </Text>
+                </Flex>
+              </Flex>
+            </VStack>
+          </Box>
+
+          {/* ── Accuracy ── */}
+          <Box
+            bg="white"
+            borderRadius="16px"
+            border="1px solid #e2e8f0"
+            boxShadow="0 2px 12px rgba(0,0,0,.04)"
+            p={5}
+          >
+            <Flex align="center" gap={2} mb={4}>
+              <Flex
+                w="36px"
+                h="36px"
+                bg="#f0fdf4"
+                borderRadius="10px"
+                align="center"
+                justify="center"
+                flexShrink={0}
+              >
+                <Icon as={FaBullseye} color="#16a34a" fontSize="16px" />
+              </Flex>
+              <Box>
+                <Text fontSize="14px" fontWeight={800} color="#0f172a">
+                  Accuracy
+                </Text>
+                {/* Clear label so user knows what the % means */}
+                <Text fontSize="11px" color="#94a3b8">
+                  Correct ÷ Attempted
+                </Text>
+              </Box>
+            </Flex>
+
+            {/* Big number */}
+            <Flex align="baseline" gap={2} mb={1}>
+              <Text
+                fontSize={{ base: "38px", md: "42px" }}
+                fontWeight={900}
+                color={scoreColor(accuracy)}
+                lineHeight={1}
+              >
+                {accuracy}%
+              </Text>
+              <Text fontSize="12px" color="#94a3b8">
+                ({correctCount}/{correctCount + wrongCount} attempted)
+              </Text>
+            </Flex>
+
+            {/* Bar */}
+            <Box
+              bg="#f1f5f9"
+              borderRadius="full"
+              h="8px"
+              mb={4}
+              overflow="hidden"
+            >
+              <Box
+                h="100%"
+                w={`${accuracy}%`}
+                bg={scoreColor(accuracy)}
+                borderRadius="full"
+                style={{ transition: "width 1.2s ease" }}
+              />
+            </Box>
+
+            <VStack
+              align="stretch"
+              spacing={2.5}
+              divider={<Divider borderColor="#f1f5f9" />}
+            >
+              <Flex justify="space-between">
+                <Text fontSize="13px" color="#64748b">
+                  Correct answers
+                </Text>
+                <Text fontSize="13px" fontWeight={700} color="#16a34a">
+                  {correctCount}
+                </Text>
+              </Flex>
+              <Flex justify="space-between">
+                <Text fontSize="13px" color="#64748b">
+                  Wrong answers
+                </Text>
+                <Text fontSize="13px" fontWeight={700} color="#ef4444">
+                  {wrongCount}
+                </Text>
+              </Flex>
+              <Flex justify="space-between">
+                <Text fontSize="13px" color="#64748b">
+                  Not attempted
+                </Text>
+                <Text fontSize="13px" fontWeight={700} color="#64748b">
+                  {skippedCount + notVisited}
+                </Text>
+              </Flex>
+            </VStack>
+          </Box>
+
+          {/* ── Ranking / Score % ── */}
+          <Box
+            bg="white"
+            borderRadius="16px"
+            border="1px solid #e2e8f0"
+            boxShadow="0 2px 12px rgba(0,0,0,.04)"
+            p={5}
+          >
+            <Flex align="center" gap={2} mb={4}>
+              <Flex
+                w="36px"
+                h="36px"
+                bg="#fefce8"
+                borderRadius="10px"
+                align="center"
+                justify="center"
+                flexShrink={0}
+              >
+                <Icon as={FaMedal} color="#d97706" fontSize="16px" />
+              </Flex>
+              <Box>
+                <Text fontSize="14px" fontWeight={800} color="#0f172a">
+                  {percentile !== null ? "Ranking" : "Score Summary"}
+                </Text>
+                <Text fontSize="11px" color="#94a3b8">
+                  {percentile !== null
+                    ? "Among all students"
+                    : "Your performance"}
+                </Text>
+              </Box>
+            </Flex>
+
+            {percentile !== null ? (
+              <>
+                <Flex align="baseline" gap={2} mb={1}>
+                  <Text
+                    fontSize={{ base: "38px", md: "42px" }}
+                    fontWeight={900}
+                    color="#d97706"
+                    lineHeight={1}
+                  >
+                    {typeof percentile === "number"
+                      ? `${percentile.toFixed(1)}%`
+                      : percentile}
+                  </Text>
+                  <Text fontSize="12px" color="#94a3b8">
+                    percentile
+                  </Text>
+                </Flex>
+                <Box
+                  bg="#f1f5f9"
+                  borderRadius="full"
+                  h="8px"
+                  mb={4}
+                  overflow="hidden"
+                >
+                  <Box
+                    h="100%"
+                    bg="#d97706"
+                    borderRadius="full"
+                    w={`${typeof percentile === "number" ? percentile : 0}%`}
+                    style={{ transition: "width 1.2s ease" }}
+                  />
+                </Box>
+                <Box bg="#fef9c3" borderRadius="10px" px={3} py={2.5} mb={3}>
+                  <Text fontSize="13px" fontWeight={600} color="#92400e">
+                    🏆 Better than{" "}
+                    {typeof percentile === "number"
+                      ? `${percentile.toFixed(0)}%`
+                      : percentile}{" "}
+                    of all students
+                  </Text>
+                </Box>
+              </>
+            ) : (
+              <>
+                <Flex align="baseline" gap={2} mb={1}>
+                  <Text
+                    fontSize={{ base: "38px", md: "42px" }}
+                    fontWeight={900}
+                    color={scoreColor(pct)}
+                    lineHeight={1}
+                  >
+                    {pct}%
+                  </Text>
+                  <Text fontSize="12px" color="#94a3b8">
+                    score
+                  </Text>
+                </Flex>
+                <Box
+                  bg="#f1f5f9"
+                  borderRadius="full"
+                  h="8px"
+                  mb={4}
+                  overflow="hidden"
+                >
+                  <Box
+                    h="100%"
+                    bg={scoreColor(pct)}
+                    w={`${pct}%`}
+                    borderRadius="full"
+                    style={{ transition: "width 1.2s ease" }}
+                  />
+                </Box>
+                <Box bg={scoreBg(pct)} borderRadius="10px" px={3} py={2.5}>
+                  <Text
+                    fontSize="13px"
+                    fontWeight={600}
+                    color={scoreColor(pct)}
+                  >
+                    {scoreLabel(pct)} — {score}/{totalQuestions} correct
+                  </Text>
+                </Box>
+                <Text fontSize="11px" color="#94a3b8" mt={3}>
+                  Percentile available once more students attempt this test.
+                </Text>
+              </>
+            )}
+
+            {/* Score vs accuracy comparison */}
+            <Divider my={3} borderColor="#f1f5f9" />
+            <Grid templateColumns="1fr 1fr" gap={3}>
+              <Box textAlign="center" bg="#f8fafc" borderRadius="10px" p={3}>
                 <Text
-                  fontSize="28px"
+                  fontSize="18px"
                   fontWeight={900}
-                  color={pctColor(pct)}
+                  color={scoreColor(pct)}
                   lineHeight={1}
                 >
                   {pct}%
                 </Text>
-                <Text fontSize="11px" color="#94a3b8" fontWeight={600} mt={0.5}>
-                  Score
-                </Text>
-              </Flex>
-            </Box>
-            <Box flex={1} w="100%">
-              <Flex align="center" gap={3} mb={1} flexWrap="wrap">
                 <Text
-                  fontSize={{ base: "22px", md: "28px" }}
-                  fontWeight={900}
-                  color="#0f172a"
+                  fontSize="10px"
+                  color="#94a3b8"
+                  fontWeight={600}
+                  mt={1}
+                  textTransform="uppercase"
+                  letterSpacing=".5px"
                 >
-                  {score} / {totalQuestions}
+                  Score %
                 </Text>
-                <Badge
-                  px={3}
-                  py={1}
-                  borderRadius="full"
-                  fontSize="12px"
-                  fontWeight={700}
-                  bg={pctBg(pct)}
-                  color={pctColor(pct)}
+                <Text fontSize="9px" color="#94a3b8" mt={0.5}>
+                  ÷ all questions
+                </Text>
+              </Box>
+              <Box textAlign="center" bg="#f8fafc" borderRadius="10px" p={3}>
+                <Text
+                  fontSize="18px"
+                  fontWeight={900}
+                  color={scoreColor(accuracy)}
+                  lineHeight={1}
                 >
-                  {pctLabel(pct)}
-                </Badge>
-              </Flex>
-              {percentile !== null && (
-                <Flex align="center" gap={2} mb={4}>
-                  <Flex
-                    align="center"
-                    gap={1.5}
-                    px={3}
-                    py={1.5}
-                    bg="#fefce8"
-                    border="1px solid #fde68a"
-                    borderRadius="10px"
-                  >
-                    <Icon as={FaTrophy} color="#d97706" fontSize="13px" />
-                    <Text fontSize="13px" fontWeight={700} color="#92400e">
-                      Percentile:{" "}
-                      {typeof percentile === "number"
-                        ? `${percentile.toFixed(1)}%`
-                        : percentile}
-                    </Text>
-                  </Flex>
-                  <Text fontSize="12px" color="#94a3b8">
-                    Better than{" "}
-                    {typeof percentile === "number"
-                      ? `${percentile.toFixed(0)}%`
-                      : percentile}
-                    % of all students
-                  </Text>
-                </Flex>
-              )}
-              <Grid
-                templateColumns={{ base: "repeat(2,1fr)", sm: "repeat(4,1fr)" }}
-                gap={3}
-              >
-                {[
-                  {
-                    label: "Correct",
-                    value: correctCount,
-                    color: "#16a34a",
-                    bg: "#f0fdf4",
-                    border: "#bbf7d0",
-                    icon: FaCheckCircle,
-                  },
-                  {
-                    label: "Wrong",
-                    value: wrongCount,
-                    color: "#ef4444",
-                    bg: "#fef2f2",
-                    border: "#fecaca",
-                    icon: FaTimesCircle,
-                  },
-                  {
-                    label: "Skipped",
-                    value: skippedCount,
-                    color: "#64748b",
-                    bg: "#f8fafc",
-                    border: "#e2e8f0",
-                    icon: FaCircle,
-                  },
-                  {
-                    label: "Marked",
-                    value: markedCount,
-                    color: "#7c3aed",
-                    bg: "#f5f3ff",
-                    border: "#ddd6fe",
-                    icon: FaFlag,
-                  },
-                ].map((st) => (
-                  <StatBox key={st.label} {...st} />
-                ))}
-              </Grid>
-            </Box>
-          </Flex>
-        </Box>
+                  {accuracy}%
+                </Text>
+                <Text
+                  fontSize="10px"
+                  color="#94a3b8"
+                  fontWeight={600}
+                  mt={1}
+                  textTransform="uppercase"
+                  letterSpacing=".5px"
+                >
+                  Accuracy
+                </Text>
+                <Text fontSize="9px" color="#94a3b8" mt={0.5}>
+                  ÷ attempted only
+                </Text>
+              </Box>
+            </Grid>
+          </Box>
+        </Grid>
 
-        {/* ── Section Scores (only for sectioned tests) ─────────────────────── */}
+        {/* ── Section Scores ──────────────────────────────────────────────── */}
         {isSectioned && sectionScores.length > 0 && (
           <Box mb={5}>
             <Flex align="center" gap={2} mb={4}>
@@ -2039,6 +2581,17 @@ export default function ResultPage() {
               <Text fontSize="16px" fontWeight={800} color="#0f172a">
                 Section Breakdown
               </Text>
+              <Badge
+                px={2.5}
+                py={0.5}
+                borderRadius="full"
+                fontSize="11px"
+                fontWeight={700}
+                bg="#eff6ff"
+                color="#2563eb"
+              >
+                {sectionScores.length} sections
+              </Badge>
             </Flex>
             <Grid
               templateColumns={{
@@ -2055,192 +2608,7 @@ export default function ResultPage() {
           </Box>
         )}
 
-        {/* Details row */}
-        <Grid
-          templateColumns={{ base: "1fr", md: "repeat(3,1fr)" }}
-          gap={4}
-          mb={5}
-        >
-          <Box
-            bg="white"
-            borderRadius="16px"
-            border="1px solid #e2e8f0"
-            boxShadow="0 2px 12px rgba(0,0,0,.04)"
-            p={5}
-          >
-            <Flex align="center" gap={2} mb={4}>
-              <Flex
-                w="36px"
-                h="36px"
-                bg="#eff6ff"
-                borderRadius="10px"
-                align="center"
-                justify="center"
-              >
-                <Icon as={FaClock} color="#4a72b8" fontSize="16px" />
-              </Flex>
-              <Text fontSize="14px" fontWeight={800} color="#0f172a">
-                Time Details
-              </Text>
-            </Flex>
-            <VStack align="stretch" spacing={3}>
-              <Flex justify="space-between">
-                <Text fontSize="13px" color="#64748b">
-                  Time Taken
-                </Text>
-                <Text fontSize="13px" fontWeight={700} color="#374151">
-                  {fmtTime(timeTaken)}
-                </Text>
-              </Flex>
-              {totalQuestions > 0 && timeTaken > 0 && (
-                <Flex justify="space-between">
-                  <Text fontSize="13px" color="#64748b">
-                    Per Question (avg)
-                  </Text>
-                  <Text fontSize="13px" fontWeight={700} color="#374151">
-                    {fmtTime(Math.round(timeTaken / totalQuestions))}
-                  </Text>
-                </Flex>
-              )}
-              <Flex justify="space-between">
-                <Text fontSize="13px" color="#64748b">
-                  Total Questions
-                </Text>
-                <Text fontSize="13px" fontWeight={700} color="#374151">
-                  {totalQuestions}
-                </Text>
-              </Flex>
-            </VStack>
-          </Box>
-
-          <Box
-            bg="white"
-            borderRadius="16px"
-            border="1px solid #e2e8f0"
-            boxShadow="0 2px 12px rgba(0,0,0,.04)"
-            p={5}
-          >
-            <Flex align="center" gap={2} mb={4}>
-              <Flex
-                w="36px"
-                h="36px"
-                bg="#f0fdf4"
-                borderRadius="10px"
-                align="center"
-                justify="center"
-              >
-                <Icon as={FiTarget} color="#16a34a" fontSize="16px" />
-              </Flex>
-              <Text fontSize="14px" fontWeight={800} color="#0f172a">
-                Accuracy
-              </Text>
-            </Flex>
-            <Text
-              fontSize="36px"
-              fontWeight={900}
-              color={pctColor(accuracy)}
-              lineHeight={1}
-              mb={2}
-            >
-              {accuracy.toFixed(1)}%
-            </Text>
-            <Box bg="#f1f5f9" borderRadius="full" h="8px" mb={3}>
-              <Box
-                h="100%"
-                w={`${accuracy}%`}
-                bg={pctColor(accuracy)}
-                borderRadius="full"
-                style={{ transition: "width 1s ease" }}
-              />
-            </Box>
-            <VStack align="stretch" spacing={2}>
-              <Flex justify="space-between">
-                <Text fontSize="13px" color="#64748b">
-                  Answered
-                </Text>
-                <Text fontSize="13px" fontWeight={700} color="#374151">
-                  {answeredQuestion.length}
-                </Text>
-              </Flex>
-              <Flex justify="space-between">
-                <Text fontSize="13px" color="#64748b">
-                  Completion
-                </Text>
-                <Text fontSize="13px" fontWeight={700} color="#374151">
-                  {totalQuestions > 0
-                    ? Math.round(
-                        (answeredQuestion.length / totalQuestions) * 100,
-                      )
-                    : 0}
-                  %
-                </Text>
-              </Flex>
-            </VStack>
-          </Box>
-
-          <Box
-            bg="white"
-            borderRadius="16px"
-            border="1px solid #e2e8f0"
-            boxShadow="0 2px 12px rgba(0,0,0,.04)"
-            p={5}
-          >
-            <Flex align="center" gap={2} mb={4}>
-              <Flex
-                w="36px"
-                h="36px"
-                bg="#fefce8"
-                borderRadius="10px"
-                align="center"
-                justify="center"
-              >
-                <Icon as={FiAward} color="#d97706" fontSize="16px" />
-              </Flex>
-              <Text fontSize="14px" fontWeight={800} color="#0f172a">
-                Ranking
-              </Text>
-            </Flex>
-            {percentile !== null ? (
-              <>
-                <Text
-                  fontSize="36px"
-                  fontWeight={900}
-                  color="#d97706"
-                  lineHeight={1}
-                  mb={1}
-                >
-                  {typeof percentile === "number"
-                    ? `${percentile.toFixed(1)}%`
-                    : percentile}
-                </Text>
-                <Text fontSize="12px" color="#94a3b8" mb={3}>
-                  Percentile Score
-                </Text>
-                <Box bg="#fef9c3" borderRadius="10px" px={3} py={2}>
-                  <Text fontSize="12px" fontWeight={600} color="#92400e">
-                    🏆 Better than{" "}
-                    {typeof percentile === "number"
-                      ? `${percentile.toFixed(0)}%`
-                      : percentile}
-                    % of all students
-                  </Text>
-                </Box>
-              </>
-            ) : (
-              <>
-                <Text fontSize="14px" color="#94a3b8" mb={3}>
-                  Percentile available after more students attempt.
-                </Text>
-                <Box bg={pctBg(pct)} borderRadius="10px" px={3} py={2}>
-                  <Text fontSize="12px" fontWeight={600} color={pctColor(pct)}>
-                    Score: {pct}% — {pctLabel(pct)}
-                  </Text>
-                </Box>
-              </>
-            )}
-          </Box>
-        </Grid>
-
+        {/* ── Attempt history (owner view) ─────────────────────────────────── */}
         {isOwnerView && allAttempts.length > 1 && (
           <AllAttemptsPanel
             allAttempts={allAttempts}
@@ -2255,7 +2623,7 @@ export default function ResultPage() {
           />
         )}
 
-        {/* Legend */}
+        {/* ── Legend ──────────────────────────────────────────────────────── */}
         <Box
           bg="white"
           borderRadius="14px"
@@ -2264,10 +2632,9 @@ export default function ResultPage() {
           px={5}
           py={4}
           mb={5}
-          mt={5}
         >
           <Text
-            fontSize="12px"
+            fontSize="11px"
             fontWeight={700}
             color="#64748b"
             textTransform="uppercase"
@@ -2276,13 +2643,13 @@ export default function ResultPage() {
           >
             Question Status Legend
           </Text>
-          <Flex gap={3} flexWrap="wrap">
+          <Flex gap={2.5} flexWrap="wrap">
             {[
               { label: "Correct", color: "#16a34a", bg: "#f0fdf4" },
               { label: "Incorrect", color: "#ef4444", bg: "#fef2f2" },
-              { label: "Marked & Ans", color: "#7c3aed", bg: "#f5f3ff" },
+              { label: "Marked & Ans.", color: "#7c3aed", bg: "#f5f3ff" },
               { label: "Marked (Skip)", color: "#d97706", bg: "#fffbeb" },
-              { label: "Skipped", color: "#64748b", bg: "#f8fafc" },
+              { label: "Not Attempted", color: "#64748b", bg: "#f8fafc" },
               { label: "Answered", color: "#2563eb", bg: "#eff6ff" },
             ].map((l) => (
               <Flex
@@ -2303,7 +2670,7 @@ export default function ResultPage() {
           </Flex>
         </Box>
 
-        {/* Question tabs */}
+        {/* ── Question Review Tabs ─────────────────────────────────────────── */}
         <Box
           bg="white"
           borderRadius="20px"
@@ -2339,7 +2706,7 @@ export default function ResultPage() {
                     fontWeight={700}
                     color="#64748b"
                     whiteSpace="nowrap"
-                    _selected={{ bg: "#eff6ff", color: "#4a72b8" }}
+                    _selected={{ bg: "#eff6ff", color: "#2563eb" }}
                     _hover={{ bg: "#f8fafc" }}
                   >
                     {t.label}
@@ -2400,13 +2767,14 @@ export default function ResultPage() {
           </Tabs>
         </Box>
 
-        <Flex justify="center" gap={4} mt={6} flexWrap="wrap">
+        {/* Footer actions */}
+        <Flex justify="center" gap={3} mt={6} flexWrap="wrap">
           {isOwnerView ? (
             <Box
               as="button"
               px={6}
               py={3}
-              bg="#0f1e3a"
+              bg="#0b1e3d"
               color="white"
               borderRadius="12px"
               fontWeight={700}
@@ -2423,7 +2791,7 @@ export default function ResultPage() {
                 as="button"
                 px={6}
                 py={3}
-                bg="#0f1e3a"
+                bg="#0b1e3d"
                 color="white"
                 borderRadius="12px"
                 fontWeight={700}
@@ -2439,8 +2807,8 @@ export default function ResultPage() {
                 px={6}
                 py={3}
                 bg="white"
-                color="#4a72b8"
-                border="1.5px solid #4a72b8"
+                color="#2563eb"
+                border="1.5px solid #2563eb"
                 borderRadius="12px"
                 fontWeight={700}
                 fontSize="13px"

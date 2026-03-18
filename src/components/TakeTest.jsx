@@ -1573,7 +1573,6 @@ import {
   AlertDialogOverlay,
   Icon,
   IconButton,
-  Divider,
 } from "@chakra-ui/react";
 import ModalPause from "./ModalPause";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -1594,7 +1593,6 @@ import {
   FaLayerGroup,
   FaFlag,
   FaStopwatch,
-  FaEllipsisV,
   FaBars,
   FaTimes,
 } from "react-icons/fa";
@@ -1604,24 +1602,19 @@ import {
   MdOutlineReport,
 } from "react-icons/md";
 
-/* ─── Color tokens — user's palette ─────────────────────────────────────── */
+/* ─── Tokens ─────────────────────────────────────────────────────────────── */
 const C = {
-  // Backgrounds (dark)
-  bg: "#0b1e3d", // deep navy — main bg
-  bgCard: "#132952", // mid navy — cards / header
-  bgElevated: "#1a3a6e", // lighter navy — elevated surfaces
-  bgOption: "#0f2240", // option card bg
+  bg: "#0b1e3d",
+  bgCard: "#132952",
+  bgElevated: "#1a3a6e",
+  bgOption: "#0f2240",
   bgLine: "rgba(255,255,255,.07)",
-
-  // Accents
   blue: "#2563eb",
   blueDk: "#1e40af",
   blueGlow: "rgba(37,99,235,.35)",
   teal: "#0d9488",
   tealDk: "#0f766e",
   tealGlow: "rgba(13,148,136,.35)",
-
-  // Status
   green: "#16a34a",
   greenBg: "rgba(22,163,74,.18)",
   red: "#dc2626",
@@ -1631,14 +1624,9 @@ const C = {
   amber: "#d97706",
   amberBg: "rgba(217,119,6,.18)",
   sky: "#38bdf8",
-
-  // Text
   textPrimary: "#f1f5f9",
   textSecondary: "rgba(255,255,255,.55)",
   textMuted: "rgba(255,255,255,.3)",
-  textDim: "rgba(255,255,255,.18)",
-
-  // Border
   border: "rgba(255,255,255,.09)",
   borderMid: "rgba(255,255,255,.14)",
 };
@@ -1646,41 +1634,35 @@ const C = {
 const pad = (n) => String(n).padStart(2, "0");
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
-/* ─── Status config ──────────────────────────────────────────────────────── */
 const STATUS = {
   answered: {
     palBg: "#16a34a",
     palRadius: "10px 10px 3px 3px",
-    textColor: "#16a34a",
-    chipBg: "rgba(22,163,74,.18)",
+    dot: "#16a34a",
     label: "Answered",
   },
   skipped: {
     palBg: "#dc2626",
     palRadius: "3px 3px 10px 10px",
-    textColor: "#dc2626",
-    chipBg: "rgba(220,38,38,.18)",
+    dot: "#dc2626",
     label: "Not Answered",
   },
   marked: {
     palBg: "#7c3aed",
     palRadius: "50%",
-    textColor: "#7c3aed",
-    chipBg: "rgba(124,58,237,.18)",
+    dot: "#7c3aed",
     label: "Marked",
   },
   markedAnswered: {
     palBg: "#d97706",
     palRadius: "50%",
-    textColor: "#d97706",
-    chipBg: "rgba(217,119,6,.18)",
+    dot: "#d97706",
     label: "Marked & Ans.",
   },
   unvisited: {
     palBg: "transparent",
     palRadius: "8px",
-    textColor: C.textMuted,
-    chipBg: "rgba(255,255,255,.06)",
+    dot: "rgba(255,255,255,.3)",
     label: "Not Visited",
   },
 };
@@ -1696,7 +1678,6 @@ const getQStatus = (
   return "unvisited";
 };
 
-/* ─── Palette Bubble ─────────────────────────────────────────────────────── */
 const Bubble = ({ label, isCurrent, status, onClick }) => {
   const s = STATUS[status];
   return (
@@ -1731,7 +1712,7 @@ const Bubble = ({ label, isCurrent, status, onClick }) => {
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
-   TAKE TEST
+   MAIN
 ══════════════════════════════════════════════════════════════════════════ */
 const TakeTest = ({ handleFullScreen }) => {
   const navigate = useNavigate();
@@ -1803,6 +1784,9 @@ const TakeTest = ({ handleFullScreen }) => {
   const [correctQus, setcorrectQus] = useState([]);
   const [correctAns, setCorrectAns] = useState([]);
   const [animKey, setAnimKey] = useState(0);
+
+  /* ── Timer pause support ──────────────────────────────────────────────── */
+  const [timerPaused, setTimerPaused] = useState(false);
 
   const questionTimesRef = useRef({});
   const qStartTimeRef = useRef(Date.now());
@@ -1878,15 +1862,16 @@ const TakeTest = ({ handleFullScreen }) => {
     })();
   }, []);
 
-  /* Per-Q stopwatch */
+  /* Per-Q stopwatch — pauses when test is paused */
   useEffect(() => {
+    if (timerPaused) return;
     const t = setInterval(
       () =>
         setQElapsed(Math.floor((Date.now() - qStartTimeRef.current) / 1000)),
       1000,
     );
     return () => clearInterval(t);
-  }, [currentQ]);
+  }, [currentQ, timerPaused]);
 
   const saveQTime = (idx) => {
     const spent = Math.floor((Date.now() - qStartTimeRef.current) / 1000);
@@ -1970,8 +1955,9 @@ const TakeTest = ({ handleFullScreen }) => {
     return () => document.removeEventListener("keydown", h);
   }, []);
 
-  /* Timer */
+  /* Timer — respects pause */
   useEffect(() => {
+    if (timerPaused) return;
     const t = setTimeout(() => {
       if (isCountdown) {
         const rem = rh * 3600 + rm * 60 + rs;
@@ -2002,7 +1988,7 @@ const TakeTest = ({ handleFullScreen }) => {
       }
     }, 1000);
     return () => clearTimeout(t);
-  }, [hour, min, sec, rh, rm, rs, isCountdown]);
+  }, [hour, min, sec, rh, rm, rs, isCountdown, timerPaused]);
 
   /* Navigation */
   const goToQuestion = useCallback(
@@ -2132,20 +2118,53 @@ const TakeTest = ({ handleFullScreen }) => {
     });
   };
 
+  /**
+   * FIX: handleClearAnswer
+   *
+   * Old bug: removing from markedAndAnswer/markedNotAnswer arrays but NOT
+   * removing from allAns — so on submit, allAns[currentQ] still existed,
+   * making ResultPage show it as "marked & answered".
+   *
+   * Fix: always delete allAns[currentQ], reset correctQus/wrongQus counts,
+   * and move to notAnswer (not-attempted state).
+   */
   const handleClearAnswer = () => {
-    if (answeredQuestion.includes(currentQ))
-      answeredQuestion.splice(answeredQuestion.indexOf(currentQ), 1);
-    if (markedAndAnswer.includes(currentQ))
-      markedAndAnswer.splice(markedAndAnswer.indexOf(currentQ), 1);
-    if (markedNotAnswer.includes(currentQ))
-      markedNotAnswer.splice(markedNotAnswer.indexOf(currentQ), 1);
-    setAllAns((p) => {
-      const u = { ...p };
-      delete u[currentQ];
-      allAnsRef.current = u;
-      return u;
+    const idx = currentQ;
+
+    // Remove from every status bucket
+    if (answeredQuestion.includes(idx))
+      answeredQuestion.splice(answeredQuestion.indexOf(idx), 1);
+    if (markedAndAnswer.includes(idx))
+      markedAndAnswer.splice(markedAndAnswer.indexOf(idx), 1);
+    if (markedNotAnswer.includes(idx))
+      markedNotAnswer.splice(markedNotAnswer.indexOf(idx), 1);
+
+    // CRITICAL: wipe the stored answer so it doesn't appear as answered on submit
+    setAllAns((prev) => {
+      const next = { ...prev };
+      delete next[idx];
+      allAnsRef.current = next;
+      return next;
     });
-    if (!notAnswer.includes(currentQ)) setNotAnswer([...notAnswer, currentQ]);
+
+    // Undo score / wrong counts if this question was previously evaluated
+    if (correctAns.includes(idx)) {
+      correctAns.splice(correctAns.indexOf(idx), 1);
+      correctQus.splice(correctQus.indexOf(idx), 1);
+      setMark((m) => m - 1);
+      setCorrectAns([...correctAns]);
+      setcorrectQus([...correctQus]);
+    }
+    if (wrongansqus.includes(idx)) {
+      wrongansqus.splice(wrongansqus.indexOf(idx), 1);
+      setwrong((w) => w - 1);
+      setwrongansqus([...wrongansqus]);
+    }
+
+    // Mark as "not answered" (red state)
+    if (!notAnswer.includes(idx)) setNotAnswer([...notAnswer, idx]);
+
+    // Clear the displayed selection
     setans(null);
   };
 
@@ -2174,6 +2193,15 @@ const TakeTest = ({ handleFullScreen }) => {
     });
   };
 
+  /**
+   * giveMark — the result state payload keys must EXACTLY match what
+   * ResultPage and AllAttemptsPanel expect.
+   *
+   * ResultPage reads:   s.wrongansqus  (direct from navigate state)
+   * AllAttemptsPanel reads: r.wrongQus (from DB via apiFetch)
+   *
+   * Both are handled: navigate state uses `wrongansqus`, DB field is `wrongQus`.
+   */
   const giveMark = async () => {
     saveQTime(currentQ);
     try {
@@ -2187,6 +2215,7 @@ const TakeTest = ({ handleFullScreen }) => {
       const sectionScores = computeSectionScores();
       let apiPercentile = null,
         savedResultId = null;
+
       if (testMeta?.testId) {
         try {
           const res = await resultsAPI.submit({
@@ -2198,7 +2227,7 @@ const TakeTest = ({ handleFullScreen }) => {
             allAnswers: allAnsRef.current,
             questionTimes: questionTimesRef.current,
             correctQus,
-            wrongQus: wrongansqus,
+            wrongQus: wrongansqus, // ← DB field name
             answeredQus: answeredQuestion,
             notAnsweredQus: notAnswer,
             markedAndAnswered: markedAndAnswer,
@@ -2209,12 +2238,14 @@ const TakeTest = ({ handleFullScreen }) => {
           apiPercentile = res.data?.percentile ?? res.percentile ?? null;
           savedResultId = res.data?._id ?? res._id ?? null;
         } catch (err) {
-          console.error(err);
+          console.error("Submit error:", err);
         }
       }
+
       if (document.exitFullscreen) document.exitFullscreen();
       else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
       if (handleFullScreen) handleFullScreen(false);
+
       navigate("/test-result", {
         replace: true,
         state: {
@@ -2233,14 +2264,14 @@ const TakeTest = ({ handleFullScreen }) => {
           sectionScores,
           shuffledQuestions: question,
           questions: question,
-          allAnswers: allAnsRef.current,
+          allAnswers: { ...allAnsRef.current },
           questionTimes: { ...questionTimesRef.current },
-          correctQus,
-          wrongansqus,
-          answeredQuestion,
-          notAnswer,
-          markedAndAnswer,
-          markedNotAnswer,
+          correctQus: [...correctQus],
+          wrongansqus: [...wrongansqus], // ← ResultPage reads this key
+          answeredQuestion: [...answeredQuestion],
+          notAnswer: [...notAnswer],
+          markedAndAnswer: [...markedAndAnswer],
+          markedNotAnswer: [...markedNotAnswer],
           wrongans,
         },
       });
@@ -2263,10 +2294,9 @@ const TakeTest = ({ handleFullScreen }) => {
     }
   };
 
-  /* ── Right Drawer — Navigator (palette only, right side) ─────────────── */
-  const RightDrawer = () => (
+  /* ── Navigator Drawer content ─────────────────────────────────────────── */
+  const NavigatorContent = () => (
     <Flex direction="column" h="100%" overflow="hidden">
-      {/* Drawer header */}
       <Flex
         px={5}
         pt={5}
@@ -2277,12 +2307,7 @@ const TakeTest = ({ handleFullScreen }) => {
         flexShrink={0}
       >
         <Box>
-          <Text
-            fontSize="14px"
-            fontWeight={800}
-            color={C.textPrimary}
-            letterSpacing="-.2px"
-          >
+          <Text fontSize="14px" fontWeight={800} color={C.textPrimary}>
             Question Palette
           </Text>
           <Text fontSize="11px" color={C.textMuted} mt={0.5}>
@@ -2304,7 +2329,7 @@ const TakeTest = ({ handleFullScreen }) => {
         />
       </Flex>
 
-      {/* Progress bar */}
+      {/* Progress */}
       <Box px={5} py={3} flexShrink={0} borderBottom={`1px solid ${C.bgLine}`}>
         <Flex justify="space-between" mb={1.5}>
           <Text
@@ -2356,7 +2381,6 @@ const TakeTest = ({ handleFullScreen }) => {
                   w="12px"
                   h="12px"
                   flexShrink={0}
-                  flexShrink={0}
                   bg={key === "unvisited" ? "transparent" : s.palBg}
                   border={
                     key === "unvisited" ? `1.5px solid ${C.borderMid}` : "none"
@@ -2389,7 +2413,7 @@ const TakeTest = ({ handleFullScreen }) => {
         </Grid>
       </Box>
 
-      {/* Section tabs — ONLY in drawer */}
+      {/* Section tabs — only in drawer */}
       {isSectioned && sectionMeta.length > 0 && (
         <Box
           px={5}
@@ -2441,7 +2465,7 @@ const TakeTest = ({ handleFullScreen }) => {
         </Box>
       )}
 
-      {/* Palette grid */}
+      {/* Palette */}
       <Box
         flex={1}
         overflowY="auto"
@@ -2568,7 +2592,7 @@ const TakeTest = ({ handleFullScreen }) => {
       overflow="hidden"
       color={C.textPrimary}
     >
-      {/* Desktop fullscreen overlay */}
+      {/* Fullscreen overlay */}
       {!isMobile && !fsActive && (
         <Box
           position="fixed"
@@ -2595,7 +2619,7 @@ const TakeTest = ({ handleFullScreen }) => {
                 maxW="340px"
                 lineHeight="1.7"
               >
-                Exam integrity requires fullscreen mode. Click to continue.
+                Exam integrity requires fullscreen mode.
               </Text>
             </Box>
             <Button
@@ -2614,9 +2638,7 @@ const TakeTest = ({ handleFullScreen }) => {
         </Box>
       )}
 
-      {/* ══════════════════════════════════════════════════════════════
-          HEADER ROW 1 — Timer · Test Name · Menu
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ HEADER ══ */}
       <Box
         bg={C.bgCard}
         flexShrink={0}
@@ -2625,14 +2647,14 @@ const TakeTest = ({ handleFullScreen }) => {
         zIndex={10}
         position="relative"
       >
-        {/* Row 1: timer + title + icons */}
+        {/* Row 1 */}
         <Flex
           px={{ base: 4, md: 5 }}
           h={{ base: "54px", md: "58px" }}
           align="center"
           gap={3}
         >
-          {/* Timer pill — leading element like the reference */}
+          {/* Timer */}
           <Flex
             align="center"
             gap={2}
@@ -2661,13 +2683,23 @@ const TakeTest = ({ handleFullScreen }) => {
               w={{ base: "7px", md: "8px" }}
               h={{ base: "7px", md: "8px" }}
               borderRadius="50%"
-              bg={timerUrgent ? "#ef4444" : timerWarn ? C.amber : C.sky}
+              bg={
+                timerPaused
+                  ? C.amber
+                  : timerUrgent
+                    ? "#ef4444"
+                    : timerWarn
+                      ? C.amber
+                      : C.sky
+              }
               boxShadow={
-                timerUrgent
-                  ? "0 0 6px #ef4444"
-                  : timerWarn
-                    ? `0 0 6px ${C.amber}`
-                    : `0 0 6px ${C.sky}`
+                timerPaused
+                  ? `0 0 6px ${C.amber}`
+                  : timerUrgent
+                    ? "0 0 6px #ef4444"
+                    : timerWarn
+                      ? `0 0 6px ${C.amber}`
+                      : `0 0 6px ${C.sky}`
               }
               flexShrink={0}
             />
@@ -2676,21 +2708,30 @@ const TakeTest = ({ handleFullScreen }) => {
               fontWeight={900}
               letterSpacing={{ base: "1.5px", md: "2px" }}
               lineHeight="1"
-              color={timerUrgent ? "#fca5a5" : timerWarn ? "#fde68a" : "white"}
+              color={
+                timerPaused
+                  ? C.amber
+                  : timerUrgent
+                    ? "#fca5a5"
+                    : timerWarn
+                      ? "#fde68a"
+                      : "white"
+              }
               fontFamily="'JetBrains Mono','Courier New',monospace"
             >
-              {`${pad(timerH)}:${pad(timerM)}:${pad(timerS)}`}
+              {timerPaused
+                ? "PAUSED"
+                : `${pad(timerH)}:${pad(timerM)}:${pad(timerS)}`}
             </Text>
           </Flex>
 
-          {/* Test name */}
+          {/* Title */}
           <Box flex={1} minW={0}>
             <Text
               fontSize={{ base: "12px", md: "13px" }}
               fontWeight={700}
               color={C.textSecondary}
               noOfLines={1}
-              lineHeight="1.3"
             >
               {testMeta?.testTitle || "Exam"}
             </Text>
@@ -2706,17 +2747,25 @@ const TakeTest = ({ handleFullScreen }) => {
             )}
           </Box>
 
-          {/* Right icons */}
+          {/* Controls */}
           <HStack spacing={2} flexShrink={0}>
-            {/* Pause */}
+            {/* Pause — now passes testTitle + pause/resume callbacks */}
             <ModalPause
               markedAndAnswer={markedAndAnswer}
               question={question}
               markedNotAnswer={markedNotAnswer}
               notAnswer={notAnswer}
               answered={answeredQuestion}
+              testTitle={testMeta?.testTitle || "Test"}
+              onPause={() => {
+                saveQTime(currentQ);
+                setTimerPaused(true);
+              }}
+              onResume={() => {
+                qStartTimeRef.current = Date.now();
+                setTimerPaused(false);
+              }}
             />
-            {/* Navigator (right drawer) */}
             <IconButton
               icon={<Icon as={FaBars} fontSize="14px" />}
               onClick={onOpen}
@@ -2730,7 +2779,6 @@ const TakeTest = ({ handleFullScreen }) => {
               aria-label="Navigator"
               _hover={{ bg: "rgba(255,255,255,.12)", color: "white" }}
             />
-            {/* Fullscreen (desktop when not active) */}
             {!isMobile && !fsActive && (
               <IconButton
                 icon={<Icon as={FaExpand} fontSize="11px" />}
@@ -2749,7 +2797,7 @@ const TakeTest = ({ handleFullScreen }) => {
           </HStack>
         </Flex>
 
-        {/* ── SECTION TABS — horizontal scrollable, only for sectioned tests ── */}
+        {/* Section tabs */}
         {isSectioned && sectionMeta.length > 0 && (
           <Box
             borderTop={`1px solid ${C.bgLine}`}
@@ -2794,7 +2842,6 @@ const TakeTest = ({ handleFullScreen }) => {
                     >
                       {sec.name || sec.subject || `Section ${sIdx + 1}`}
                     </Text>
-                    {/* Active underline */}
                     {isActive && (
                       <Box
                         position="absolute"
@@ -2806,7 +2853,6 @@ const TakeTest = ({ handleFullScreen }) => {
                         borderRadius="full"
                       />
                     )}
-                    {/* Answered count badge */}
                     <Text
                       fontSize="9px"
                       fontWeight={700}
@@ -2823,7 +2869,7 @@ const TakeTest = ({ handleFullScreen }) => {
           </Box>
         )}
 
-        {/* Thin progress line at very bottom of header */}
+        {/* Progress line */}
         <Box h="2px" bg="rgba(255,255,255,.05)">
           <Box
             h="100%"
@@ -2834,9 +2880,7 @@ const TakeTest = ({ handleFullScreen }) => {
         </Box>
       </Box>
 
-      {/* ══════════════════════════════════════════════════════════════
-          QUESTION META ROW  — Q number · per-Q timer · bookmark · report
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ Q META ROW ══ */}
       <Flex
         px={{ base: 4, md: 5 }}
         py={{ base: "10px", md: "11px" }}
@@ -2847,7 +2891,6 @@ const TakeTest = ({ handleFullScreen }) => {
         flexShrink={0}
       >
         <HStack spacing={3}>
-          {/* Q number badge */}
           <Center
             bg={C.blue}
             borderRadius="8px"
@@ -2863,11 +2906,7 @@ const TakeTest = ({ handleFullScreen }) => {
               {isSectioned ? localQNum : currentQ + 1}
             </Text>
           </Center>
-
-          {/* Divider */}
           <Box w="1px" h="16px" bg={C.bgLine} />
-
-          {/* Per-question timer */}
           <Flex align="center" gap={1.5}>
             <Icon
               as={FaStopwatch}
@@ -2883,8 +2922,6 @@ const TakeTest = ({ handleFullScreen }) => {
               {pad(Math.floor(qElapsed / 60))}:{pad(qElapsed % 60)}
             </Text>
           </Flex>
-
-          {/* Total answered pill */}
           <Flex
             align="center"
             gap={1.5}
@@ -2894,15 +2931,13 @@ const TakeTest = ({ handleFullScreen }) => {
             py="3px"
           >
             <Text fontSize="10px" fontWeight={600} color={C.textMuted}>
-              Answered:
+              Done:
             </Text>
             <Text fontSize="10px" fontWeight={900} color={C.sky}>
               {totalAnswered}
             </Text>
           </Flex>
         </HStack>
-
-        {/* Right: bookmark, report */}
         <HStack spacing={2}>
           <IconButton
             icon={
@@ -2938,12 +2973,10 @@ const TakeTest = ({ handleFullScreen }) => {
         </HStack>
       </Flex>
 
-      {/* ══════════════════════════════════════════════════════════════
-          MAIN BODY
-      ══════════════════════════════════════════════════════════════ */}
+      {/* ══ BODY ══ */}
       <Flex flex={1} overflow="hidden">
         <Flex direction="column" flex={1} overflow="hidden" minW={0}>
-          {/* Scrollable question + options */}
+          {/* Scrollable content */}
           <Box
             flex={1}
             overflowY="auto"
@@ -2958,7 +2991,7 @@ const TakeTest = ({ handleFullScreen }) => {
               },
             }}
           >
-            {/* Question text */}
+            {/* Question */}
             <Box mb={{ base: 5, md: 6 }}>
               <Text
                 fontSize={{ base: "15px", md: "16px" }}
@@ -3004,7 +3037,6 @@ const TakeTest = ({ handleFullScreen }) => {
                       gap={3}
                       p={{ base: "13px 14px", md: "14px 18px" }}
                     >
-                      {/* Letter */}
                       <Center
                         w={{ base: "32px", md: "34px" }}
                         h={{ base: "32px", md: "34px" }}
@@ -3040,18 +3072,14 @@ const TakeTest = ({ handleFullScreen }) => {
                 );
               })}
             </VStack>
-
             <Box h={{ base: "12px", md: "16px" }} />
           </Box>
 
-          {/* ════════════════════════════════════════════════════════
-              BOTTOM ACTION BAR
-          ════════════════════════════════════════════════════════ */}
+          {/* ══ ACTION BAR ══ */}
           <Box bg={C.bgCard} borderTop={`1px solid ${C.bgLine}`} flexShrink={0}>
-            {/* ── MOBILE ────────────────────────────────────────────── */}
+            {/* MOBILE */}
             {isMobile && (
               <Box px={4} pt={3} pb={`max(14px, env(safe-area-inset-bottom))`}>
-                {/* Row 1: 3 utility buttons */}
                 <Flex gap={2} mb={2.5}>
                   <Button
                     flex={1}
@@ -3071,7 +3099,6 @@ const TakeTest = ({ handleFullScreen }) => {
                     Prev
                   </Button>
 
-                  {/* Mark for Review — matches reference style */}
                   <Button
                     flex={2}
                     h="40px"
@@ -3110,8 +3137,6 @@ const TakeTest = ({ handleFullScreen }) => {
                     Clear
                   </Button>
                 </Flex>
-
-                {/* Row 2: Save & Next (primary) + Submit */}
                 <Flex gap={2}>
                   <Button
                     flex={3}
@@ -3133,7 +3158,6 @@ const TakeTest = ({ handleFullScreen }) => {
                   >
                     Save & Next
                   </Button>
-
                   <Button
                     flex={1}
                     h="50px"
@@ -3154,7 +3178,7 @@ const TakeTest = ({ handleFullScreen }) => {
               </Box>
             )}
 
-            {/* ── DESKTOP ───────────────────────────────────────────── */}
+            {/* DESKTOP */}
             {!isMobile && (
               <Flex
                 px={6}
@@ -3218,7 +3242,6 @@ const TakeTest = ({ handleFullScreen }) => {
                     Clear
                   </Button>
                 </HStack>
-
                 <HStack spacing={2}>
                   {isSectioned &&
                     currentSecInfo &&
@@ -3293,26 +3316,24 @@ const TakeTest = ({ handleFullScreen }) => {
             flexDirection="column"
             overflow="hidden"
           >
-            <RightDrawer />
+            <NavigatorContent />
           </Box>
         )}
       </Flex>
 
-      {/* ── RIGHT DRAWER (mobile) ────────────────────────────────────────── */}
+      {/* Right drawer (mobile) */}
       {isMobile && (
         <Drawer onClose={onClose} isOpen={isOpen} placement="right" size="xs">
           <DrawerOverlay backdropFilter="blur(4px)" bg="rgba(11,30,61,.6)" />
           <DrawerContent bg={C.bgCard} maxW="300px">
             <DrawerBody p={0}>
-              <RightDrawer />
+              <NavigatorContent />
             </DrawerBody>
           </DrawerContent>
         </Drawer>
       )}
 
-      {/* ════════════════════════════════════════════════════════════════
-          SUBMIT DIALOG
-      ════════════════════════════════════════════════════════════════ */}
+      {/* ══ SUBMIT DIALOG ══ */}
       <AlertDialog
         isOpen={submitOpen}
         leastDestructiveRef={cancelRef}
@@ -3365,7 +3386,6 @@ const TakeTest = ({ handleFullScreen }) => {
             </Box>
 
             <AlertDialogBody p={5}>
-              {/* Section summary */}
               {isSectioned && sectionMeta.length > 0 && (
                 <Box
                   mb={4}
@@ -3440,7 +3460,6 @@ const TakeTest = ({ handleFullScreen }) => {
                 </Box>
               )}
 
-              {/* Stats */}
               <Grid templateColumns="repeat(4,1fr)" gap={2} mb={4}>
                 {[
                   {
@@ -3451,7 +3470,7 @@ const TakeTest = ({ handleFullScreen }) => {
                   },
                   {
                     v: answeredQuestion.length,
-                    l: "Answered",
+                    l: "Done",
                     c: C.green,
                     bg: C.greenBg,
                   },
@@ -3494,7 +3513,6 @@ const TakeTest = ({ handleFullScreen }) => {
                 ))}
               </Grid>
 
-              {/* Warning */}
               <Flex
                 align="center"
                 gap={2.5}
