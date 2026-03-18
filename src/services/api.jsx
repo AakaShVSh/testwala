@@ -6,7 +6,7 @@
  * No localStorage / sessionStorage / cookies needed.
  */
 
-export const BASE = "https://testwala-backend.onrender.com";
+export const BASE = process.env.REACT_APP_API_BASE;
 
 export const apiFetch = async (path, opts = {}) => {
   const res = await fetch(`${BASE}${path}`, {
