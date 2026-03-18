@@ -1591,10 +1591,10 @@ import {
   FaBookmark,
   FaClock,
   FaLayerGroup,
-  FaFlag,
   FaStopwatch,
   FaBars,
   FaTimes,
+  FaTrophy,
 } from "react-icons/fa";
 import {
   MdOutlineBookmarkBorder,
@@ -1607,7 +1607,6 @@ const C = {
   bg: "#0b1e3d",
   bgCard: "#132952",
   bgElevated: "#1a3a6e",
-  bgOption: "#0f2240",
   bgLine: "rgba(255,255,255,.07)",
   blue: "#2563eb",
   blueDk: "#1e40af",
@@ -1620,7 +1619,6 @@ const C = {
   red: "#dc2626",
   redBg: "rgba(220,38,38,.18)",
   purple: "#7c3aed",
-  purpleBg: "rgba(124,58,237,.18)",
   amber: "#d97706",
   amberBg: "rgba(217,119,6,.18)",
   sky: "#38bdf8",
@@ -1638,33 +1636,20 @@ const STATUS = {
   answered: {
     palBg: "#16a34a",
     palRadius: "10px 10px 3px 3px",
-    dot: "#16a34a",
     label: "Answered",
   },
   skipped: {
     palBg: "#dc2626",
     palRadius: "3px 3px 10px 10px",
-    dot: "#dc2626",
     label: "Not Answered",
   },
-  marked: {
-    palBg: "#7c3aed",
-    palRadius: "50%",
-    dot: "#7c3aed",
-    label: "Marked",
-  },
+  marked: { palBg: "#7c3aed", palRadius: "50%", label: "Marked" },
   markedAnswered: {
     palBg: "#d97706",
     palRadius: "50%",
-    dot: "#d97706",
     label: "Marked & Ans.",
   },
-  unvisited: {
-    palBg: "transparent",
-    palRadius: "8px",
-    dot: "rgba(255,255,255,.3)",
-    label: "Not Visited",
-  },
+  unvisited: { palBg: "transparent", palRadius: "8px", label: "Not Visited" },
 };
 
 const getQStatus = (
@@ -1704,7 +1689,7 @@ const Bubble = ({ label, isCurrent, status, onClick }) => {
       transform={isCurrent ? "scale(1.1)" : "scale(1)"}
       transition="all .14s cubic-bezier(.4,0,.2,1)"
       onClick={onClick}
-      _active={{ transform: "scale(.92)", transition: "transform .07s" }}
+      _active={{ transform: "scale(.92)" }}
     >
       {label}
     </Center>
@@ -1730,7 +1715,7 @@ const TakeTest = ({ handleFullScreen }) => {
     ? testMeta.sections
     : [];
 
-  /* Shuffle */
+  /* ── Shuffle ──────────────────────────────────────────────────────────── */
   const [question] = useState(() => {
     if (!isSectioned || !sectionMeta.length)
       return [...quest].sort(() => Math.random() - 0.5);
@@ -1748,7 +1733,7 @@ const TakeTest = ({ handleFullScreen }) => {
     return result;
   });
 
-  /* Section boundaries */
+  /* ── Section boundaries ───────────────────────────────────────────────── */
   const sectionBoundaries = useMemo(() => {
     if (!isSectioned || !sectionMeta.length) return [];
     const result = [];
@@ -1768,7 +1753,7 @@ const TakeTest = ({ handleFullScreen }) => {
     return result;
   }, [isSectioned, sectionMeta]);
 
-  /* Core state */
+  /* ── Core state ───────────────────────────────────────────────────────── */
   const [currentQ, setCurrentQ] = useState(0);
   const [currentSec, setCurrentSec] = useState(0);
   const [answeredQuestion, setAnsweredQuestion] = useState([]);
@@ -1785,12 +1770,18 @@ const TakeTest = ({ handleFullScreen }) => {
   const [correctAns, setCorrectAns] = useState([]);
   const [animKey, setAnimKey] = useState(0);
 
-  /* ── Timer pause support ──────────────────────────────────────────────── */
+  /* ── Timer state ──────────────────────────────────────────────────────── */
+  // timerPaused: freezes both main timer and per-Q stopwatch
   const [timerPaused, setTimerPaused] = useState(false);
+  // pauseStartRef: wall-clock time when pause started, used to offset qStart
+  const pauseStartRef = useRef(null);
 
   const questionTimesRef = useRef({});
+  // qStartTimeRef: wall-clock time the student started the current question
   const qStartTimeRef = useRef(Date.now());
   const [qElapsed, setQElapsed] = useState(0);
+  // qElapsedRef: mirrors qElapsed for use inside closures without stale state
+  const qElapsedRef = useRef(0);
 
   const timeLimitMin = Number(testMeta?.timeLimitMin) || 0;
   const isCountdown = timeLimitMin > 0;
@@ -1808,10 +1799,12 @@ const TakeTest = ({ handleFullScreen }) => {
   const [fsActive, setFsActive] = useState(false);
   const [hasExitedFs, setHasExitedFs] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
+  // isLastQuestion: true when on final Q and triggering Save&Next / Mark
+  const [isLastQSubmit, setIsLastQSubmit] = useState(false);
   const cancelRef = useRef();
   const giveMarkRef = useRef(null);
 
-  /* Derived */
+  /* ── Derived ──────────────────────────────────────────────────────────── */
   const totalAnswered = answeredQuestion.length + markedAndAnswer.length;
   const progressPct =
     question.length > 0
@@ -1842,12 +1835,13 @@ const TakeTest = ({ handleFullScreen }) => {
   const timerWarn = isCountdown && remSec <= 600 && !timerUrgent;
   const isMarked =
     markedNotAnswer.includes(currentQ) || markedAndAnswer.includes(currentQ);
+  const isLastQ = currentQ === question.length - 1;
 
   useEffect(() => {
     allAnsRef.current = allAns;
   }, [allAns]);
 
-  /* Fullscreen on mount */
+  /* ── Fullscreen on mount ──────────────────────────────────────────────── */
   useEffect(() => {
     if (isMobile) return;
     const el = document.documentElement;
@@ -1862,24 +1856,50 @@ const TakeTest = ({ handleFullScreen }) => {
     })();
   }, []);
 
-  /* Per-Q stopwatch — pauses when test is paused */
+  /* ── Per-Q stopwatch ──────────────────────────────────────────────────
+     Uses a ref-based approach so pause offsets are always accurate.
+     When paused: we record the elapsed so far and stop the interval.
+     On resume:   we reset qStartTimeRef so the interval picks up correctly.
+  ─────────────────────────────────────────────────────────────────────── */
   useEffect(() => {
-    if (timerPaused) return;
-    const t = setInterval(
-      () =>
-        setQElapsed(Math.floor((Date.now() - qStartTimeRef.current) / 1000)),
-      1000,
-    );
+    if (timerPaused) return; // don't run when paused
+    const t = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - qStartTimeRef.current) / 1000);
+      qElapsedRef.current = elapsed;
+      setQElapsed(elapsed);
+    }, 500); // 500ms for smoother display
     return () => clearInterval(t);
   }, [currentQ, timerPaused]);
 
-  const saveQTime = (idx) => {
+  /* ── Save time spent on a question ───────────────────────────────────── */
+  const saveQTime = useCallback((idx) => {
+    // Add elapsed since last start to the accumulated time for this question
     const spent = Math.floor((Date.now() - qStartTimeRef.current) / 1000);
     questionTimesRef.current[idx] =
       (questionTimesRef.current[idx] || 0) + spent;
-  };
+  }, []);
 
-  /* Security */
+  /* ── Pause / Resume helpers ───────────────────────────────────────────
+     onPause:  save partial time, record pause start
+     onResume: reset qStartTimeRef to NOW (pause duration is excluded)
+  ─────────────────────────────────────────────────────────────────────── */
+  const handlePause = useCallback(() => {
+    // Save whatever time was spent before the pause
+    saveQTime(currentQ);
+    // Move qStartTimeRef forward so the interval doesn't double-count
+    pauseStartRef.current = Date.now();
+    setTimerPaused(true);
+  }, [currentQ, saveQTime]);
+
+  const handleResume = useCallback(() => {
+    // Reset start time to NOW — pause duration is simply not counted
+    qStartTimeRef.current = Date.now();
+    qElapsedRef.current = 0;
+    setQElapsed(0);
+    setTimerPaused(false);
+  }, []);
+
+  /* ── Security ─────────────────────────────────────────────────────────── */
   useEffect(() => {
     let requesting = false;
     const requestFS = async () => {
@@ -1945,6 +1965,7 @@ const TakeTest = ({ handleFullScreen }) => {
     document.addEventListener("contextmenu", h);
     return () => document.removeEventListener("contextmenu", h);
   }, []);
+
   useEffect(() => {
     const h = (e) => {
       if (e.key === "F11" || e.key === "Escape") e.preventDefault();
@@ -1955,14 +1976,19 @@ const TakeTest = ({ handleFullScreen }) => {
     return () => document.removeEventListener("keydown", h);
   }, []);
 
-  /* Timer — respects pause */
+  /* ── Main timer — respects timerPaused ───────────────────────────────── */
   useEffect(() => {
     if (timerPaused) return;
     const t = setTimeout(() => {
       if (isCountdown) {
         const rem = rh * 3600 + rm * 60 + rs;
         if (rem <= 0) {
-          toast({ title: "Time's Up!", status: "warning", position: "top" });
+          toast({
+            title: "Time's Up! Submitting…",
+            status: "warning",
+            position: "top",
+            duration: 3000,
+          });
           giveMarkRef.current?.();
           return;
         }
@@ -1990,11 +2016,13 @@ const TakeTest = ({ handleFullScreen }) => {
     return () => clearTimeout(t);
   }, [hour, min, sec, rh, rm, rs, isCountdown, timerPaused]);
 
-  /* Navigation */
+  /* ── Navigation ───────────────────────────────────────────────────────── */
   const goToQuestion = useCallback(
     (idx) => {
+      if (idx === currentQ) return; // no-op if same question
       saveQTime(currentQ);
       qStartTimeRef.current = Date.now();
+      qElapsedRef.current = 0;
       setQElapsed(0);
       setCurrentQ(idx);
       if (isSectioned) setCurrentSec(sectionBoundaries[idx]?.sectionIdx ?? 0);
@@ -2004,7 +2032,7 @@ const TakeTest = ({ handleFullScreen }) => {
       );
       setAnimKey((k) => k + 1);
     },
-    [currentQ, isSectioned, sectionBoundaries, question],
+    [currentQ, isSectioned, sectionBoundaries, question, saveQTime],
   );
 
   const goToSection = (sIdx) => {
@@ -2014,7 +2042,9 @@ const TakeTest = ({ handleFullScreen }) => {
     goToQuestion(offset);
   };
 
-  const handleSaveNext = () => {
+  /* ── Apply current-question status before navigating away ────────────── */
+  const applyCurrentQStatus = () => {
+    // If answered → mark as answered
     if (
       answer !== null &&
       allAnsRef.current[currentQ] !== undefined &&
@@ -2026,8 +2056,11 @@ const TakeTest = ({ handleFullScreen }) => {
         notAnswer.splice(notAnswer.indexOf(currentQ), 1);
       if (markedAndAnswer.includes(currentQ))
         markedAndAnswer.splice(markedAndAnswer.indexOf(currentQ), 1);
-      setAnsweredQuestion([...answeredQuestion, currentQ]);
-    } else if (
+      setAnsweredQuestion((prev) => [...prev, currentQ]);
+      return true; // had answer
+    }
+    // If nothing selected → mark as skipped
+    if (
       allAnsRef.current[currentQ] === undefined &&
       answer === null &&
       !notAnswer.includes(currentQ)
@@ -2038,12 +2071,29 @@ const TakeTest = ({ handleFullScreen }) => {
         markedAndAnswer.splice(markedAndAnswer.indexOf(currentQ), 1);
       if (answeredQuestion.includes(currentQ))
         answeredQuestion.splice(answeredQuestion.indexOf(currentQ), 1);
-      setNotAnswer([...notAnswer, currentQ]);
+      setNotAnswer((prev) => [...prev, currentQ]);
     }
-    if (question.length - 1 > currentQ) goToQuestion(currentQ + 1);
+    return false;
   };
 
+  /* ── Save & Next ──────────────────────────────────────────────────────
+     If on last question → open submit dialog with "last question" message.
+  ─────────────────────────────────────────────────────────────────────── */
+  const handleSaveNext = () => {
+    applyCurrentQStatus();
+    if (isLastQ) {
+      setIsLastQSubmit(true);
+      setSubmitOpen(true);
+    } else {
+      goToQuestion(currentQ + 1);
+    }
+  };
+
+  /* ── Mark for Review ─────────────────────────────────────────────────
+     If on last question → open submit dialog with "last question" message.
+  ─────────────────────────────────────────────────────────────────────── */
   const markedQuestion = () => {
+    // Save answer into allAns if not already there
     if (allAnsRef.current[currentQ] === undefined && answer !== null)
       setAllAns((p) => {
         const n = {
@@ -2053,6 +2103,7 @@ const TakeTest = ({ handleFullScreen }) => {
         allAnsRef.current = n;
         return n;
       });
+
     if (
       allAnsRef.current[currentQ] !== undefined &&
       !markedAndAnswer.includes(currentQ)
@@ -2060,10 +2111,10 @@ const TakeTest = ({ handleFullScreen }) => {
       if (answeredQuestion.includes(currentQ))
         answeredQuestion.splice(answeredQuestion.indexOf(currentQ), 1);
       if (markedNotAnswer.includes(currentQ))
-        notAnswer.splice(markedNotAnswer.indexOf(currentQ), 1);
+        markedNotAnswer.splice(markedNotAnswer.indexOf(currentQ), 1);
       if (notAnswer.includes(currentQ))
         notAnswer.splice(notAnswer.indexOf(currentQ), 1);
-      setMarkedAndAnswer([...markedAndAnswer, currentQ]);
+      setMarkedAndAnswer((prev) => [...prev, currentQ]);
       setans(null);
     } else if (
       allAnsRef.current[currentQ] === undefined &&
@@ -2078,68 +2129,67 @@ const TakeTest = ({ handleFullScreen }) => {
       if (answeredQuestion.includes(currentQ))
         answeredQuestion.splice(answeredQuestion.indexOf(currentQ), 1);
       if (markedAndAnswer.includes(currentQ))
-        notAnswer.splice(markedAndAnswer.indexOf(currentQ), 1);
+        markedAndAnswer.splice(markedAndAnswer.indexOf(currentQ), 1);
       if (notAnswer.includes(currentQ))
         notAnswer.splice(notAnswer.indexOf(currentQ), 1);
-      setMarkedNotAnswer([...markedNotAnswer, currentQ]);
+      setMarkedNotAnswer((prev) => [...prev, currentQ]);
     }
-    if (question.length - 1 > currentQ) goToQuestion(currentQ + 1);
+
+    if (isLastQ) {
+      setIsLastQSubmit(true);
+      setSubmitOpen(true);
+    } else {
+      goToQuestion(currentQ + 1);
+    }
   };
 
+  /* ── Select answer ────────────────────────────────────────────────────── */
   const handleAnswer = (optionText, optionIndex) => {
     setans(optionText);
     const isCorrect = question[currentQ].answer === optionIndex;
-    if (isCorrect && !correctAns.includes(currentQ)) {
-      if (wrongansqus.includes(currentQ)) {
-        setwrong((w) => w - 1);
-        wrongansqus.splice(wrongansqus.indexOf(currentQ), 1);
-      }
-      setMark((m) => m + 1);
-      setcorrectQus((p) => [...p, currentQ]);
-      setCorrectAns((p) => [...p, currentQ]);
-    } else if (!isCorrect && correctAns.includes(currentQ)) {
-      correctAns.splice(correctAns.indexOf(currentQ), 1);
-      correctQus.splice(correctQus.indexOf(currentQ), 1);
-      setMark((m) => m - 1);
-      setwrong((w) => w + 1);
-    }
-    if (
-      !isCorrect &&
-      !correctAns.includes(currentQ) &&
-      !wrongansqus.includes(currentQ)
-    ) {
-      setwrong((w) => w + 1);
-      setwrongansqus((p) => [...p, currentQ]);
-    }
+
     setAllAns((p) => {
       const n = { ...p, [currentQ]: optionIndex };
       allAnsRef.current = n;
       return n;
     });
+
+    if (isCorrect) {
+      // Was previously wrong → swap
+      if (wrongansqus.includes(currentQ)) {
+        setwrongansqus((prev) => prev.filter((i) => i !== currentQ));
+        setwrong((w) => w - 1);
+      }
+      // Not already in correct
+      if (!correctAns.includes(currentQ)) {
+        setMark((m) => m + 1);
+        setcorrectQus((p) => [...p, currentQ]);
+        setCorrectAns((p) => [...p, currentQ]);
+      }
+    } else {
+      // Was previously correct → swap
+      if (correctAns.includes(currentQ)) {
+        setCorrectAns((p) => p.filter((i) => i !== currentQ));
+        setcorrectQus((p) => p.filter((i) => i !== currentQ));
+        setMark((m) => m - 1);
+      }
+      if (!wrongansqus.includes(currentQ)) {
+        setwrong((w) => w + 1);
+        setwrongansqus((p) => [...p, currentQ]);
+      }
+    }
   };
 
-  /**
-   * FIX: handleClearAnswer
-   *
-   * Old bug: removing from markedAndAnswer/markedNotAnswer arrays but NOT
-   * removing from allAns — so on submit, allAns[currentQ] still existed,
-   * making ResultPage show it as "marked & answered".
-   *
-   * Fix: always delete allAns[currentQ], reset correctQus/wrongQus counts,
-   * and move to notAnswer (not-attempted state).
-   */
+  /* ── Clear answer ─────────────────────────────────────────────────────── */
   const handleClearAnswer = () => {
     const idx = currentQ;
-
-    // Remove from every status bucket
     if (answeredQuestion.includes(idx))
-      answeredQuestion.splice(answeredQuestion.indexOf(idx), 1);
+      setAnsweredQuestion((p) => p.filter((i) => i !== idx));
     if (markedAndAnswer.includes(idx))
-      markedAndAnswer.splice(markedAndAnswer.indexOf(idx), 1);
+      setMarkedAndAnswer((p) => p.filter((i) => i !== idx));
     if (markedNotAnswer.includes(idx))
-      markedNotAnswer.splice(markedNotAnswer.indexOf(idx), 1);
+      setMarkedNotAnswer((p) => p.filter((i) => i !== idx));
 
-    // CRITICAL: wipe the stored answer so it doesn't appear as answered on submit
     setAllAns((prev) => {
       const next = { ...prev };
       delete next[idx];
@@ -2147,27 +2197,20 @@ const TakeTest = ({ handleFullScreen }) => {
       return next;
     });
 
-    // Undo score / wrong counts if this question was previously evaluated
     if (correctAns.includes(idx)) {
-      correctAns.splice(correctAns.indexOf(idx), 1);
-      correctQus.splice(correctQus.indexOf(idx), 1);
+      setCorrectAns((p) => p.filter((i) => i !== idx));
+      setcorrectQus((p) => p.filter((i) => i !== idx));
       setMark((m) => m - 1);
-      setCorrectAns([...correctAns]);
-      setcorrectQus([...correctQus]);
     }
     if (wrongansqus.includes(idx)) {
-      wrongansqus.splice(wrongansqus.indexOf(idx), 1);
+      setwrongansqus((p) => p.filter((i) => i !== idx));
       setwrong((w) => w - 1);
-      setwrongansqus([...wrongansqus]);
     }
-
-    // Mark as "not answered" (red state)
-    if (!notAnswer.includes(idx)) setNotAnswer([...notAnswer, idx]);
-
-    // Clear the displayed selection
+    if (!notAnswer.includes(idx)) setNotAnswer((p) => [...p, idx]);
     setans(null);
   };
 
+  /* ── Compute section scores ───────────────────────────────────────────── */
   const computeSectionScores = () => {
     if (!isSectioned || !sectionMeta.length) return [];
     let offset = 0;
@@ -2193,17 +2236,19 @@ const TakeTest = ({ handleFullScreen }) => {
     });
   };
 
-  /**
-   * giveMark — the result state payload keys must EXACTLY match what
-   * ResultPage and AllAttemptsPanel expect.
-   *
-   * ResultPage reads:   s.wrongansqus  (direct from navigate state)
-   * AllAttemptsPanel reads: r.wrongQus (from DB via apiFetch)
-   *
-   * Both are handled: navigate state uses `wrongansqus`, DB field is `wrongQus`.
-   */
+  /* ── Submit ───────────────────────────────────────────────────────────── */
   const giveMark = async () => {
     saveQTime(currentQ);
+
+    // Snapshot arrays at submit time (avoid stale closure values)
+    const snapCorrectQus = [...correctQus];
+    const snapWrongansqus = [...wrongansqus];
+    const snapAnswered = [...answeredQuestion];
+    const snapNotAnswer = [...notAnswer];
+    const snapMarkedAns = [...markedAndAnswer];
+    const snapMarkedNot = [...markedNotAnswer];
+    const snapMark = mark;
+
     try {
       const subject = testMeta?.subject || "";
       const category = testMeta?.category || subject;
@@ -2211,7 +2256,9 @@ const TakeTest = ({ handleFullScreen }) => {
         ? totalTimeInSeconds - (rh * 3600 + rm * 60 + rs)
         : hour * 3600 + min * 60 + sec;
       const scorePct =
-        question.length > 0 ? Math.round((mark / question.length) * 100) : 0;
+        question.length > 0
+          ? Math.round((snapCorrectQus.length / question.length) * 100)
+          : 0;
       const sectionScores = computeSectionScores();
       let apiPercentile = null,
         savedResultId = null;
@@ -2220,18 +2267,18 @@ const TakeTest = ({ handleFullScreen }) => {
         try {
           const res = await resultsAPI.submit({
             testId: testMeta.testId,
-            score: mark,
+            score: snapCorrectQus.length,
             totalQuestions: question.length,
-            wrongAnswers: wrongans,
+            wrongAnswers: snapWrongansqus.length,
             timeTaken,
-            allAnswers: allAnsRef.current,
-            questionTimes: questionTimesRef.current,
-            correctQus,
-            wrongQus: wrongansqus, // ← DB field name
-            answeredQus: answeredQuestion,
-            notAnsweredQus: notAnswer,
-            markedAndAnswered: markedAndAnswer,
-            markedNotAnswered: markedNotAnswer,
+            allAnswers: { ...allAnsRef.current },
+            questionTimes: { ...questionTimesRef.current },
+            correctQus: snapCorrectQus,
+            wrongQus: snapWrongansqus,
+            answeredQus: snapAnswered,
+            notAnsweredQus: snapNotAnswer,
+            markedAndAnswered: snapMarkedAns,
+            markedNotAnswered: snapMarkedNot,
             shuffledQuestions: question,
             sectionScores,
           });
@@ -2253,7 +2300,7 @@ const TakeTest = ({ handleFullScreen }) => {
           testTitle: testMeta?.testTitle || category || subject,
           subject,
           category,
-          score: mark,
+          score: snapCorrectQus.length,
           totalQuestions: question.length,
           scorePercentage: scorePct,
           percentile: apiPercentile,
@@ -2266,13 +2313,13 @@ const TakeTest = ({ handleFullScreen }) => {
           questions: question,
           allAnswers: { ...allAnsRef.current },
           questionTimes: { ...questionTimesRef.current },
-          correctQus: [...correctQus],
-          wrongansqus: [...wrongansqus], // ← ResultPage reads this key
-          answeredQuestion: [...answeredQuestion],
-          notAnswer: [...notAnswer],
-          markedAndAnswer: [...markedAndAnswer],
-          markedNotAnswer: [...markedNotAnswer],
-          wrongans,
+          correctQus: snapCorrectQus,
+          wrongansqus: snapWrongansqus,
+          answeredQuestion: snapAnswered,
+          notAnswer: snapNotAnswer,
+          markedAndAnswer: snapMarkedAns,
+          markedNotAnswer: snapMarkedNot,
+          wrongans: snapWrongansqus.length,
         },
       });
     } catch (err) {
@@ -2294,7 +2341,7 @@ const TakeTest = ({ handleFullScreen }) => {
     }
   };
 
-  /* ── Navigator Drawer content ─────────────────────────────────────────── */
+  /* ── Navigator panel ──────────────────────────────────────────────────── */
   const NavigatorContent = () => (
     <Flex direction="column" h="100%" overflow="hidden">
       <Flex
@@ -2413,7 +2460,7 @@ const TakeTest = ({ handleFullScreen }) => {
         </Grid>
       </Box>
 
-      {/* Section tabs — only in drawer */}
+      {/* Section tabs */}
       {isSectioned && sectionMeta.length > 0 && (
         <Box
           px={5}
@@ -2448,7 +2495,7 @@ const TakeTest = ({ handleFullScreen }) => {
                   fontSize="11px"
                   fontWeight={700}
                   bg={
-                    isActive ? `rgba(56,189,248,.18)` : "rgba(255,255,255,.06)"
+                    isActive ? "rgba(56,189,248,.18)" : "rgba(255,255,255,.06)"
                   }
                   color={isActive ? C.sky : C.textSecondary}
                   border="1px solid"
@@ -2566,6 +2613,7 @@ const TakeTest = ({ handleFullScreen }) => {
           fontSize="13px"
           leftIcon={<Icon as={FaPaperPlane} fontSize="12px" />}
           onClick={() => {
+            setIsLastQSubmit(false);
             setSubmitOpen(true);
             onClose();
           }}
@@ -2638,7 +2686,7 @@ const TakeTest = ({ handleFullScreen }) => {
         </Box>
       )}
 
-      {/* ══ HEADER ══ */}
+      {/* ═══ HEADER ═══ */}
       <Box
         bg={C.bgCard}
         flexShrink={0}
@@ -2647,7 +2695,6 @@ const TakeTest = ({ handleFullScreen }) => {
         zIndex={10}
         position="relative"
       >
-        {/* Row 1 */}
         <Flex
           px={{ base: 4, md: 5 }}
           h={{ base: "54px", md: "58px" }}
@@ -2664,7 +2711,9 @@ const TakeTest = ({ handleFullScreen }) => {
                 ? C.redBg
                 : timerWarn
                   ? C.amberBg
-                  : "rgba(255,255,255,.07)"
+                  : timerPaused
+                    ? "rgba(217,119,6,.12)"
+                    : "rgba(255,255,255,.07)"
             }
             border="1px solid"
             borderColor={
@@ -2672,7 +2721,9 @@ const TakeTest = ({ handleFullScreen }) => {
                 ? "rgba(220,38,38,.4)"
                 : timerWarn
                   ? "rgba(217,119,6,.4)"
-                  : C.border
+                  : timerPaused
+                    ? "rgba(217,119,6,.35)"
+                    : C.border
             }
             borderRadius="10px"
             px={{ base: 3, md: 3.5 }}
@@ -2696,12 +2747,18 @@ const TakeTest = ({ handleFullScreen }) => {
                 timerPaused
                   ? `0 0 6px ${C.amber}`
                   : timerUrgent
-                    ? "0 0 6px #ef4444"
+                    ? "0 0 8px #ef4444"
                     : timerWarn
                       ? `0 0 6px ${C.amber}`
                       : `0 0 6px ${C.sky}`
               }
               flexShrink={0}
+              // Pulse animation when paused
+              style={
+                timerPaused
+                  ? { animation: "pulse 1.5s ease-in-out infinite" }
+                  : {}
+              }
             />
             <Text
               fontSize={{ base: "15px", md: "17px" }}
@@ -2725,7 +2782,6 @@ const TakeTest = ({ handleFullScreen }) => {
             </Text>
           </Flex>
 
-          {/* Title */}
           <Box flex={1} minW={0}>
             <Text
               fontSize={{ base: "12px", md: "13px" }}
@@ -2747,9 +2803,7 @@ const TakeTest = ({ handleFullScreen }) => {
             )}
           </Box>
 
-          {/* Controls */}
           <HStack spacing={2} flexShrink={0}>
-            {/* Pause — now passes testTitle + pause/resume callbacks */}
             <ModalPause
               markedAndAnswer={markedAndAnswer}
               question={question}
@@ -2757,14 +2811,8 @@ const TakeTest = ({ handleFullScreen }) => {
               notAnswer={notAnswer}
               answered={answeredQuestion}
               testTitle={testMeta?.testTitle || "Test"}
-              onPause={() => {
-                saveQTime(currentQ);
-                setTimerPaused(true);
-              }}
-              onResume={() => {
-                qStartTimeRef.current = Date.now();
-                setTimerPaused(false);
-              }}
+              onPause={handlePause}
+              onResume={handleResume}
             />
             <IconButton
               icon={<Icon as={FaBars} fontSize="14px" />}
@@ -2838,7 +2886,6 @@ const TakeTest = ({ handleFullScreen }) => {
                       fontWeight={isActive ? 800 : 600}
                       color={isActive ? "white" : C.textSecondary}
                       noOfLines={1}
-                      transition="color .15s"
                     >
                       {sec.name || sec.subject || `Section ${sIdx + 1}`}
                     </Text>
@@ -2880,7 +2927,7 @@ const TakeTest = ({ handleFullScreen }) => {
         </Box>
       </Box>
 
-      {/* ══ Q META ROW ══ */}
+      {/* Q meta row */}
       <Flex
         px={{ base: 4, md: 5 }}
         py={{ base: "10px", md: "11px" }}
@@ -2911,15 +2958,25 @@ const TakeTest = ({ handleFullScreen }) => {
             <Icon
               as={FaStopwatch}
               fontSize="10px"
-              color={qElapsed > 120 ? C.amber : C.textMuted}
+              color={
+                timerPaused ? C.amber : qElapsed > 120 ? C.amber : C.textMuted
+              }
             />
             <Text
               fontSize={{ base: "12px", md: "13px" }}
               fontWeight={700}
-              color={qElapsed > 120 ? C.amber : C.textSecondary}
+              color={
+                timerPaused
+                  ? C.amber
+                  : qElapsed > 120
+                    ? C.amber
+                    : C.textSecondary
+              }
               fontFamily="'JetBrains Mono',monospace"
             >
-              {pad(Math.floor(qElapsed / 60))}:{pad(qElapsed % 60)}
+              {timerPaused
+                ? "--:--"
+                : `${pad(Math.floor(qElapsed / 60))}:${pad(qElapsed % 60)}`}
             </Text>
           </Flex>
           <Flex
@@ -2937,6 +2994,23 @@ const TakeTest = ({ handleFullScreen }) => {
               {totalAnswered}
             </Text>
           </Flex>
+          {/* Last question badge */}
+          {isLastQ && (
+            <Flex
+              align="center"
+              gap={1.5}
+              bg="rgba(251,191,36,.15)"
+              border="1px solid rgba(251,191,36,.3)"
+              borderRadius="7px"
+              px={2.5}
+              py="3px"
+            >
+              <Icon as={FaTrophy} fontSize="9px" color="#fbbf24" />
+              <Text fontSize="10px" fontWeight={700} color="#fbbf24">
+                Last Q
+              </Text>
+            </Flex>
+          )}
         </HStack>
         <HStack spacing={2}>
           <IconButton
@@ -2954,26 +3028,15 @@ const TakeTest = ({ handleFullScreen }) => {
             bg={isMarked ? C.amberBg : "transparent"}
             color={isMarked ? C.amber : C.textMuted}
             aria-label="Mark for review"
-            border={isMarked ? `1px solid rgba(217,119,6,.35)` : "none"}
+            border={isMarked ? "1px solid rgba(217,119,6,.35)" : "none"}
             _hover={{ bg: C.amberBg, color: C.amber }}
             transition="all .15s"
-          />
-          <IconButton
-            icon={<Icon as={MdOutlineReport} fontSize="16px" />}
-            h="30px"
-            w="30px"
-            minW="30px"
-            borderRadius="7px"
-            bg="transparent"
-            color={C.textMuted}
-            aria-label="Report"
-            _hover={{ bg: "rgba(220,38,38,.12)", color: "#f87171" }}
           />
           {!isMobile && <ReportQuestionDropdown />}
         </HStack>
       </Flex>
 
-      {/* ══ BODY ══ */}
+      {/* ═══ BODY ═══ */}
       <Flex flex={1} overflow="hidden">
         <Flex direction="column" flex={1} overflow="hidden" minW={0}>
           {/* Scrollable content */}
@@ -2998,7 +3061,6 @@ const TakeTest = ({ handleFullScreen }) => {
                 lineHeight={{ base: "1.75", md: "1.8" }}
                 color={C.textPrimary}
                 fontWeight={400}
-                letterSpacing=".1px"
               >
                 {question[currentQ]?.qus}
               </Text>
@@ -3006,7 +3068,7 @@ const TakeTest = ({ handleFullScreen }) => {
 
             {/* Options */}
             <VStack spacing={{ base: "10px", md: "12px" }} align="stretch">
-              {question[currentQ]?.options.map((opt, i) => {
+              {question[currentQ]?.options?.map((opt, i) => {
                 const sel = answer === opt;
                 return (
                   <Box
@@ -3014,7 +3076,7 @@ const TakeTest = ({ handleFullScreen }) => {
                     borderRadius={{ base: "12px", md: "14px" }}
                     border="1.5px solid"
                     borderColor={sel ? C.blue : C.border}
-                    bg={sel ? `rgba(37,99,235,.15)` : C.bgCard}
+                    bg={sel ? "rgba(37,99,235,.15)" : C.bgCard}
                     boxShadow={
                       sel
                         ? `0 0 0 1px ${C.blue}, 0 4px 20px ${C.blueGlow}`
@@ -3024,7 +3086,7 @@ const TakeTest = ({ handleFullScreen }) => {
                     transition="all .15s cubic-bezier(.4,0,.2,1)"
                     _hover={{
                       borderColor: sel ? C.blue : C.borderMid,
-                      bg: sel ? `rgba(37,99,235,.18)` : C.bgElevated,
+                      bg: sel ? "rgba(37,99,235,.18)" : C.bgElevated,
                     }}
                     _active={{
                       transform: "scale(.99)",
@@ -3075,7 +3137,7 @@ const TakeTest = ({ handleFullScreen }) => {
             <Box h={{ base: "12px", md: "16px" }} />
           </Box>
 
-          {/* ══ ACTION BAR ══ */}
+          {/* ═══ ACTION BAR ═══ */}
           <Box bg={C.bgCard} borderTop={`1px solid ${C.bgLine}`} flexShrink={0}>
             {/* MOBILE */}
             {isMobile && (
@@ -3098,7 +3160,6 @@ const TakeTest = ({ handleFullScreen }) => {
                   >
                     Prev
                   </Button>
-
                   <Button
                     flex={2}
                     h="40px"
@@ -3120,7 +3181,6 @@ const TakeTest = ({ handleFullScreen }) => {
                   >
                     Mark For Review
                   </Button>
-
                   <Button
                     flex={1}
                     h="40px"
@@ -3142,35 +3202,47 @@ const TakeTest = ({ handleFullScreen }) => {
                     flex={3}
                     h="50px"
                     borderRadius="14px"
-                    bg={`linear-gradient(135deg,${C.blue},${C.blueDk})`}
+                    bg={
+                      isLastQ
+                        ? `linear-gradient(135deg,${C.teal},${C.tealDk})`
+                        : `linear-gradient(135deg,${C.blue},${C.blueDk})`
+                    }
                     color="white"
                     fontWeight={800}
                     fontSize="15px"
-                    rightIcon={<Icon as={FaChevronRight} fontSize="13px" />}
+                    rightIcon={
+                      <Icon
+                        as={isLastQ ? FaPaperPlane : FaChevronRight}
+                        fontSize="13px"
+                      />
+                    }
                     onClick={handleSaveNext}
-                    boxShadow={`0 4px 20px ${C.blueGlow}`}
+                    boxShadow={
+                      isLastQ
+                        ? `0 4px 20px ${C.tealGlow}`
+                        : `0 4px 20px ${C.blueGlow}`
+                    }
                     _hover={{ opacity: 0.95 }}
-                    _active={{
-                      transform: "scale(.98)",
-                      transition: "transform .08s",
-                    }}
+                    _active={{ transform: "scale(.98)" }}
                     transition="all .15s"
                   >
-                    Save & Next
+                    {isLastQ ? "Finish & Submit" : "Save & Next"}
                   </Button>
                   <Button
                     flex={1}
                     h="50px"
                     borderRadius="14px"
-                    bg={`rgba(13,148,136,.18)`}
+                    bg="rgba(13,148,136,.18)"
                     color={C.teal}
-                    border={`1.5px solid rgba(13,148,136,.35)`}
+                    border="1.5px solid rgba(13,148,136,.35)"
                     fontWeight={800}
                     fontSize="12px"
                     leftIcon={<Icon as={FaPaperPlane} fontSize="11px" />}
-                    onClick={() => setSubmitOpen(true)}
+                    onClick={() => {
+                      setIsLastQSubmit(false);
+                      setSubmitOpen(true);
+                    }}
                     _hover={{ bg: "rgba(13,148,136,.25)" }}
-                    transition="all .15s"
                   >
                     Submit
                   </Button>
@@ -3251,9 +3323,9 @@ const TakeTest = ({ handleFullScreen }) => {
                         h="42px"
                         px={5}
                         borderRadius="11px"
-                        bg={`rgba(13,148,136,.14)`}
+                        bg="rgba(13,148,136,.14)"
                         color={C.teal}
-                        border={`1px solid rgba(13,148,136,.25)`}
+                        border="1px solid rgba(13,148,136,.25)"
                         fontWeight={800}
                         fontSize="13px"
                         rightIcon={<Icon as={FaLayerGroup} fontSize="10px" />}
@@ -3267,19 +3339,30 @@ const TakeTest = ({ handleFullScreen }) => {
                     h="42px"
                     px={7}
                     borderRadius="11px"
-                    bg={`linear-gradient(135deg,${C.blue},${C.blueDk})`}
+                    bg={
+                      isLastQ
+                        ? `linear-gradient(135deg,${C.teal},${C.tealDk})`
+                        : `linear-gradient(135deg,${C.blue},${C.blueDk})`
+                    }
                     color="white"
                     fontWeight={800}
                     fontSize="13px"
-                    rightIcon={<Icon as={FaChevronRight} fontSize="11px" />}
+                    rightIcon={
+                      <Icon
+                        as={isLastQ ? FaPaperPlane : FaChevronRight}
+                        fontSize="11px"
+                      />
+                    }
                     onClick={handleSaveNext}
                     _hover={{
                       opacity: 0.9,
-                      boxShadow: `0 6px 20px ${C.blueGlow}`,
+                      boxShadow: isLastQ
+                        ? `0 6px 20px ${C.tealGlow}`
+                        : `0 6px 20px ${C.blueGlow}`,
                     }}
                     transition="all .15s"
                   >
-                    Save & Next
+                    {isLastQ ? "Finish & Submit" : "Save & Next"}
                   </Button>
                   <Button
                     h="42px"
@@ -3290,7 +3373,10 @@ const TakeTest = ({ handleFullScreen }) => {
                     fontWeight={800}
                     fontSize="13px"
                     leftIcon={<Icon as={FaPaperPlane} fontSize="11px" />}
-                    onClick={() => setSubmitOpen(true)}
+                    onClick={() => {
+                      setIsLastQSubmit(false);
+                      setSubmitOpen(true);
+                    }}
                     _hover={{
                       opacity: 0.9,
                       boxShadow: `0 6px 20px ${C.tealGlow}`,
@@ -3333,11 +3419,14 @@ const TakeTest = ({ handleFullScreen }) => {
         </Drawer>
       )}
 
-      {/* ══ SUBMIT DIALOG ══ */}
+      {/* ═══ SUBMIT DIALOG ═══ */}
       <AlertDialog
         isOpen={submitOpen}
         leastDestructiveRef={cancelRef}
-        onClose={() => setSubmitOpen(false)}
+        onClose={() => {
+          setSubmitOpen(false);
+          setIsLastQSubmit(false);
+        }}
         isCentered
         motionPreset="slideInBottom"
       >
@@ -3386,6 +3475,35 @@ const TakeTest = ({ handleFullScreen }) => {
             </Box>
 
             <AlertDialogBody p={5}>
+              {/* Last question special message */}
+              {isLastQSubmit && (
+                <Flex
+                  align="center"
+                  gap={2.5}
+                  bg="rgba(56,189,248,.1)"
+                  borderRadius="12px"
+                  p={3.5}
+                  border="1px solid rgba(56,189,248,.25)"
+                  mb={4}
+                >
+                  <Icon
+                    as={FaTrophy}
+                    color={C.sky}
+                    fontSize="14px"
+                    flexShrink={0}
+                  />
+                  <Box>
+                    <Text fontSize="13px" fontWeight={700} color={C.sky}>
+                      You've reached the last question!
+                    </Text>
+                    <Text fontSize="11px" color={C.textSecondary} mt={0.5}>
+                      Review your answers below before submitting.
+                    </Text>
+                  </Box>
+                </Flex>
+              )}
+
+              {/* Section summary */}
               {isSectioned && sectionMeta.length > 0 && (
                 <Box
                   mb={4}
@@ -3460,6 +3578,7 @@ const TakeTest = ({ handleFullScreen }) => {
                 </Box>
               )}
 
+              {/* Stats */}
               <Grid templateColumns="repeat(4,1fr)" gap={2} mb={4}>
                 {[
                   {
@@ -3549,10 +3668,13 @@ const TakeTest = ({ handleFullScreen }) => {
                 border={`1px solid ${C.border}`}
                 fontWeight={700}
                 fontSize="14px"
-                onClick={() => setSubmitOpen(false)}
+                onClick={() => {
+                  setSubmitOpen(false);
+                  setIsLastQSubmit(false);
+                }}
                 _hover={{ bg: "rgba(255,255,255,.12)" }}
               >
-                Cancel
+                {isLastQSubmit ? "Review Answers" : "Cancel"}
               </Button>
               <Button
                 flex={1}
@@ -3565,6 +3687,7 @@ const TakeTest = ({ handleFullScreen }) => {
                 leftIcon={<Icon as={FaPaperPlane} fontSize="12px" />}
                 onClick={() => {
                   setSubmitOpen(false);
+                  setIsLastQSubmit(false);
                   giveMark();
                 }}
                 _hover={{ opacity: 0.9, boxShadow: `0 8px 24px ${C.tealGlow}` }}
@@ -3576,6 +3699,14 @@ const TakeTest = ({ handleFullScreen }) => {
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
+
+      {/* Pulse keyframe for paused dot */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+      `}</style>
     </Box>
   );
 };
