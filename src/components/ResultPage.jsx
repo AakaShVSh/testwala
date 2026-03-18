@@ -2429,7 +2429,7 @@ export default function ResultPage() {
               </Flex>
               <Box>
                 <Text fontSize="15px" fontWeight={800} color="#0f172a">
-                  {percentile !== null ? "Ranking" : "Score Summary"}
+                  {percentile !== null ? "Percentile" : "Score Summary"}
                 </Text>
                 <Text fontSize="11px" color="#94a3b8">
                   {percentile !== null
