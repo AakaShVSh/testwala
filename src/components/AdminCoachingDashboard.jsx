@@ -433,7 +433,7 @@ function TestSubmissionsModal({ test, isOpen, onClose }) {
                   </Text>
                 </Box>
               ))}
-            </Grid>
+            </Grid> 
           )}
 
           {/* Search */}
