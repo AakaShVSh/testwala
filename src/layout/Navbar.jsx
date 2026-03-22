@@ -618,6 +618,9 @@ import {
   FaTrophy,
   FaShieldAlt,
   FaClipboardList,
+  FaChartBar,
+  FaUsers,
+  FaLayerGroup,
 } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import { NotificationBell } from "../components/RequestTestDrawer";
@@ -629,6 +632,15 @@ const LINKS = [
   { label: "My Tests", to: "/UserTestData", icon: FaTrophy, auth: true },
 ];
 
+// Admin sub-nav items shown in dropdown and mobile drawer
+const ADMIN_LINKS = [
+  { label: "Dashboard", to: "/admin/dashboard", icon: FaChartBar },
+  { label: "Users", to: "/admin/users", icon: FaUsers },
+  { label: "Coaching", to: "/admin/coaching", icon: FaChalkboardTeacher },
+  { label: "Tests", to: "/admin/tests", icon: FaLayerGroup },
+  { label: "Test Requests", to: "/admin/test-requests", icon: FaClipboardList },
+];
+
 const Navbar = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -637,6 +649,10 @@ const Navbar = () => {
 
   const isActive = (to) =>
     to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+
+  const isAnyAdminActive = ADMIN_LINKS.some((l) =>
+    location.pathname.startsWith(l.to),
+  );
 
   const handleSignOut = async () => {
     await signOut();
@@ -659,7 +675,7 @@ const Navbar = () => {
       <Flex
         maxW="1390px"
         mx="auto"
-        px={{ base: 4, md: 6,lg:0 }}
+        px={{ base: 4, md: 6, lg: 0 }}
         py={0}
         align="center"
         justify="space-between"
@@ -671,14 +687,14 @@ const Navbar = () => {
             src={logo}
             mt={4}
             alt="logo"
-            h={{ base: "40px", md: "48px",lg:"80px" }}
+            h={{ base: "40px", md: "48px", lg: "80px" }}
             w="auto"
             objectFit="cover"
             transform="scale(1.6)"
-            // alignItems={}
             transformOrigin="left center"
           />
         </Link>
+
         {/* ── Desktop nav links ── */}
         <Flex align="center" gap={1} display={{ base: "none", md: "flex" }}>
           {LINKS.filter((l) => !l.auth || user).map((link) => (
@@ -699,30 +715,57 @@ const Navbar = () => {
             </Link>
           ))}
 
-          {/* Admin link — desktop */}
+          {/* Admin dropdown — desktop */}
           {isAdmin && (
-            <Link to="/admin/coaching">
-              <Flex
-                align="center"
-                gap={1.5}
-                px={4}
+            <Menu>
+              <MenuButton>
+                <Flex
+                  align="center"
+                  gap={1.5}
+                  px={4}
+                  py={2}
+                  borderRadius="9px"
+                  fontSize="13px"
+                  fontWeight={isAnyAdminActive ? 600 : 500}
+                  color={isAnyAdminActive ? "#7c3aed" : "#6d28d9"}
+                  bg={isAnyAdminActive ? "#f5f3ff" : "rgba(124,58,237,.07)"}
+                  border="1px solid"
+                  borderColor={
+                    isAnyAdminActive ? "#c4b5fd" : "rgba(124,58,237,.2)"
+                  }
+                  _hover={{ bg: "#f5f3ff", borderColor: "#c4b5fd" }}
+                  transition="all .15s"
+                >
+                  <Icon as={FaShieldAlt} fontSize="11px" />
+                  Admin
+                </Flex>
+              </MenuButton>
+              <MenuList
+                borderRadius="12px"
+                border="1px solid #e2e8f0"
+                boxShadow="0 8px 30px rgba(0,0,0,.1)"
                 py={2}
-                borderRadius="9px"
-                fontSize="13px"
-                fontWeight={isActive("/admin") ? 600 : 500}
-                color={isActive("/admin") ? "#7c3aed" : "#6d28d9"}
-                bg={isActive("/admin") ? "#f5f3ff" : "rgba(124,58,237,.07)"}
-                border="1px solid"
-                borderColor={
-                  isActive("/admin") ? "#c4b5fd" : "rgba(124,58,237,.2)"
-                }
-                _hover={{ bg: "#f5f3ff", borderColor: "#c4b5fd" }}
-                transition="all .15s"
+                minW="200px"
               >
-                <Icon as={FaShieldAlt} fontSize="11px" />
-                Admin
-              </Flex>
-            </Link>
+                {ADMIN_LINKS.map((al) => (
+                  <MenuItem
+                    key={al.to}
+                    icon={<Icon as={al.icon} color="#7c3aed" fontSize="12px" />}
+                    onClick={() => navigate(al.to)}
+                    fontSize="13px"
+                    fontWeight={isActive(al.to) ? 700 : 500}
+                    color={isActive(al.to) ? "#6d28d9" : "#374151"}
+                    bg={isActive(al.to) ? "#f5f3ff" : "white"}
+                    borderRadius="8px"
+                    mx={2}
+                    w="calc(100% - 16px)"
+                    _hover={{ bg: "#f5f3ff", color: "#6d28d9" }}
+                  >
+                    {al.label}
+                  </MenuItem>
+                ))}
+              </MenuList>
+            </Menu>
           )}
         </Flex>
 
@@ -850,33 +893,27 @@ const Navbar = () => {
                         textTransform="uppercase"
                         letterSpacing="1.5px"
                       >
-                        Admin
+                        Admin Panel
                       </Text>
                     </Box>
-                    <MenuItem
-                      icon={<Icon as={FaShieldAlt} color="#7c3aed" />}
-                      onClick={() => navigate("/admin/coaching")}
-                      color="#6d28d9"
-                      fontWeight={500}
-                      borderRadius="8px"
-                      mx={2}
-                      w="calc(100% - 16px)"
-                      _hover={{ bg: "#f5f3ff" }}
-                    >
-                      Coaching Requests
-                    </MenuItem>
-                    <MenuItem
-                      icon={<Icon as={FaClipboardList} color="#7c3aed" />}
-                      onClick={() => navigate("/admin/test-requests")}
-                      color="#6d28d9"
-                      fontWeight={500}
-                      borderRadius="8px"
-                      mx={2}
-                      w="calc(100% - 16px)"
-                      _hover={{ bg: "#f5f3ff" }}
-                    >
-                      Test Requests
-                    </MenuItem>
+                    {ADMIN_LINKS.map((al) => (
+                      <MenuItem
+                        key={al.to}
+                        icon={
+                          <Icon as={al.icon} color="#7c3aed" fontSize="12px" />
+                        }
+                        onClick={() => navigate(al.to)}
+                        color="#6d28d9"
+                        fontWeight={500}
+                        fontSize="13px"
+                        borderRadius="8px"
+                        mx={2}
+                        w="calc(100% - 16px)"
+                        _hover={{ bg: "#f5f3ff" }}
+                      >
+                        {al.label}
+                      </MenuItem>
+                    ))}
                   </>
                 )}
 
@@ -950,7 +987,6 @@ const Navbar = () => {
           </DrawerHeader>
           <DrawerBody py={4}>
             <Stack spacing={1}>
-              {/* User info strip */}
               {user && (
                 <Flex
                   align="center"
@@ -1005,7 +1041,6 @@ const Navbar = () => {
                 </Flex>
               )}
 
-              {/* Nav links */}
               {LINKS.filter((l) => !l.auth || user).map((link) => (
                 <Flex
                   key={link.to}
@@ -1030,7 +1065,7 @@ const Navbar = () => {
                 </Flex>
               ))}
 
-              {/* Admin links (mobile) */}
+              {/* Admin links — mobile */}
               {isAdmin && (
                 <>
                   <Box px={4} pt={3} pb={1}>
@@ -1041,59 +1076,35 @@ const Navbar = () => {
                       textTransform="uppercase"
                       letterSpacing="1.5px"
                     >
-                      Admin
+                      Admin Panel
                     </Text>
                   </Box>
-                  <Flex
-                    align="center"
-                    gap={3}
-                    px={4}
-                    py={3}
-                    borderRadius="10px"
-                    fontSize="14px"
-                    fontWeight={500}
-                    color={isActive("/admin") ? "#7c3aed" : "#6d28d9"}
-                    bg={isActive("/admin") ? "#f5f3ff" : "rgba(124,58,237,.05)"}
-                    cursor="pointer"
-                    onClick={() => {
-                      navigate("/admin/coaching");
-                      onClose();
-                    }}
-                    _hover={{ bg: "#f5f3ff" }}
-                  >
-                    <Icon as={FaShieldAlt} fontSize="14px" />
-                    Coaching Requests
-                  </Flex>
-                  <Flex
-                    align="center"
-                    gap={3}
-                    px={4}
-                    py={3}
-                    borderRadius="10px"
-                    fontSize="14px"
-                    fontWeight={500}
-                    color={
-                      isActive("/admin/test-requests") ? "#7c3aed" : "#6d28d9"
-                    }
-                    bg={
-                      isActive("/admin/test-requests")
-                        ? "#f5f3ff"
-                        : "rgba(124,58,237,.05)"
-                    }
-                    cursor="pointer"
-                    onClick={() => {
-                      navigate("/admin/test-requests");
-                      onClose();
-                    }}
-                    _hover={{ bg: "#f5f3ff" }}
-                  >
-                    <Icon as={FaClipboardList} fontSize="14px" />
-                    Test Requests
-                  </Flex>
+                  {ADMIN_LINKS.map((al) => (
+                    <Flex
+                      key={al.to}
+                      align="center"
+                      gap={3}
+                      px={4}
+                      py={3}
+                      borderRadius="10px"
+                      fontSize="14px"
+                      fontWeight={500}
+                      color={isActive(al.to) ? "#7c3aed" : "#6d28d9"}
+                      bg={isActive(al.to) ? "#f5f3ff" : "rgba(124,58,237,.05)"}
+                      cursor="pointer"
+                      onClick={() => {
+                        navigate(al.to);
+                        onClose();
+                      }}
+                      _hover={{ bg: "#f5f3ff" }}
+                    >
+                      <Icon as={al.icon} fontSize="14px" />
+                      {al.label}
+                    </Flex>
+                  ))}
                 </>
               )}
 
-              {/* Auth actions */}
               {user ? (
                 <Flex
                   align="center"
@@ -1144,7 +1155,7 @@ const Navbar = () => {
                       onClose();
                     }}
                   >
-                    Account Banao
+                    Create Account
                   </Box>
                 </>
               )}

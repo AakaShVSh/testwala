@@ -680,8 +680,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import Slideshow from "./Slideshow";
 import { useRef, useState, useEffect } from "react";
-import AdsterraBanner from "./AdsterraBanner";
-import FloatingVideoAd from "./FloatingVideoAd";
+// import FloatingVideoAd from "./FloatingVideoAd";
 
 /* ─── Fonts ─────────────────────────────────────────────────────────────── */
 const FONTS = `
@@ -1695,7 +1694,6 @@ const Home = ({ setchoosesub }) => {
         px={{ base: "16px", md: "24px", lg: "40px" }}
         pb={{ base: "32px", md: "40px" }}
       >
-        <AdsterraBanner />
       </Box>
 
       {/* <FloatingVideoAd /> */}
