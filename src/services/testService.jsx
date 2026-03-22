@@ -1,172 +1,138 @@
-import axios from "axios";
-import { setCookies } from "../helpers/cookies";
-import { setLocalStorage } from "../helpers/localStorage";
+/**
+ * src/services/testService.js
+ * ─────────────────────────────────────────────────────────────────────────────
+ * ⚠️  DEPRECATED — do not add new code here.
+ *
+ * This file previously used axios + cookies + localStorage for auth.
+ * All of that logic has been centralised in api.js which uses the native
+ * fetch API with httpOnly session cookies (no manual token storage needed).
+ *
+ * MIGRATION GUIDE
+ * ───────────────
+ * Replace every import from this file with the equivalent from api.js:
+ *
+ *   OLD (testService)                NEW (api)
+ *   ─────────────────────────────    ──────────────────────────────────────
+ *   signUpApi(data, _, setMsg)   →   authAPI.signUp(data)
+ *   signInApi(data, setMsg)      →   authAPI.signIn(data)
+ *   createTestApi(data, setMsg)  →   testsAPI.create(data)
+ *   getAllTestsApi(setMsg)        →   testsAPI.getAll()
+ *   getTestByIdApi(id, setMsg)   →   testsAPI.getById(id)
+ *   getTestBySlugApi(s, setMsg)  →   testsAPI.getBySlug(s)
+ *   getTestLeaderboardApi(id, _) →   testsAPI.getLeaderboard(id)
+ *   updateTestApi(id, d, setMsg) →   testsAPI.update(id, d)
+ *   deleteTestApi(id, setMsg)    →   testsAPI.delete(id)
+ *
+ * The shims below let existing call-sites keep working while you migrate.
+ * They log a deprecation warning in development so you can track them down.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
 
+import { authAPI, testsAPI } from "./api";
 
-const BASE_URL = "https://testwala-backend.onrender.com";
-// "http://localhost:80"; // change to https://testwala-backend.onrender.com for prod
+const warn = (fn) =>
+  console.warn(
+    `[testService] "${fn}" is deprecated. Import from services/api.js instead.`,
+  );
 
+// ── Auth shims ────────────────────────────────────────────────────────────────
 
-// ─── AUTH ────────────────────────────────────────────────────────────────────
-
-export const signUpApi = async (data, cmpPassword, setMessage) => {
+export const signUpApi = async (data, _cmpPassword, setMessage) => {
+  warn("signUpApi");
   try {
-    const r = await axios.post(`${BASE_URL}/auth/signup`, data);
-    if (r.data.token !== undefined) {
-      setCookies("_user", r.data.token);
-      setMessage(r.data.message);
-      return true;
-    } else {
-      setMessage(r.data.message);
-      return false;
-    }
-  } catch (error) {
-    console.error(error.message);
-    setMessage("Something went wrong");
+    const r = await authAPI.signUp(data);
+    setMessage?.(r.message);
+    return true;
+  } catch (e) {
+    setMessage?.(e.message || "Something went wrong");
     return false;
   }
 };
 
 export const signInApi = async (data, setMessage) => {
+  warn("signInApi");
   try {
-    const r = await axios.post(`${BASE_URL}/auth/signin`, data);
-    if (r.data.token) {
-      setCookies("_user", r.data.token);
-      setLocalStorage("_user", r.data.data._id);
-      setMessage(r.data.message);
-      return true;
-    } else {
-      setMessage(r.data.message);
-      return false;
-    }
-  } catch (error) {
-    console.error(error.message);
-    setMessage("Something went wrong");
+    const r = await authAPI.signIn(data);
+    setMessage?.(r.message);
+    return true;
+  } catch (e) {
+    setMessage?.(e.message || "Something went wrong");
     return false;
   }
 };
 
-// ─── TESTS ───────────────────────────────────────────────────────────────────
+// ── Test shims ────────────────────────────────────────────────────────────────
 
-/**
- * POST /tests/create
- * Create a new test and save result to backend.
- */
 export const createTestApi = async (testData, setMessage) => {
+  warn("createTestApi");
   try {
-    const r = await axios.post(`${BASE_URL}/tests/create`, testData, {
-      withCredentials: true,
-    });
-    if (r.data) {
-      setLocalStorage("currentTestId", r.data._id || r.data.id);
-      return r.data;
-    }
-    return null;
-  } catch (error) {
-    console.error(error.message);
-    if (setMessage) setMessage("Failed to save test");
+    return await testsAPI.create(testData);
+  } catch (e) {
+    setMessage?.("Failed to save test");
     return null;
   }
 };
 
-/**
- * GET /tests
- * Fetch all tests for the logged-in user.
- */
 export const getAllTestsApi = async (setMessage) => {
+  warn("getAllTestsApi");
   try {
-    const r = await axios.get(`${BASE_URL}/tests`, {
-      withCredentials: true,
-    });
-    return r.data;
-  } catch (error) {
-    console.error(error.message);
-    if (setMessage) setMessage("Failed to fetch tests");
+    const r = await testsAPI.getAll();
+    return r.data ?? r;
+  } catch (e) {
+    setMessage?.("Failed to fetch tests");
     return [];
   }
 };
 
-/**
- * GET /tests/id/:id
- * Fetch a single test by its MongoDB _id.
- */
 export const getTestByIdApi = async (id, setMessage) => {
+  warn("getTestByIdApi");
   try {
-    const r = await axios.get(`${BASE_URL}/tests/id/${id}`, {
-      withCredentials: true,
-    });
-    return r.data;
-  } catch (error) {
-    console.error(error.message);
-    if (setMessage) setMessage("Failed to fetch test");
+    const r = await testsAPI.getById(id);
+    return r.data ?? r;
+  } catch (e) {
+    setMessage?.("Failed to fetch test");
     return null;
   }
 };
 
-/**
- * GET /tests/:slug
- * Fetch a test by its slug (e.g. test name / url-friendly id).
- */
 export const getTestBySlugApi = async (slug, setMessage) => {
+  warn("getTestBySlugApi");
   try {
-    const r = await axios.get(`${BASE_URL}/tests/${slug}`, {
-      withCredentials: true,
-    });
-    return r.data;
-  } catch (error) {
-    console.error(error.message);
-    if (setMessage) setMessage("Failed to fetch test");
+    const r = await testsAPI.getBySlug(slug);
+    return r.data ?? r;
+  } catch (e) {
+    setMessage?.("Failed to fetch test");
     return null;
   }
 };
 
-/**
- * GET /tests/:id/leaderboard
- * Fetch leaderboard for a specific test.
- */
 export const getTestLeaderboardApi = async (id, setMessage) => {
+  warn("getTestLeaderboardApi");
   try {
-    const r = await axios.get(`${BASE_URL}/tests/${id}/leaderboard`, {
-      withCredentials: true,
-    });
-    return r.data;
-  } catch (error) {
-    console.error(error.message);
-    if (setMessage) setMessage("Failed to fetch leaderboard");
+    const r = await testsAPI.getLeaderboard(id);
+    return r.data ?? r;
+  } catch (e) {
+    setMessage?.("Failed to fetch leaderboard");
     return [];
   }
 };
 
-/**
- * PATCH /tests/:id
- * Update a test (e.g. update title, questions, etc).
- */
 export const updateTestApi = async (id, updatedData, setMessage) => {
+  warn("updateTestApi");
   try {
-    const r = await axios.patch(`${BASE_URL}/tests/${id}`, updatedData, {
-      withCredentials: true,
-    });
-    return r.data;
-  } catch (error) {
-    console.error(error.message);
-    if (setMessage) setMessage("Failed to update test");
+    return await testsAPI.update(id, updatedData);
+  } catch (e) {
+    setMessage?.("Failed to update test");
     return null;
   }
 };
 
-/**
- * DELETE /tests/:id
- * Delete a test by id.
- */
 export const deleteTestApi = async (id, setMessage) => {
+  warn("deleteTestApi");
   try {
-    const r = await axios.delete(`${BASE_URL}/tests/${id}`, {
-      withCredentials: true,
-    });
-    return r.data;
-  } catch (error) {
-    console.error(error.message);
-    if (setMessage) setMessage("Failed to delete test");
+    return await testsAPI.delete(id);
+  } catch (e) {
+    setMessage?.("Failed to delete test");
     return null;
   }
 };

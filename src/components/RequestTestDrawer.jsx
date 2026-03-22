@@ -2648,7 +2648,6 @@ import {
 import { apiFetch } from "../services/api";
 import { socket } from "../services/socket";
 import { useAuth } from "../context/AuthContext";
-import AdsterraBanner from "./AdsterraBanner";
 
 const STANDARD_EXAM_TYPES = [
   "SSC",
@@ -3454,12 +3453,10 @@ export function MyTestRequests({ coachingId, onRequestTest }) {
               </Flex>
             );
           })}
-          <AdsterraBanner/>
         </Box>
       )}
 
       <TestDetailModal test={selTest} isOpen={isOpen} onClose={onClose} />
-      <AdsterraBanner/>
     </Box>
   );
 }

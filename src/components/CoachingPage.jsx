@@ -7865,7 +7865,6 @@ import {
 import { apiFetch } from "../services/api";
 import { socket } from "../services/socket";
 import RequestTestDrawer, { MyTestRequests } from "./RequestTestDrawer";
-import AdsterraBanner from "./AdsterraBanner";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 const EXAM_TYPES = [
@@ -9346,7 +9345,6 @@ function CoachingDetail({ coaching }) {
           <>
           <MyTestRequests coachingId={coaching._id} onRequestTest={openReq} />
         <Box mt={10}>
-      <AdsterraBanner />
     </Box></>
         ) : (
           <Box>
@@ -9385,7 +9383,6 @@ function CoachingDetail({ coaching }) {
             </Box>
             <StudentTestsSection coachingId={coaching._id} />
             <Box mt={10}>
-              <AdsterraBanner />
             </Box>
           </Box>
         )}
@@ -9398,7 +9395,6 @@ function CoachingDetail({ coaching }) {
         coachingExamTypes={displayExamTypes}
         currentUser={user}
       />
-      <AdsterraBanner />
     </Box>
   );
 }
@@ -9786,7 +9782,6 @@ function CoachingList({ onCoachingCreated }) {
         }}
         currentUser={currentUser}
       />
-      <AdsterraBanner />
     </Box>
   );
 }

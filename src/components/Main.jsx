@@ -180,7 +180,6 @@
 //     </AuthProvider>
 //   );
 // }
-
 import React, { useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { useToast } from "@chakra-ui/react";
@@ -204,9 +203,15 @@ import TokenTestPage from "./TokenTestPage";
 import UserTestDataList from "./UserTestDataList";
 import SavedPage from "./SavedData";
 import SaveQuestion from "./SaveQuestion";
+
+// ── Admin pages ──────────────────────────────────────────────────────────────
 import AdminCoachingPage from "./AdminCoachingPage";
 import AdminTestRequestsPage from "./AdminTestRequestsPage";
+import AdminDashboardPage from "./AdminDashboardPage";
+import AdminUsersPage from "./AdminUsersPage";
+import AdminTestsPage from "./AdminTestsPage";
 
+// const BASE_URL = "http://localhost:8080";
 const BASE_URL = "https://testwala-backend.onrender.com";
 
 function AppShell() {
@@ -258,8 +263,12 @@ function AppShell() {
       .finally(() => setIsLoading(false));
   }, [chooseSub, toast]);
 
+  // Admin routes use their own AdminNavPage layout — hide global Navbar/Footer
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
   const hideLayout =
     isFullScreen ||
+    isAdminRoute ||
     location.pathname === "/auth/signin" ||
     location.pathname === "/auth/signup" ||
     location.pathname === "/auth/forgotPassword" ||
@@ -270,6 +279,7 @@ function AppShell() {
       {!hideLayout && <Navbar />}
       <ScrollToTop />
       <Routes>
+        {/* ── Public / Student routes ────────────────────────────────── */}
         <Route path="/" element={<Home setchoosesub={setchoosesub} />} />
         <Route path="/auth/signin" element={<Signin />} />
         <Route path="/auth/signup" element={<Signup />} />
@@ -302,18 +312,14 @@ function AppShell() {
             />
           }
         />
-        {/* Admin */}
-        <Route path="/admin/coaching" element={<AdminCoachingPage />} />
-        <Route
-          path="/admin/test-requests"
-          element={<AdminTestRequestsPage />}
-        />
-        {/* Tests & Coaching */}
+
+        {/* ── Tests & Coaching ───────────────────────────────────────── */}
         <Route path="/tests/token/:token" element={<TokenTestPage />} />
         <Route path="/tests/:id" element={<TestDetailPage />} />
         <Route path="/coaching" element={<CoachingPage />} />
         <Route path="/coaching/:slug" element={<CoachingPage />} />
-        {/* Protected */}
+
+        {/* ── Protected student routes ───────────────────────────────── */}
         <Route
           path="/UserTestData"
           element={
@@ -338,6 +344,17 @@ function AppShell() {
             </ProtectedRoute>
           }
         />
+
+        {/* ── Admin routes (wrapped by AdminNavPage internally) ──────── */}
+        <Route path="/admin" element={<AdminDashboardPage />} />
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+        <Route path="/admin/users" element={<AdminUsersPage />} />
+        <Route path="/admin/coaching" element={<AdminCoachingPage />} />
+        <Route
+          path="/admin/test-requests"
+          element={<AdminTestRequestsPage />}
+        />
+        <Route path="/admin/tests" element={<AdminTestsPage />} />
       </Routes>
       {!hideLayout && <Footer />}
     </>
