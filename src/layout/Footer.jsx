@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Flex, Text, Icon, Image } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import { FaGraduationCap, FaHeart } from "react-icons/fa";
+import { FaHeart } from "react-icons/fa";
 import logo from "../assets/logo.png";
 
 export default function Footer() {
@@ -27,7 +27,6 @@ export default function Footer() {
               w="auto"
               objectFit="cover"
               transform="scale(1.6)"
-              // alignItems={}
               transformOrigin="left center"
             />
           </Flex>
@@ -51,7 +50,7 @@ export default function Footer() {
                 Coaching
               </Text>
             </Link>
-            <Link to="/auth/signin">
+            <Link to="/about">
               <Text
                 fontSize="13px"
                 color="rgba(255,255,255,.4)"
@@ -59,8 +58,17 @@ export default function Footer() {
               >
                 About Us
               </Text>
-            </Link>{" "}
-            <Link to="/auth/signin">
+            </Link>
+            <Link to="/feedback">
+              <Text
+                fontSize="13px"
+                color="rgba(255,255,255,.4)"
+                _hover={{ color: "white" }}
+              >
+                Feedback
+              </Text>
+            </Link>
+            <Link to="/terms">
               <Text
                 fontSize="13px"
                 color="rgba(255,255,255,.4)"
@@ -69,7 +77,7 @@ export default function Footer() {
                 Terms and Conditions
               </Text>
             </Link>
-            <Link to="/auth/signup">
+            <Link to="/privacy">
               <Text
                 fontSize="13px"
                 color="rgba(255,255,255,.4)"
@@ -80,10 +88,12 @@ export default function Footer() {
             </Link>
           </Flex>
         </Flex>
+
         <Box h="1px" bg="rgba(255,255,255,.07)" my={6} />
+
         <Flex justify="space-between" align="center" flexWrap="wrap" gap={2}>
           <Text fontSize="12px" color="rgba(255,255,255,.3)">
-            © 2025 TestWala. All rights reserved.
+            © {new Date().getFullYear()} TestWala. All rights reserved.
           </Text>
           <Flex align="center" gap={1}>
             <Text fontSize="12px" color="rgba(255,255,255,.3)">
